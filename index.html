@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13F1 Frontend-Backend</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 16px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 32px; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--line); }
+  li:last-child { border-bottom: 1px solid var(--line); }
+  .name { font-weight: 600; min-width: 90px; }
+  a { color: var(--link); }
+</style>
+</head>
+<body>
+<main>
+  <h1>13F1 Frontend-Backend</h1>
+  <p class="sub">2026/27 · tesztek javítása</p>
+  <ul>
+    <!-- One <li> per test, newest first. -->
+    <li><span class="name">Test 02</span> <a href="test02/walkthrough.html">Javítás</a> <a href="test02/demo.html">Bemutató</a></li>
+  </ul>
+</main>
+</body>
+</html>

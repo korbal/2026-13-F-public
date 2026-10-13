@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 02 javítás</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  /* The school PCs have AutoCAD's font named "Italic" (italic__.ttf), so font-family: italic looks slanted there.
+     Hide it, so the preview behaves like a computer without it (the exam machine). */
+  @font-face { font-family: "Italic"; src: local("Times New Roman"); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  header.top h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header.top .progress { margin-left: auto; font-size: 15px; opacity: .9; }
+  nav.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  nav.steps button {
+    border: 2px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 0; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
+  .solution pre div { white-space: pre; padding: 0 12px; }
+  .solution pre div.new { background: #d3f0dc; box-shadow: inset 4px 0 #1a7f37; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  nav.steps button.extra { border-style: dashed; }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+  }
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  .task-head h2 { margin: 0 0 4px; font-size: 24px; }
+  .task-head .tag { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .goal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0 16px;
+  }
+  .goal p { margin: 0 0 6px; }
+  .goal p:last-child { margin-bottom: 0; }
+  .goal ul { margin: 0 0 6px; padding-left: 22px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal .paper { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
+  .goal .now { color: var(--bad); font-weight: 600; }
+  .goal .count { float: right; font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 10px; margin-left: 12px; }
+  .goal .learn { background: #eef3fb; border-radius: 6px; padding: 10px 14px; }
+  table.exp { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+  table.exp th { background: var(--bg); font-weight: 600; }
+  table.exp code, .console { white-space: pre; }
+  pre.snippet {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid + .grid { margin-top: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+  textarea.code {
+    width: 100%;
+    min-height: 300px;
+    resize: vertical;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-radius: 8px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    tab-size: 2;
+  }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button {
+    font: inherit;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .buttons .kbd { align-self: center; font-size: 13px; color: var(--muted); }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .result code, .goal code, .hint code, table.exp code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .preview-host {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    min-height: 300px;
+    overflow: auto;
+  }
+  .console {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 8px;
+    min-height: 300px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .console .err { color: #ff8a80; }
+  .console .dim { color: #8b8fa3; }
+  .next { margin-top: 4px; }
+  .finished {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-radius: 8px;
+    padding: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .goal .bridge { background: #f3f0fa; border-radius: 6px; padding: 10px 14px 10px 8px; }
+  .goal .bridge ol { margin: 0; padding-left: 26px; }
+  .goal .bridge li { margin: 0 0 6px; }
+  .goal .bridge li:last-child { margin-bottom: 0; }
+  .goal .bridge code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .listing {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 0;
+    font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    overflow-x: auto;
+  }
+  .listing .ln { white-space: pre; padding: 0 12px 0 0; display: flex; }
+  .listing .gut { flex: 0 0 46px; display: flex; gap: 3px; justify-content: flex-end; align-items: center; padding-right: 10px; }
+  .listing .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .matches { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .matches ul { list-style: none; margin: 0; padding: 0; }
+  .matches li { padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: default; }
+  .matches li:last-child { border-bottom: 0; }
+  .matches li:hover { background: var(--bg); }
+  .matches .chip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .matches .file { color: var(--muted); font-size: 13px; }
+  .matches .zero { color: var(--bad); font-weight: 600; }
+  .matches .tags { font: 13px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; color: var(--muted); margin: 2px 0 0 18px; white-space: pre-wrap; }
+  .matches .note2 { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .matches code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Test 02 · Széchenyi Film Club · javítás</h1>
+  <div class="progress" id="progress"></div>
+</header>
+<nav class="steps" id="steps"></nav>
+<main>
+  <p class="intro">Minden feladatban egy hibás kód van, és ezek a hibák tényleg előfordultak a Test 02 tesztekben. Olvasd el, mit kért a feladat, mi történik most, és lépésről lépésre, mit csinál most a kód. A CSS-feladatoknál bal oldalt látod a teljes <code>index.html</code>-t: a színes pötty megmutatja, melyik sorra hat a CSS-ed, a „Mit jelöl ki a CSS-ed?” doboz pedig felsorolja ugyanezt (vidd fölé az egeret, és az oldalon is bekeretezi). Utána javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
+  <div id="finished"></div>
+  <section id="task"></section>
+</main>
+<footer class="bottom"><button id="resetAll">Minden feladat visszaállítása</button></footer>
+
+<script>
+"use strict";
+
+// ---------- Shared fixtures ----------
+
+const PAGE_HTML = `
+<header>
+  <h1>Széchenyi Film Club</h1>
+  <nav>
+    <ul>
+      <li><a href="#program">Program</a></li>
+      <li><a href="#membership">Membership</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section id="program">
+    <h2>Program</h2>
+    <p class="note">Every Thursday at 15:00 in Room 12.</p>
+    <ul>
+      <li>Interstellar</li>
+      <li>The Matrix</li>
+      <li class="sold-out">Inception</li>
+      <li>Spirited Away</li>
+    </ul>
+  </section>
+  <section id="membership">
+    <h2>Membership</h2>
+    <p>Membership is free for every student.</p>
+  </section>
+</main>
+<footer>Széchenyi Film Club · 2026</footer>`;
+
+const BASE_CSS = `* { box-sizing: border-box; }
+#program li { color: black; line-height: 1.6; }`;
+
+const PREVIEW_CSS = `:host { all: initial; display: block; font-family: "Times New Roman", serif; color: black; background: white; }
+.page { padding: 0 0 12px; }
+header { padding: 8px 12px; }
+main { padding: 0 12px; }
+footer { padding: 0 12px; }`;
+
+const EXPECTED = [
+  ["Interstellar", 2014, false, "Interstellar (2014)"],
+  ["  The Matrix ", 1999, false, "The Matrix (1999)"],
+  ["Inception", 2010, true, "Inception (2010) - SOLD OUT"],
+];
+
+const CALLS = `
+console.log(formatScreening("Interstellar", 2014, false));
+console.log(formatScreening("  The Matrix ", 1999, false));
+console.log(formatScreening("Inception", 2010, true));`;
+
+// ---------- Helpers ----------
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function show(v) {
+  if (typeof v === "string") return '"' + v + '"';
+  if (v === undefined) return "undefined";
+  return String(v);
+}
+function rgb(str) {
+  const m = String(str).match(/\d+(\.\d+)?/g);
+  return m ? m.slice(0, 3).map(Number) : [0, 0, 0];
+}
+function luminance(str) {
+  const [r, g, b] = rgb(str);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+// Render the page fixture with the student's CSS inside a shadow root, so it cannot touch this page.
+function renderCss(host, css, html, withBase) {
+  host.innerHTML = "";
+  const box = document.createElement("div");
+  host.appendChild(box);
+  const root = box.attachShadow({ mode: "open" });
+  root.innerHTML =
+    "<style>" + PREVIEW_CSS + "</style>" +
+    (withBase ? "<style>" + BASE_CSS + "</style>" : "") +
+    '<style id="student">' + css + "</style>" +
+    '<div class="page">' + (html || PAGE_HTML) + "</div>";
+  root.querySelectorAll("a").forEach(a => a.addEventListener("click", e => e.preventDefault()));
+  return root;
+}
+
+// ---------- Which HTML elements does each CSS rule select? ----------
+
+const COLORS = ["#e8590c", "#1971c2", "#2f9e44", "#ae3ec9", "#c2255c", "#0c8599"];
+const LINES = PAGE_HTML.replace(/^\n/, "").split("\n");
+// The n-th opening tag in the source is the n-th element in document order, so this maps element index -> line.
+const ELEMENT_LINE = [];
+LINES.forEach((line, i) => (line.match(/<[a-zA-Z]/g) || []).forEach(() => ELEMENT_LINE.push(i)));
+
+// Selectors of every rule in a CSS text, read from the text itself so a broken selector still shows up.
+function cssSelectors(css) {
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const out = [];
+  const re = /([^{}]+)\{[^{}]*\}/g;
+  let m;
+  while ((m = re.exec(clean))) {
+    const sel = m[1].trim();
+    if (sel && !sel.startsWith("@")) out.push(sel);
+  }
+  return out;
+}
+
+function matchRules(root, css, withBase) {
+  const page = root.querySelector(".page");
+  const rules = [];
+  if (withBase) cssSelectors(BASE_CSS).filter(s => s !== "*").forEach(s => rules.push({ selector: s, file: "base.css" }));
+  cssSelectors(css).forEach(s => rules.push({ selector: s, file: "style.css" }));
+  return rules.map((r, k) => {
+    let els = null;
+    try { els = [...page.querySelectorAll(r.selector.replace(/:hover/g, ""))]; } catch (e) { /* invalid selector */ }
+    return Object.assign(r, { els, hover: r.selector.includes(":hover"), color: COLORS[k % COLORS.length] });
+  });
+}
+
+function openTag(el) {
+  const h = el.outerHTML;
+  return h.slice(0, h.indexOf(">") + 1);
+}
+
+function renderListing(root, matches) {
+  const host = document.getElementById("listing");
+  if (!host) return;
+  const all = [...root.querySelector(".page").querySelectorAll("*")];
+  const marks = LINES.map(() => []);
+  matches.forEach(m => (m.els || []).forEach(el => {
+    const line = ELEMENT_LINE[all.indexOf(el)];
+    if (line !== undefined && !marks[line].includes(m.color)) marks[line].push(m.color);
+  }));
+  host.innerHTML = LINES.map((line, i) => {
+    const dots = marks[i].map(c => `<span class="dot" style="background:${c}"></span>`).join("");
+    const bg = marks[i].length ? ` style="background:${marks[i][0]}1f"` : "";
+    return `<div class="ln"${bg}><span class="gut">${dots}</span>${esc(line) || " "}</div>`;
+  }).join("");
+}
+
+function renderMatches(root, css, matches) {
+  const host = document.getElementById("matches");
+  if (!host) return;
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const open = (clean.match(/\{/g) || []).length, close = (clean.match(/\}/g) || []).length;
+  const rows = matches.map((m, k) => {
+    let what;
+    if (m.els === null) what = `<span class="zero">Hibás szelektor: a böngésző az egész szabályt kihagyja.</span>`;
+    else if (m.els.length === 0) what = `<span class="zero">0 elem: ez a szabály semmire nem hat!</span>`;
+    else what = `${m.els.length} elem${m.hover ? ", de csak amíg fölötte van az egér" : ""}:<div class="tags">${m.els.map(e => esc(openTag(e))).join("\n")}</div>`;
+    return `<li data-k="${k}"><span class="chip" style="background:${m.color}"></span><code>${esc(m.selector)}</code> <span class="file">(${m.file})</span> → ${what}</li>`;
+  }).join("");
+  host.innerHTML = `<ul>${rows || "<li>Nincs egy szabály sem.</li>"}</ul>` +
+    (open !== close ? `<p class="zero">Valahol hiányzik egy <code>{</code> vagy egy <code>}</code>.</p>` : "") +
+    `<p class="note2">Vidd az egeret egy sor fölé: az oldalon bekeretezi, amit kijelöl.</p>`;
+  host.querySelectorAll("li[data-k]").forEach(li => {
+    const m = matches[+li.dataset.k];
+    li.addEventListener("mouseenter", () => (m.els || []).forEach(e => { e.style.outline = `3px solid ${m.color}`; e.style.outlineOffset = "2px"; }));
+    li.addEventListener("mouseleave", () => (m.els || []).forEach(e => { e.style.outline = ""; e.style.outlineOffset = ""; }));
+  });
+}
+
+// Does a :hover rule apply to this element and set the given property?
+function hoverRule(root, el, test) {
+  const sheet = root.getElementById("student").sheet;
+  if (!sheet) return false;
+  for (const rule of sheet.cssRules) {
+    if (!rule.selectorText || !rule.selectorText.includes(":hover")) continue;
+    for (const part of rule.selectorText.split(",")) {
+      if (!part.includes(":hover")) continue;
+      const plain = part.replace(/:hover/g, "").trim() || "*";
+      try {
+        if (el.matches(plain) && test(rule.style)) return true;
+      } catch (e) { /* invalid selector */ }
+    }
+  }
+  return false;
+}
+
+// Run student JS with a fake console. Returns { logs, error, fn }.
+function runJs(code) {
+  const logs = [];
+  const fakeConsole = {
+    log: (...a) => logs.push(a.map(x => typeof x === "string" ? x : show(x)).join(" ")),
+  };
+  fakeConsole.error = fakeConsole.warn = fakeConsole.info = fakeConsole.log;
+  let fn, error;
+  try {
+    fn = new Function("console",
+      code + '\n;return typeof formatScreening === "function" ? formatScreening : undefined;'
+    )(fakeConsole);
+  } catch (e) {
+    error = e;
+  }
+  return { logs, error, fn };
+}
+
+function checkCases(fn, cases) {
+  const problems = [];
+  if (typeof fn !== "function") {
+    problems.push("Nincs <code>formatScreening</code> nevű függvény.");
+    return problems;
+  }
+  for (const [t, y, s, want] of cases) {
+    const call = `formatScreening(${show(t)}, ${y}, ${s})`;
+    let got;
+    try { got = fn(t, y, s); }
+    catch (e) { problems.push(`<code>${esc(call)}</code> hibára fut: ${esc(e.name + ": " + e.message)}`); continue; }
+    if (got !== want) {
+      problems.push(`<code>${esc(call)}</code><br>elvárt: <code>${esc(show(want))}</code><br>kaptuk: <code>${esc(show(got))}</code>`);
+    }
+  }
+  return problems;
+}
+
+// ---------- Tasks ----------
+// Each task: id, title, tag, count, paper, now, bridge (HTML: step by step, what the code does now), learn (HTML), start (broken code), kind ("css" | "js"), check(ctx) -> list of problems, hint (HTML).
+
+const TASKS = [
+  {
+    id: "italic",
+    title: "1. Dőlt betű",
+    tag: "B · CSS",
+    kind: "css",
+    count: `3 tesztben`,
+    paper: `Anything with the class <code>note</code> is italic and has a font size of <code>14px</code>.`,
+    now: `Az „Every Thursday…” sor kisebb lett, de nem dőlt.`,
+    learn: `<p>A CSS-ben a <b>betűtípus</b> és a <b>betűstílus</b> két külön tulajdonság. A <code>font-family</code> a betűtípust adja meg, például <code>Arial</code> vagy <code>Georgia</code>. Ha a megadott nevű betűtípus nincs a gépen, a böngésző egyszerűen az alap betűtípust használja, és nem szól, hogy valami nem stimmel. A dőlt betű nem betűtípus, ezért a <code>font-family</code> nem tudja dőltté tenni a szöveget.</p><p>Jegyezd meg: ha egy CSS-sor nem csinál semmit, nézd meg, jó-e a <b>tulajdonság neve</b>.</p>`,
+    bridge: `<ol>
+<li>A <code>style.css</code>-ben a szabály így kezdődik: <code>.note</code>. Ez a <b>szelektor</b>. Megmondja, hogy az <code>index.html</code> melyik elemére vonatkozik a szabály.</li>
+<li>A <code>.note</code> elején álló <b>pont</b> azt jelenti: „azt az elemet keresem, amin <code>class="note"</code> van”.</li>
+<li>Az <code>index.html</code>-ben ez az elem: <code>&lt;p class="note"&gt;Every Thursday at 15:00 in Room 12.&lt;/p&gt;</code>. Bal oldalt színes pötty jelöli.</li>
+<li>Ezért a <code>{ }</code> közötti sorok erre az egy bekezdésre hatnak. Az oldalon ez az „Every Thursday…” sor.</li>
+<li>A szelektor tehát jó: a „Mit jelöl ki a CSS-ed?” doboz is 1 elemet mutat. A hiba a <code>{ }</code> között van: a méret működik, a dőlt betű nem.</li>
+<li><b>Figyelem:</b> az iskolai gépeken véletlenül van egy <b>„Italic” nevű betűtípus</b> (az AutoCAD telepítette). Ezért a saját gépeden a <code>font-family: Italic</code> ferde betűnek látszhatott. De ez egy betűtípus, nem dőlt stílus: egy másik gépen, például a vizsgán, nincs ilyen betűtípus, és a szöveg egyenes marad. Ez az oldal úgy mutatja, mint egy gép, amin nincs ilyen betűtípus.</li>
+</ol>`,
+    start: `.note {
+  font-family: Italic;
+  font-size: 14px;
+}`,
+    hint: `A dőlt betű nem betűtípus, hanem betűstílus. Keresd meg a W3Schools-on: <b>CSS Fonts → Font Style</b>.`,
+    solution: `.note {
+  font-style: italic;
+  font-size: 14px;
+}`,
+    why: `A <code>font-family: Italic</code> helyett <code>font-style: italic</code>: a dőlt betű stílus, nem betűtípus.`,
+    check(root) {
+      const p = [];
+      const note = root.querySelector(".note");
+      const cs = getComputedStyle(note);
+      if (cs.fontStyle !== "italic") p.push("A <code>.note</code> szöveg még nem dőlt.");
+      if (cs.fontSize !== "14px") p.push(`A <code>.note</code> mérete ${esc(cs.fontSize)}, nem 14px.`);
+      const other = root.querySelector("#membership p");
+      if (getComputedStyle(other).fontStyle === "italic") p.push("Más bekezdés is dőlt lett, pedig csak a <code>.note</code> legyen az.");
+      return p;
+    },
+  },
+  {
+    id: "header",
+    title: "2. Fejléc",
+    tag: "B · CSS",
+    kind: "css",
+    count: `5 tesztben`,
+    paper: `The header has a dark background colour, light text, and its content is centred.`,
+    now: `A fejléc sötét, a szöveg fehér, de a cím és a menü balra van.`,
+    learn: `<p>A <code>header</code>-re írt szín a benne lévő címre is hat, pedig a címre nem írtunk semmit. Ez az <b>öröklés</b>: bizonyos tulajdonságokat a gyerek elemek megkapnak a szülőtől, például a <code>color</code>-t, a <code>font-family</code>-t és a szöveg igazítását is.</p><p>Ezért elég a szülőre egyszer megadni, hogy a tartalma hova igazodjon (balra, jobbra, középre), és a cím meg a menü is követi.</p>`,
+    bridge: `<ol>
+<li>A szelektor <code>header</code>. Előtte nincs se pont, se <code>#</code>, ezért ez egy <b>elem neve</b>: minden <code>&lt;header&gt;</code> elemet kijelöl.</li>
+<li>Az <code>index.html</code>-ben egy <code>&lt;header&gt;</code> van, a legtetején. Ami a <code>&lt;header&gt;</code> és a <code>&lt;/header&gt;</code> között van, az <b>benne van</b>: a <code>&lt;h1&gt;</code> cím és a <code>&lt;nav&gt;</code> menü.</li>
+<li>Az oldalon ez a sötét sáv a tetején, benne a „Széchenyi Film Club” cím és a két menüpont.</li>
+<li>A szabály a <code>&lt;header&gt;</code>-re hat, és a benne lévő cím és menü átveszi tőle a színt. Ezért fehér a cím is, pedig a <code>h1</code>-re nem írtunk semmit.</li>
+<li>A szelektor jó, a háttér és a szín is. Egy tulajdonság hiányzik a <code>{ }</code> közül: az, amelyik középre teszi a tartalmat.</li>
+</ol>`,
+    start: `header {
+  background-color: #2b2d42;
+  color: white;
+}`,
+    hint: `Szöveg vízszintes igazítása: W3Schools, <b>CSS Text → Text Alignment</b>.`,
+    solution: `header {
+  background-color: #2b2d42;
+  color: white;
+  text-align: center;
+}`,
+    why: `Egy új sor: <code>text-align: center;</code>. A <code>header</code> tartalma (a cím és a menü) örökli, ezért mind középre kerül.`,
+    check(root) {
+      const p = [];
+      const h = root.querySelector("header");
+      const cs = getComputedStyle(h);
+      if (luminance(cs.backgroundColor) > 0.35 || cs.backgroundColor === "rgba(0, 0, 0, 0)") p.push("A fejléc háttere nem sötét.");
+      if (luminance(cs.color) < 0.65) p.push("A fejléc szövege nem világos.");
+      if (cs.textAlign !== "center") p.push("A fejléc tartalma még nincs középen.");
+      return p;
+    },
+  },
+  {
+    id: "card",
+    title: "3. A Membership kártya",
+    tag: "C · CSS",
+    kind: "css",
+    count: `2 tesztben`,
+    paper: `The Membership section looks like a card: a 2px solid border, rounded corners, padding inside, and a background colour different from the page's.`,
+    now: `A tulajdonságok mind jók, mégsem változik semmi az oldalon.`,
+    learn: `<p>A szelektor első karaktere mondja meg, mit keresel:</p><ul><li><code>p</code>: minden <code>&lt;p&gt;</code> elem;</li><li><code>.valami</code>: minden elem, amin <code>class="valami"</code> van;</li><li><code>#valami</code>: az az egy elem, amin <code>id="valami"</code> van.</li></ul><p>Ha a szelektor semmire nem illik az oldalon, a böngésző nem ír hibát, csak nem csinál semmit. Ezért mindig nézd meg a HTML-ben, hogy <code>id</code> vagy <code>class</code> van-e az elemen.</p>`,
+    bridge: `<ol>
+<li>A szelektor <code>.membership</code>. A <b>pont</b> azt jelenti: „azt az elemet keresem, amin <code>class="membership"</code> van”.</li>
+<li>Keresd meg bal oldalt, az <code>index.html</code>-ben a Membership szakaszt. Így kezdődik: <code>&lt;section id="membership"&gt;</code>. Ezen <b><code>id</code></b> van, nem <code>class</code>.</li>
+<li>Az egész oldalon nincs egyetlen elem sem <code>class="membership"</code>-pel, ezért a szabály <b>semmire nem hat</b>. A „Mit jelöl ki a CSS-ed?” doboz is ezt mutatja: 0 elem, és bal oldalt egy sor sincs megjelölve.</li>
+<li>A böngésző ilyenkor nem ír hibát, egyszerűen nem történik semmi. A tulajdonságok a <code>{ }</code> között mind jók.</li>
+<li>Írd át a szelektort úgy, hogy <code>id</code>-t keressen (lent, az „Amit tudni kell” részben látod, melyik jel kell hozzá). Ha jó, a doboz 1 elemet mutat, és a <code>&lt;section id="membership"&gt;</code> sor kap egy pöttyöt.</li>
+</ol>`,
+    start: `.membership {
+  border: 2px solid #2b2d42;
+  border-radius: 10px;
+  padding: 16px;
+  background-color: #fff3d6;
+}`,
+    hint: `Nézd meg, mi van a HTML-ben: <code>id</code> vagy <code>class</code>? Az id-t másik jellel kell kijelölni, mint a class-t. W3Schools: <b>CSS Selectors</b>.`,
+    solution: `#membership {
+  border: 2px solid #2b2d42;
+  border-radius: 10px;
+  padding: 16px;
+  background-color: #fff3d6;
+}`,
+    why: `A <code>.membership</code> helyett <code>#membership</code>: a HTML-ben <code>id="membership"</code> van, és az id-t a <code>#</code> jelöli ki.`,
+    check(root) {
+      const p = [];
+      const m = root.getElementById("membership");
+      const cs = getComputedStyle(m);
+      if (cs.borderTopWidth !== "2px" || cs.borderTopStyle !== "solid") p.push("A Membership szakasznak még nincs 2px-es folytonos kerete.");
+      if (parseFloat(cs.borderTopLeftRadius) <= 0) p.push("A sarkok nincsenek lekerekítve.");
+      if (parseFloat(cs.paddingTop) <= 0) p.push("Nincs belső margó (padding).");
+      if (cs.backgroundColor === "rgba(0, 0, 0, 0)") p.push("Nincs saját háttérszíne.");
+      return p;
+    },
+  },
+  {
+    id: "links",
+    title: "4. Menülinkek",
+    tag: "C · CSS",
+    kind: "css",
+    count: `4 tesztben`,
+    paper: `The menu links are not underlined, and their colour is easy to read on the dark header.<br>When the mouse is over a menu link, it changes colour and becomes underlined.`,
+    now: `A felsorolásjelek már eltűntek, de a linkek kékek és alá vannak húzva. Ha föléjük viszed az egeret, nem történik semmi.`,
+    learn: `<p>A böngésző a linkeknek <b>saját stílust</b> ad: kék szín és aláhúzás. Ez közvetlenül az <code>&lt;a&gt;</code> elemen van. Ha a szülőre (<code>nav</code>) írod a színt és a <code>text-decoration</code>-t, a link saját stílusa erősebb, ezért semmi nem változik. A szabályt magukra a linkekre kell írni.</p><p>Hogyan jelölöd ki az elemet, ami egy másikon belül van? Szóközzel: <code>footer p</code> = minden <code>&lt;p&gt;</code>, ami a <code>&lt;footer&gt;</code>-ben van.</p><p>A <code>:hover</code> a szelektor végére kerül, és csak addig hat, amíg az egér az elem fölött van: <code>button:hover { ... }</code>.</p>`,
+    bridge: `<ol>
+<li>Az utolsó szabály szelektora <code>nav</code>: ez a <code>&lt;nav&gt;</code> elemet jelöli ki.</li>
+<li>Az <code>index.html</code>-ben a <code>&lt;nav&gt;</code>-on belül van egy <code>&lt;ul&gt;</code>, abban két <code>&lt;li&gt;</code>, és mindkettőben egy <code>&lt;a&gt;</code>. A <b>linkek</b> az <code>&lt;a&gt;</code> elemek, például <code>&lt;a href="#program"&gt;Program&lt;/a&gt;</code>.</li>
+<li>A kék színt és az aláhúzást a böngésző <b>közvetlenül az <code>&lt;a&gt;</code> elemekre</b> teszi, nem a <code>&lt;nav&gt;</code>-ra.</li>
+<li>A te szabályod a <code>&lt;nav&gt;</code>-ra hat, az <code>&lt;a&gt;</code>-kra nem. A „Mit jelöl ki a CSS-ed?” dobozban látszik: a <code>nav</code> szabály 1 elemet jelöl ki, a <code>&lt;nav&gt;</code>-ot. A két <code>&lt;a&gt;</code> sor mellett bal oldalt nincs pötty a színével.</li>
+<li>Olyan szelektor kell, ami az <code>&lt;a&gt;</code> elemeket jelöli ki, de csak azokat, amik a <code>&lt;nav&gt;</code>-ban vannak. Ha jó, a doboz 2 elemet mutat, és a két <code>&lt;a&gt;</code> sor kap pöttyöt.</li>
+<li>Utána kell egy második szabály ugyanerre a két linkre, a szelektor végén <code>:hover</code>-rel.</li>
+</ol>`,
+    start: `header {
+  background-color: #2b2d42;
+  color: white;
+  text-align: center;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+nav {
+  text-decoration: none;
+  color: #ffd166;
+}`,
+    hint: `Az aláhúzást és a kék színt a böngésző a <b>link</b> elemre teszi, nem a <code>nav</code>-ra. Melyik elemet kell kijelölni? A hoverhez kell egy második szabály is, a <code>:hover</code> a szelektor végére kerül.`,
+    solution: `header {
+  background-color: #2b2d42;
+  color: white;
+  text-align: center;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+nav a {
+  text-decoration: none;
+  color: #ffd166;
+}
+
+nav a:hover {
+  text-decoration: underline;
+  color: white;
+}`,
+    why: `A <code>nav</code> helyett <code>nav a</code>: így a szabály a nav-on belüli linkekre hat. Utána egy új szabály <code>nav a:hover</code>-rel, ami visszahozza az aláhúzást és más színt ad.`,
+    check(root) {
+      const p = [];
+      const a = root.querySelector("nav a");
+      const cs = getComputedStyle(a);
+      if (cs.textDecorationLine.includes("underline")) p.push("A menülinkek még alá vannak húzva.");
+      const c = cs.color;
+      if (c === "rgb(0, 0, 238)" || c === "rgb(85, 26, 139)") p.push("A menülinkek még az alap kék színűek.");
+      else if (luminance(c) < 0.5) p.push("A menülinkek színe nem olvasható jól a sötét fejlécen.");
+      if (!hoverRule(root, a, s => /underline/.test(s.textDecoration || s.textDecorationLine)))
+        p.push("Nincs olyan <code>:hover</code> szabály, ami visszahozza az aláhúzást a linkeken.");
+      if (!hoverRule(root, a, s => !!s.color))
+        p.push("A <code>:hover</code> szabály nem változtatja meg a linkek színét.");
+      return p;
+    },
+  },
+  {
+    id: "trim",
+    title: "5. A trim() eredménye",
+    tag: "D · JavaScript",
+    kind: "js",
+    count: `Test 01-ben és Test 02-ben is, több tesztben`,
+    paper: `Extra spaces at the start and end of the title are removed.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>"Interstellar", 2014, false</code></td><td><code>Interstellar (2014)</code></td></tr><tr><td><code>"  The Matrix ", 1999, false</code></td><td><code>The Matrix (1999)</code></td></tr><tr><td><code>"Inception", 2010, true</code></td><td><code>Inception (2010) - SOLD OUT</code></td></tr></table>`,
+    now: `A <code>The Matrix</code> előtt és után ott maradtak a szóközök. Nézd a Console-t jobbra.`,
+    learn: `<p>A JavaScriptben egy szöveg nem változik meg. A <code>trim()</code>, a <code>toLowerCase()</code> és a <code>toUpperCase()</code> <b>nem a meglévő szöveget javítja</b>, hanem egy <b>új</b> szöveget ad vissza. Ha az újat nem mented el (vagy nem használod rögtön), elveszik.</p><p>Példa: <code>let name = "anna";</code> után a <code>name.toUpperCase();</code> sor semmit nem változtat, a <code>name</code> még mindig <code>"anna"</code>.</p>`,
+    bridge: `<ol>
+<li>A kód két részből áll. Fent a <b>függvény</b>: <code>function formatScreening(title, year, isSoldOut) { ... }</code>. Ez csak egy recept, magától nem fut le. Lent a három <b>hívás</b>: <code>formatScreening(...)</code>. Ezek futtatják le a receptet.</li>
+<li>Hívásnál a zárójelben lévő értékek <b>sorrendben</b> bekerülnek a függvény paramétereibe. A második hívásnál:<table class="exp"><tr><th>Hívás</th><th><code>title</code></th><th><code>year</code></th><th><code>isSoldOut</code></th></tr><tr><td><code>formatScreening("  The Matrix ", 1999, false)</code></td><td><code>"  The Matrix "</code></td><td><code>1999</code></td><td><code>false</code></td></tr></table></li>
+<li>Kövessük ezt a hívást soronként:<table class="exp"><tr><th>Sor</th><th>Mi történik</th><th><code>title</code> utána</th></tr><tr><td><code>title.trim();</code></td><td>Készül egy új szöveg: <code>"The Matrix"</code>. Nem mentjük el sehova, ezért elveszik.</td><td><code>"  The Matrix "</code></td></tr><tr><td><code>let label = title + ...</code></td><td>A <code>label</code> a szóközös <code>title</code>-ből készül.</td><td><code>"  The Matrix "</code></td></tr></table></li>
+<li>Ezért marad ott a szóköz a Console-ban. A <code>trim()</code> eredményét el kell menteni, vagy ott helyben felhasználni, ahol a <code>label</code> készül.</li>
+</ol>`,
+    start: `function formatScreening(title, year, isSoldOut) {
+  title.trim();
+  let label = title + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+` + CALLS,
+    hint: `A <code>trim()</code> nem változtatja meg a <code>title</code>-t. Egy <b>új</b> szöveget ad vissza, és azt el kell menteni valahova.`,
+    solution: `function formatScreening(title, year, isSoldOut) {
+  title = title.trim();
+  let label = title + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+
+console.log(formatScreening("Interstellar", 2014, false));
+console.log(formatScreening("  The Matrix ", 1999, false));
+console.log(formatScreening("Inception", 2010, true));`,
+    why: `A <code>title.trim();</code> helyett <code>title = title.trim();</code>: a levágott új szöveget visszamentjük a <code>title</code>-be.`,
+    check(run) { return checkCases(run.fn, EXPECTED); },
+  },
+  {
+    id: "join",
+    title: "6. Szöveg összefűzése",
+    tag: "D · JavaScript",
+    kind: "js",
+    count: `3 tesztben (vessző, <code>&amp;&amp;</code>, <code>.slice</code>)`,
+    paper: `It <b>returns</b> the title, a space and the year in brackets.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>"Interstellar", 2014, false</code></td><td><code>Interstellar (2014)</code></td></tr><tr><td><code>"  The Matrix ", 1999, false</code></td><td><code>The Matrix (1999)</code></td></tr><tr><td><code>"Inception", 2010, true</code></td><td><code>Inception (2010) - SOLD OUT</code></td></tr></table>`,
+    now: `A Console-ban csak egy <code>)</code> jelenik meg, az Inceptionnél <code>) - SOLD OUT</code>.`,
+    learn: `<p>Szövegeket a <code>+</code> jellel fűzöl össze: <code>"Szia " + name</code> → <code>"Szia Anna"</code>. Számot is hozzá lehet fűzni: <code>"Év: " + 2014</code> → <code>"Év: 2014"</code>.</p><p>A vessző egészen mást csinál: a vesszővel elválasztott értékek közül a JavaScript csak az <b>utolsót</b> tartja meg. Ezért lett az eredmény <code>")"</code>.</p><p>A szóköz és a zárójelek is csak akkor kerülnek bele, ha te beleírod őket idézőjelek között.</p>`,
+    bridge: `<ol>
+<li>Az első hívás: <code>formatScreening("Interstellar", 2014, false)</code>. Az értékek sorrendben bekerülnek a paraméterekbe: <code>title</code> = <code>"Interstellar"</code>, <code>year</code> = <code>2014</code>, <code>isSoldOut</code> = <code>false</code>.</li>
+<li>A függvény első sora: <code>let label = (title.trim(), " (", year, ")");</code>. A zárójelben <b>négy érték</b> van, vesszővel elválasztva: <code>"Interstellar"</code>, <code>" ("</code>, <code>2014</code> és <code>")"</code>.</li>
+<li>Vesszővel elválasztott értékek közül a JavaScript csak az <b>utolsót</b> tartja meg. Ezért a <code>label</code> értéke <code>")"</code> lesz.</li>
+<li>Az <code>isSoldOut</code> <code>false</code>, ezért az <code>if</code> belseje kimarad, és a <code>return label;</code> a <code>")"</code>-t adja vissza. Ezt látod a Console-ban.</li>
+<li>A négy darab jó, csak egyetlen szöveggé kell összefűzni őket. Ehhez a vesszők helyére más jel kell (lásd lent).</li>
+</ol>`,
+    start: `function formatScreening(title, year, isSoldOut) {
+  let label = (title.trim(), " (", year, ")");
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+` + CALLS,
+    hint: `A vessző nem fűz össze szövegeket. A JavaScriptben ehhez a <code>+</code> jel kell (vagy a <code>\`...\${year}...\`</code> template literal).`,
+    solution: `function formatScreening(title, year, isSoldOut) {
+  let label = title.trim() + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+
+console.log(formatScreening("Interstellar", 2014, false));
+console.log(formatScreening("  The Matrix ", 1999, false));
+console.log(formatScreening("Inception", 2010, true));`,
+    why: `A vesszők helyén <code>+</code>, és a külső zárójel sem kell: <code>title.trim() + " (" + year + ")"</code> egyetlen szöveg.`,
+    check(run) { return checkCases(run.fn, EXPECTED); },
+  },
+  {
+    id: "bool",
+    title: "7. true vagy \"yes\"",
+    tag: "D · JavaScript",
+    kind: "js",
+    count: `2 tesztben`,
+    paper: `Three parameters: the film's title, its year, and whether it is sold out (<code>true</code> or <code>false</code>).<br>If the film is sold out, <code> - SOLD OUT</code> is added to the end.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>"Interstellar", 2014, false</code></td><td><code>Interstellar (2014)</code></td></tr><tr><td><code>"  The Matrix ", 1999, false</code></td><td><code>The Matrix (1999)</code></td></tr><tr><td><code>"Inception", 2010, true</code></td><td><code>Inception (2010) - SOLD OUT</code></td></tr></table>`,
+    now: `Az Inceptionnél a hívásban <code>true</code> van, mégsem kerül a végére a <code> - SOLD OUT</code>.`,
+    learn: `<p>A <code>true</code> és a <code>false</code> <b>logikai érték</b> (boolean), nem szöveg. A <code>"yes"</code> szöveg, és a <code>true == "yes"</code> hamis, ezért az <code>if</code> belseje sosem fut le.</p><p>Egy logikai értéket nem kell semmivel összehasonlítani: <code>if (isMember) { ... }</code> akkor fut le, ha az <code>isMember</code> értéke <code>true</code>.</p>`,
+    bridge: `<ol>
+<li>A harmadik hívás: <code>formatScreening("Inception", 2010, true)</code>. A harmadik érték bekerül a harmadik paraméterbe: <code>isSoldOut</code> = <code>true</code>.</li>
+<li>Az <code>if</code> ezt vizsgálja: <code>isSoldOut == "yes"</code>. Most <code>isSoldOut</code> helyén <code>true</code> van, tehát a kérdés: <code>true == "yes"</code>?</li>
+<li>A <code>true</code> logikai érték, a <code>"yes"</code> szöveg (idézőjel van körülötte). Nem egyenlők, ezért a válasz <code>false</code>.</li>
+<li>Ha az <code>if</code> zárójelében <code>false</code> jön ki, a <code>{ }</code> belseje kimarad, és a <code> - SOLD OUT</code> nem kerül a végére.</li>
+<li>A hívásokban <code>true</code> és <code>false</code> van, és a hívásokat nem írhatod át. Az <code>if</code>-et kell úgy átírni, hogy <code>true</code> esetén lefusson.</li>
+</ol>`,
+    start: `function formatScreening(title, year, isSoldOut) {
+  let label = title.trim() + " (" + year + ")";
+  if (isSoldOut == "yes") {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+` + CALLS,
+    hint: `A hívásban a harmadik érték <code>true</code>, nem <code>"yes"</code>. Egy <code>true</code>/<code>false</code> értéket nem kell semmivel összehasonlítani: az <code>if</code> zárójelébe magában is beírható. A hívásokat ne írd át!`,
+    solution: `function formatScreening(title, year, isSoldOut) {
+  let label = title.trim() + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+
+console.log(formatScreening("Interstellar", 2014, false));
+console.log(formatScreening("  The Matrix ", 1999, false));
+console.log(formatScreening("Inception", 2010, true));`,
+    why: `Az <code>if (isSoldOut == "yes")</code> helyett <code>if (isSoldOut)</code>: ha az <code>isSoldOut</code> értéke <code>true</code>, a belseje lefut.`,
+    check(run) { return checkCases(run.fn, EXPECTED); },
+  },
+  {
+    id: "calls",
+    title: "8. A hívások",
+    tag: "D · JavaScript",
+    kind: "js",
+    count: `7 tesztben hiányoztak vagy rosszak voltak a hívások`,
+    paper: `Call it with <code>console.log</code> for these three films.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>"Interstellar", 2014, false</code></td><td><code>Interstellar (2014)</code></td></tr><tr><td><code>"  The Matrix ", 1999, false</code></td><td><code>The Matrix (1999)</code></td></tr><tr><td><code>"Inception", 2010, true</code></td><td><code>Inception (2010) - SOLD OUT</code></td></tr></table>`,
+    now: `A függvény jó, a három hívás is ott van, mégis üres a Console.`,
+    learn: `<p>A <code>return</code> visszaadja az eredményt annak, aki a függvényt meghívta, de <b>nem írja ki</b> sehova. Kiírni a <code>console.log(...)</code> tud: azt írja ki, ami a zárójelében van.</p><p>Ha a függvényhívás a <code>console.log</code> zárójelébe kerül, a függvény eredménye megjelenik: <code>console.log(add(2, 3));</code> → a Console-ban <code>5</code>.</p><p>Hívásnál a feladat értékeit használd, mindhárom paraméterrel.</p>`,
+    bridge: `<ol>
+<li>Fent a függvény, lent a három hívás. A hívások lefutnak, és a függvény mindháromszor elkészíti a jó szöveget.</li>
+<li>A <code>return label;</code> visszaadja a szöveget <b>oda, ahol a hívás áll</b>. Az első hívás sora így olyan lesz, mintha ez állna ott: <code>"Interstellar (2014)";</code></li>
+<li>Egy szöveg, ami magában áll egy sorban, nem csinál semmit: senki nem írja ki. Ezért üres a Console.</li>
+<li>Kiírni a <code>console.log( ... )</code> tud: ami a zárójelében van, az jelenik meg a Console-ban.</li>
+<li>Ha a hívás a <code>console.log</code> zárójelébe kerül, a függvény eredménye kerül oda, és az jelenik meg.</li>
+</ol>`,
+    start: `function formatScreening(title, year, isSoldOut) {
+  let label = title.trim() + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+
+formatScreening("Interstellar", 2014, false);
+formatScreening("  The Matrix ", 1999, false);
+formatScreening("Inception", 2010, true);`,
+    hint: `A <code>return</code> visszaadja az értéket, de nem írja ki. Ahhoz, hogy megjelenjen a Console-ban, a hívást be kell tenni egy <code>console.log( ... )</code>-ba.`,
+    solution: `function formatScreening(title, year, isSoldOut) {
+  let label = title.trim() + " (" + year + ")";
+  if (isSoldOut) {
+    label = label + " - SOLD OUT";
+  }
+  return label;
+}
+
+console.log(formatScreening("Interstellar", 2014, false));
+console.log(formatScreening("  The Matrix ", 1999, false));
+console.log(formatScreening("Inception", 2010, true));`,
+    why: `Mindhárom hívás a <code>console.log( ... )</code> zárójelébe került: a függvény eredményét így kiírja a Console.`,
+    check(run) {
+      const p = checkCases(run.fn, EXPECTED);
+      const want = EXPECTED.map(e => e[3]);
+      const same = run.logs.length === 3 && run.logs.every((l, i) => l === want[i]);
+      if (!same) p.push(`A Console-ban nem pontosan a három elvárt sor van (most ${run.logs.length} sor).`);
+      return p;
+    },
+  },
+  {
+    id: "bonus",
+    title: "★ Extra: Sold out",
+    tag: "Bónusz · CSS",
+    kind: "css",
+    base: true,
+    extra: true,
+    count: `9-en próbálták, 3-nak sikerült`,
+    paper: `Give the <i>Inception</i> list item <code>class="sold-out"</code>. In <code>style.css</code>, make it grey and crossed out. Do not edit <code>base.css</code> and do not use <code>!important</code>. Above your rule, write one comment that explains why a rule with only <code>.sold-out</code> as the selector is not enough here.`,
+    now: `Az Inception áthúzott, de fekete maradt.`,
+    learn: `<p>Ha két szabály <b>ugyanazt a tulajdonságot</b> állítja <b>ugyanarra az elemre</b>, az erősebb szelektor nyer, akármelyik van később. Az erősség (specificitás) számolása: id = 100, class = 10, elem = 1.</p><ul><li><code>#program li</code> (a <code>base.css</code>-ben) = 100 + 1 = <b>101</b></li><li><code>.sold-out</code> = <b>10</b></li></ul><p>Ezért a fekete szín nyer. Az áthúzást a <code>base.css</code> nem állítja, ezért az működik.</p>`,
+    bridge: `<ol>
+<li>Két CSS-fájl ad stílust ugyanannak az oldalnak: a <code>base.css</code> (ezt nem szabad átírni, bal oldalt látod) és a <code>style.css</code> (ezt javítod).</li>
+<li>A <code>base.css</code> szabálya: <code>#program li</code>. Balról jobbra olvasva: <code>#program</code> = az elem, amin <code>id="program"</code> van, vagyis a <code>&lt;section id="program"&gt;</code>. A <b>szóköz</b> azt jelenti: „azon belül”. A <code>li</code> = minden <code>&lt;li&gt;</code>. Együtt: minden <code>&lt;li&gt;</code> a Program szakaszban, tehát mind a négy film, az Inception is.</li>
+<li>A <code>style.css</code> szabálya: <code>.sold-out</code> = az elem, amin <code>class="sold-out"</code> van. Ez csak az Inception: <code>&lt;li class="sold-out"&gt;Inception&lt;/li&gt;</code>.</li>
+<li>Az Inceptionre tehát <b>két szabály is hat</b>, és mindkettő megadja a <code>color</code>-t. Bal oldalt az Inception sorában két pötty van, mindkét szabály színével.</li>
+<li>Ha két szabály ugyanazt a tulajdonságot adja meg ugyanarra az elemre, az erősebb szelektor nyer (lent látod, hogyan számolod). Az áthúzást (<code>text-decoration</code>) csak a te szabályod adja meg, ezért az működik.</li>
+</ol>`,
+    start: `.sold-out {
+  color: gray;
+  text-decoration: line-through;
+}`,
+    hint: `Melyik szelektor erősebb: <code>#program li</code> (1 id + 1 elem) vagy <code>.sold-out</code> (1 class)? Írj olyan szelektort, ami erősebb a <code>#program li</code>-nél. Kommentet CSS-ben így írsz: <code>/* ... */</code>.`,
+    solution: `/* A base.css-ben a #program li (1 id + 1 elem = 101) erősebb,
+   mint a .sold-out (1 class = 10), ezért az nyerné a színt.
+   A #program .sold-out (1 id + 1 class = 110) már erősebb. */
+#program .sold-out {
+  color: gray;
+  text-decoration: line-through;
+}`,
+    why: `A <code>.sold-out</code> helyett <code>#program .sold-out</code> (110), ami erősebb a <code>base.css</code>-beli <code>#program li</code>-nél (101). Fölötte a komment, ami ezt elmagyarázza.`,
+    check(root) {
+      const p = [];
+      const css = root.getElementById("student").textContent;
+      const li = root.querySelector(".sold-out");
+      const cs = getComputedStyle(li);
+      const [r, g, b] = rgb(cs.color);
+      const grey = Math.max(r, g, b) - Math.min(r, g, b) < 30 && r > 90 && r < 210;
+      if (!grey) p.push("Az Inception nem szürke.");
+      if (!cs.textDecorationLine.includes("line-through")) p.push("Az Inception nincs áthúzva.");
+      const others = [...root.querySelectorAll("#program li:not(.sold-out)")];
+      if (others.some(o => getComputedStyle(o).color !== "rgb(0, 0, 0)")) p.push("A többi film már nem fekete.");
+      if (/!\s*important/i.test(css)) p.push("A <code>!important</code> tilos.");
+      if (!/\/\*[\s\S]{15,}?\*\//.test(css)) p.push("Hiányzik a komment, ami elmagyarázza, miért nem elég a <code>.sold-out</code>.");
+      return p;
+    },
+  },
+];
+
+// ---------- State (per browser, optional) ----------
+
+const KEY = "test02-javitas-v1";
+let state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (saved && typeof saved === "object") state = Object.assign(state, saved);
+} catch (e) { /* storage unavailable: start fresh */ }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+// ---------- UI ----------
+
+const $steps = document.getElementById("steps");
+const $task = document.getElementById("task");
+const $progress = document.getElementById("progress");
+const $finished = document.getElementById("finished");
+
+function renderSteps() {
+  $steps.innerHTML = "";
+  TASKS.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    if (i === state.current) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (t.extra) b.classList.add("extra");
+    b.addEventListener("click", () => { state.current = i; save(); renderAll(); });
+    $steps.appendChild(b);
+  });
+  const required = TASKS.filter(t => !t.extra);
+  const n = required.filter(t => state.done[t.id]).length;
+  const shown = required.filter(t => state.done[t.id] && state.revealed[t.id]).length;
+  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (state.done.bonus ? " + extra ★" : "");
+  $finished.innerHTML = n === required.length
+    ? `<div class="finished">Mind a ${required.length} feladat kész. Ha van időd, jöhet a ★ Extra.</div>`
+    : "";
+}
+
+function editorHtml(label) {
+  return `
+        <p class="label">${label}</p>
+        <textarea class="code" id="code" spellcheck="false" wrap="off"></textarea>
+        <div class="buttons">
+          <button class="primary" id="check">Ellenőrzés</button>
+          <button id="reset">Visszaállítás</button>
+          <span class="kbd">vagy Ctrl+Enter</span>
+        </div>
+        <div id="result"></div>
+        <div id="hint"></div>
+        <div id="solution"></div>`;
+}
+
+function renderTask() {
+  const t = TASKS[state.current];
+  const code = state.code[t.id] ?? t.start;
+  $task.innerHTML = `
+    <div class="task-head">
+      <div class="tag">${esc(t.tag)}</div>
+      <h2>${esc(t.title)}</h2>
+    </div>
+    <div class="goal">
+      <span class="count">Előfordult: ${t.count}</span>
+      <h3>A feladatban ez állt</h3>
+      <div class="paper">${t.paper}</div>
+      <h3>Mi történik most</h3>
+      <p class="now">${t.now}</p>
+      <h3>Lépésről lépésre: mit csinál most a kód</h3>
+      <div class="bridge">${t.bridge}</div>
+      <h3>Amit tudni kell</h3>
+      <div class="learn">${t.learn}</div>
+    </div>
+    ${t.kind === "css" ? `
+    <div class="grid">
+      <div>
+        <p class="label">index.html (ezt nem kell átírni). A pötty jelöli, melyik sorra hat a CSS-ed.</p>
+        <div class="listing" id="listing"></div>
+        ${t.base ? `<p class="label">base.css (ezt nem szabad átírni)</p><pre class="snippet">${esc(BASE_CSS)}</pre>` : ""}
+      </div>
+      <div>
+        <p class="label">Így néz ki az oldal</p>
+        <div id="out" class="preview-host"></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div>${editorHtml("style.css: ezt javítsd")}</div>
+      <div>
+        <p class="label">Mit jelöl ki a CSS-ed?</p>
+        <div class="matches" id="matches"></div>
+      </div>
+    </div>` : `
+    <div class="grid">
+      <div>${editorHtml("script.js: ezt javítsd")}</div>
+      <div>
+        <p class="label">Console (F12)</p>
+        <div id="out" class="console"></div>
+      </div>
+    </div>`}`;
+  const $code = document.getElementById("code");
+  $code.value = code;
+  const fit = () => { $code.style.height = "auto"; $code.style.height = Math.max(300, $code.scrollHeight + 4) + "px"; };
+  fit();
+  $code.addEventListener("input", fit);
+  $code.addEventListener("input", () => { state.code[t.id] = $code.value; save(); runOutput(t); });
+  $code.addEventListener("keydown", e => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const s = $code.selectionStart, en = $code.selectionEnd;
+      $code.value = $code.value.slice(0, s) + "  " + $code.value.slice(en);
+      $code.selectionStart = $code.selectionEnd = s + 2;
+      $code.dispatchEvent(new Event("input"));
+    }
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doCheck(t); }
+  });
+  document.getElementById("check").addEventListener("click", () => doCheck(t));
+  document.getElementById("reset").addEventListener("click", () => {
+    delete state.code[t.id];
+    save();
+    renderTask();
+  });
+  runOutput(t);
+  if (state.revealed[t.id]) showSolution(t);
+}
+
+// Live output: the page preview for CSS, the console for JS.
+function runOutput(t) {
+  const code = document.getElementById("code").value;
+  const out = document.getElementById("out");
+  if (t.kind === "css") {
+    const root = renderCss(out, code, t.html, t.base);
+    const matches = matchRules(root, code, t.base);
+    renderListing(root, matches);
+    renderMatches(root, code, matches);
+    return root;
+  }
+  const run = runJs(code);
+  let html = run.logs.map(l => esc(l)).join("\n");
+  if (run.error) html += (html ? "\n" : "") + `<span class="err">Uncaught ${esc(run.error.name)}: ${esc(run.error.message)}</span>`;
+  if (!html) html = '<span class="dim">(üres: semmi nem jelent meg a Console-ban)</span>';
+  out.innerHTML = html;
+  return run;
+}
+
+function doCheck(t) {
+  const ctx = runOutput(t);
+  let problems;
+  if (t.kind === "js" && ctx.error) {
+    problems = [`A kód hibára fut, mielőtt bármit ellenőrizni lehetne: <code>${esc(ctx.error.name + ": " + ctx.error.message)}</code>`];
+  } else {
+    try { problems = t.check(ctx); }
+    catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message)]; }
+  }
+  const $r = document.getElementById("result");
+  const $h = document.getElementById("hint");
+  if (problems.length === 0) {
+    state.done[t.id] = true;
+    save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.current && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button class="next" id="next">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("next").addEventListener("click", () => {
+      state.current = nextIdx; save(); renderAll();
+    });
+    renderSteps();
+  } else {
+    $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    state.fails[t.id] = (state.fails[t.id] || 0) + 1;
+    save();
+    $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+    if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+      $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
+      document.getElementById("stuck").addEventListener("click", () => {
+        if (!confirm("Biztos? Előbb olvasd el még egyszer a „Lépésről lépésre” részt és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+        document.getElementById("stuck").remove();
+        state.revealed[t.id] = true;
+        save();
+        showSolution(t);
+        renderSteps();
+      });
+    }
+  }
+}
+
+// After this many failed checks the student may open the solution.
+const STUCK_AFTER = 2;
+
+// The solution, with the lines that differ from the broken start marked.
+function showSolution(t) {
+  const before = t.start.split("\n").map(l => l.trim());
+  const lines = t.solution.split("\n").map(l =>
+    `<div${l.trim() && !before.includes(l.trim()) ? ' class="new"' : ""}>${esc(l) || " "}</div>`).join("");
+  const $s = document.getElementById("solution");
+  $s.innerHTML = `<div class="solution">
+    <h4>Megoldás</h4>
+    <p>${t.why}</p>
+    <pre>${lines}</pre>
+    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és nézd meg, mi változik ${t.kind === "css" ? "az oldalon" : "a Console-ban"}.</p>
+    <button id="load">Betöltöm a szerkesztőbe</button>
+  </div>`;
+  document.getElementById("load").addEventListener("click", () => {
+    const $code = document.getElementById("code");
+    $code.value = t.solution;
+    $code.dispatchEvent(new Event("input"));
+    doCheck(t);
+  });
+}
+
+function renderAll() { renderSteps(); renderTask(); }
+
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Biztosan visszaállítod az összes feladatot?")) return;
+  state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+  save();
+  renderAll();
+});
+
+if (!(state.current >= 0 && state.current < TASKS.length)) state.current = 0;
+renderAll();
+</script>
+</body>
+</html>

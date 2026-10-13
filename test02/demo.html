@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 02 bemutató</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --bad: #b42318;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 22px/1.45 system-ui, "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 18px;
+  }
+  header.top .count { margin-left: auto; opacity: .85; }
+  header.top button {
+    font: inherit;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  main { flex: 1; padding: 24px 32px 32px; max-width: 1500px; width: 100%; margin: 0 auto; }
+  h1 { font-size: 40px; margin: 0 0 8px; }
+  .lead { font-size: 26px; margin: 0 0 24px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  @media (max-width: 1000px) { .pair { grid-template-columns: 1fr; } }
+  .side h2 { font-size: 24px; margin: 0 0 8px; }
+  .side.bad h2 { color: var(--bad); }
+  .side.good h2 { color: var(--ok); }
+  textarea {
+    width: 100%;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-left: 6px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font: 22px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    resize: vertical;
+    tab-size: 2;
+  }
+  .side.bad textarea { border-left-color: var(--bad); }
+  .side.good textarea { border-left-color: var(--ok); }
+  .run {
+    margin: 10px 0;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+  }
+  .out {
+    background: #000;
+    color: #e8e8ec;
+    border-radius: 8px;
+    padding: 12px 18px;
+    min-height: 64px;
+    font: 22px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre-wrap;
+  }
+  .out .label { color: #8b8fa3; font-size: 16px; display: block; }
+  .out .err { color: #ff8a80; }
+  .out .dim { color: #8b8fa3; }
+  .rule {
+    margin-top: 24px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 26px;
+  }
+  .rule b { color: var(--accent); }
+  code { background: rgba(0,0,0,.07); padding: 1px 6px; border-radius: 4px; font-family: Consolas, "Cascadia Mono", "Courier New", monospace; }
+  .say {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 17px;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  .say.hidden { display: none; }
+  .end { text-align: center; padding-top: 80px; }
+  .end h1 { font-size: 52px; }
+  .end p { font-size: 30px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <span>Test 02 · bemutató</span>
+  <button id="prev">← Előző</button>
+  <button id="next">Következő →</button>
+  <button id="notes">Jegyzet (N)</button>
+  <span class="count" id="count"></span>
+</header>
+<main id="slide"></main>
+
+<script>
+"use strict";
+
+// Each slide: title, lead, bad {code}, good {code}, rule (HTML), say (teacher notes).
+const SLIDES = [
+  {
+    title: "A trim() nem javítja ki a szöveget",
+    lead: "Új szöveget ad vissza. Ha nem mented el, elveszik.",
+    bad: `let title = "  The Matrix ";
+title.trim();
+console.log("[" + title + "]");`,
+    good: `let title = "  The Matrix ";
+title = title.trim();
+console.log("[" + title + "]");`,
+    rule: `Ugyanígy működik a <code>toLowerCase()</code> és a <code>toUpperCase()</code> is: <b>az eredményt el kell menteni</b>, vagy rögtön használni.`,
+    say: `Futtasd a rosszat: a szögletes zárójel megmutatja, hogy a szóközök ott maradtak. Kérdezd meg: „miért?”. Aztán futtasd a jót. Ez Test 01-ben és Test 02-ben is sok pontot vitt el.`,
+  },
+  {
+    title: "Szöveget + jellel fűzünk össze",
+    lead: "A vessző nem fűz össze semmit.",
+    bad: `let label = ("Interstellar", " (", 2014, ")");
+console.log(label);`,
+    good: `let label = "Interstellar" + " (" + 2014 + ")";
+console.log(label);`,
+    rule: `A vesszővel elválasztott értékekből a JavaScript <b>csak az utolsót</b> tartja meg. A szóközt és a zárójelet <b>neked kell beírni</b> idézőjelek közé.`,
+    say: `Futtasd a rosszat: csak egy „)” jelenik meg. Kérdezd meg, honnan jön. Utána a jót. Írd át élőben a jót úgy, hogy kimarad a szóköz a „ (” elől, és futtasd: „Interstellar(2014)”.`,
+  },
+  {
+    title: "A return nem ír ki semmit",
+    lead: "A return visszaadja az eredményt. Kiírni a console.log tud.",
+    bad: `function double(n) {
+  return n * 2;
+}
+
+double(5);`,
+    good: `function double(n) {
+  return n * 2;
+}
+
+console.log(double(5));`,
+    rule: `A függvényhívást <b>tedd bele</b> a <code>console.log( … )</code> zárójelébe, és a feladat <b>összes</b> hívását írd meg.`,
+    say: `Futtasd a rosszat: üres a Console. „A függvény lefutott, a 10 megvan, csak senki nem írta ki.” Aztán a jót. Test 02-ben 7 tesztben hiányoztak vagy rosszak voltak a hívások.`,
+  },
+  {
+    end: true,
+    title: "Most ti jöttök",
+    lead: "Nyissátok meg: <code>korbal.github.io/2026-13-F-public</code> → Test 02 → Javítás",
+    say: `Járj körbe, nézd a „Kész: x / 8” számlálót. Akinél piros marad, ahhoz menj oda.`,
+  },
+];
+
+let current = 0;
+let showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, +(sessionStorage.getItem("demo-slide") || 0))); } catch (e) { /* ignore */ }
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function run(code) {
+  const logs = [];
+  const fake = { log: (...a) => logs.push(a.map(x => typeof x === "string" ? x : String(x)).join(" ")) };
+  let html;
+  try {
+    new Function("console", code)(fake);
+    html = logs.length ? logs.map(esc).join("\n") : '<span class="dim">(semmi nem jelent meg)</span>';
+  } catch (e) {
+    html = (logs.length ? logs.map(esc).join("\n") + "\n" : "") + `<span class="err">Uncaught ${esc(e.name)}: ${esc(e.message)}</span>`;
+  }
+  return '<span class="label">Console</span>' + html;
+}
+
+function side(kind, label, code) {
+  const rows = code.split("\n").length + 1;
+  return `<div class="side ${kind}">
+    <h2>${label}</h2>
+    <textarea rows="${rows}" spellcheck="false" wrap="off">${esc(code)}</textarea>
+    <button class="run">▶ Futtatás</button>
+    <div class="out"><span class="label">Console</span><span class="dim">(még nem futott)</span></div>
+  </div>`;
+}
+
+function render() {
+  const s = SLIDES[current];
+  const $m = document.getElementById("slide");
+  if (s.end) {
+    $m.innerHTML = `<div class="end"><h1>${esc(s.title)}</h1><p>${s.lead}</p></div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+  } else {
+    $m.innerHTML = `<h1>${esc(s.title)}</h1>
+      <p class="lead">${esc(s.lead)}</p>
+      <div class="pair">${side("bad", "✗ Rossz", s.bad)}${side("good", "✓ Jó", s.good)}</div>
+      <div class="rule">${s.rule}</div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+    $m.querySelectorAll(".side").forEach(el => {
+      const ta = el.querySelector("textarea");
+      const out = el.querySelector(".out");
+      el.querySelector(".run").addEventListener("click", () => { out.innerHTML = run(ta.value); });
+      ta.addEventListener("keydown", e => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); out.innerHTML = run(ta.value); }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const a = ta.selectionStart, b = ta.selectionEnd;
+          ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b);
+          ta.selectionStart = ta.selectionEnd = a + 2;
+        }
+      });
+    });
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("demo-slide", current); } catch (e) { /* ignore */ }
+}
+
+function go(d) {
+  current = Math.min(SLIDES.length - 1, Math.max(0, current + d));
+  render();
+}
+
+document.getElementById("prev").addEventListener("click", () => go(-1));
+document.getElementById("next").addEventListener("click", () => go(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; render(); });
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") go(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; render(); }
+});
+
+render();
+</script>
+</body>
+</html>
