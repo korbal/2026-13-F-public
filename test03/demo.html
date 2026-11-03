@@ -98,6 +98,7 @@
   }
   .meter .b { color: #ff8a80; }
   .meter .g { color: #8ce99a; }
+  .meter .dim { color: #8b8fa3; font-size: 16px; }
   .rule {
     margin-top: 22px;
     background: #fff;
@@ -233,10 +234,52 @@ const SLIDES = [
     say: `Kattints a rossznál a Megjelenítésre: a menü a cím mellé tapad, és kicsit feljebb van. Írd be élőben csak a justify-content-et (az oldal rögtön frissül), aztán az align-items-et. Csak 6-an csinálták meg az egyiket, 6-an a másikat. A position: absolute (1 tesztben) is a jobb szélre tette, de a feladat flexboxot kért.`,
   },
   {
+    js: true,
+    title: "Objektum: { }, tömb: [ ]",
+    lead: "A [{ }] egy tömb, benne egy objektum. A tömbnek nincs stock mezője.",
+    html: "",
+    bad: `const special = [
+  { name: "Kakaós csiga", stock: 8 }
+];
+
+special.stock = special.stock - 1;
+console.log(special.stock);`,
+    good: `const special = { name: "Kakaós csiga", stock: 8 };
+
+special.stock = special.stock - 1;
+console.log(special.stock);`,
+    rule: `<code>{ }</code> = <b>objektum</b>, a mezőjét névvel éred el: <code>special.stock</code>. <code>[ ]</code> = <b>tömb</b>, az elemét sorszámmal: <code>menu[0]</code>. A <code>[{ }]</code>-ből a mező: <code>special[0].stock</code>, de a feladat egy objektumot kért.`,
+    say: `Futtasd a rosszat: NaN. Kérdezd meg: „mi a special?” (egy tömb). „Van a tömbnek stock-ja?” (nincs: undefined, és undefined - 1 = NaN). Aztán a jót. 9 tesztben volt a special tömb. Utána mondd ki: a 7-et nem beírni kell, hanem a kód csökkentse (4 tesztben nem változott az objektum).`,
+  },
+  {
+    js: true,
+    title: "Tömb → sorszám → mező",
+    lead: "Előbb az elem (menu[0]), utána a mező (.name).",
+    html: "",
+    bad: `const menu = [
+  { name: "Szendvics", price: 450, stock: 12 },
+  { name: "Pogácsa", price: 250, stock: 30 },
+  { name: "Túró Rudi", price: 220, stock: 40 },
+];
+
+console.log(menu.name[0]);
+console.log(menu.price[menu.length - 1]);`,
+    good: `const menu = [
+  { name: "Szendvics", price: 450, stock: 12 },
+  { name: "Pogácsa", price: 250, stock: 30 },
+  { name: "Túró Rudi", price: 220, stock: 40 },
+];
+
+console.log(menu[0].name);
+console.log(menu[menu.length - 1].price);`,
+    rule: `<code>menu</code> a tömb, <code>menu[0]</code> az első elem (egy objektum), <code>menu[0].name</code> a neve. Az utolsó elem: <code>menu[menu.length - 1]</code>. A ciklusban ugyanígy: <code>menu[i].stock</code>, nem <code>menu.stock</code>.`,
+    say: `Futtasd a rosszat: piros TypeError, és a második sor le sem fut. Mondd ki: egy piros hiba leállítja a fájlt, ezért F és G is elveszett annál, akinél ez az E-ben történt (4 teszt). Aztán a jót. Kérdezd meg: mi lenne menu.stock egy ciklusban? (undefined minden körben: 2 tesztben ettől lett minden sor SOLD OUT.)`,
+  },
+  {
     end: true,
     title: "Most ti jöttök",
     lead: "Nyissátok meg: <code>korbal.github.io/2026-13-F-public</code> → Test 03 → Javítás",
-    say: `Járj körbe, nézd a „Kész: x / 8” számlálót. Akinél piros marad, ahhoz menj oda. A 7. és a 8. feladat az űrlap (select, label for, rádiók name-je, form).`,
+    say: `Járj körbe, nézd a „Kész: x / 13” számlálót. Akinél piros marad, ahhoz menj oda. Az 1–8. feladat a HTML/CSS (a 7–8. az űrlap), a 9–13. a JavaScript. A 2. részben gyenge négy diák (lásd debrief) a 10. feladattal kezdjen.`,
   },
 ];
 
@@ -251,6 +294,15 @@ function esc(s) {
 // Render the slide's HTML with the given CSS in a shadow root, then measure it.
 function draw(el, s, css) {
   const view = el.querySelector(".view");
+  if (s.js) {
+    view.hidden = true;
+    const out = el.querySelector(".meter");
+    out.style.borderRadius = "8px";
+    out.style.whiteSpace = "pre-wrap";
+    out.style.minHeight = "70px";
+    out.innerHTML = runJs(css);
+    return;
+  }
   view.innerHTML = "";
   const box = document.createElement("div");
   view.appendChild(box);
@@ -261,12 +313,25 @@ function draw(el, s, css) {
   el.querySelector(".meter").innerHTML = m;
 }
 
+function runJs(code) {
+  const logs = [];
+  const fake = { log: (...a) => logs.push(a.map(x => typeof x === "string" ? x : String(x)).join(" ")) };
+  let html;
+  try {
+    new Function("console", code)(fake);
+    html = logs.length ? logs.map(esc).join("\n") : '<span class="dim">(semmi nem jelent meg)</span>';
+  } catch (e) {
+    html = (logs.length ? logs.map(esc).join("\n") + "\n" : "") + `<span class="b">Uncaught ${esc(e.name)}: ${esc(e.message)}</span>`;
+  }
+  return '<span class="dim">Console</span>\n' + html;
+}
+
 function side(kind, label, code, html) {
   const rows = code.split("\n").length + 1;
   return `<div class="side ${kind}">
     <h2>${label}</h2>
     <textarea rows="${rows}" spellcheck="false" wrap="off">${esc(code)}</textarea>
-    <button class="run">▶ Megjelenítés</button>
+    <button class="run">${SLIDES[current].js ? "▶ Futtatás" : "▶ Megjelenítés"}</button>
     <div class="shown" hidden>
       <div class="view"></div>
       <div class="meter"></div>
@@ -283,16 +348,16 @@ function render() {
   } else {
     $m.innerHTML = `<h1>${esc(s.title)}</h1>
       <p class="lead">${esc(s.lead)}</p>
-      <p class="html">${esc(s.html)}</p>
+      ${s.html ? `<p class="html">${esc(s.html)}</p>` : ""}
       <div class="pair">${side("bad", "✗ Rossz", s.bad)}${side("good", "✓ Jó", s.good)}</div>
       <div class="rule">${s.rule}</div>
       <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
     $m.querySelectorAll(".side").forEach(el => {
       const ta = el.querySelector("textarea");
       const shown = el.querySelector(".shown"), btn = el.querySelector(".run");
-      const show = () => { shown.hidden = false; btn.hidden = true; draw(el, s, ta.value); };
+      const show = () => { shown.hidden = false; if (!s.js) btn.hidden = true; draw(el, s, ta.value); };
       btn.addEventListener("click", show);
-      ta.addEventListener("input", () => { if (!shown.hidden) draw(el, s, ta.value); });
+      ta.addEventListener("input", () => { if (!shown.hidden && !s.js) draw(el, s, ta.value); });
       ta.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); show(); } });
       ta.addEventListener("keydown", e => {
         if (e.key === "Tab") {
@@ -300,7 +365,7 @@ function render() {
           const a = ta.selectionStart, b = ta.selectionEnd;
           ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b);
           ta.selectionStart = ta.selectionEnd = a + 2;
-          if (!shown.hidden) draw(el, s, ta.value);
+          if (!shown.hidden && !s.js) draw(el, s, ta.value);
         }
       });
     });

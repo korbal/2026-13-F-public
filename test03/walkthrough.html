@@ -153,6 +153,18 @@
   .measure { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px 14px; font-size: 14px; margin: -6px 0 0; }
   .measure .bad { color: var(--bad); font-weight: 600; }
   .measure .good { color: var(--ok); font-weight: 600; }
+  .console {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 8px;
+    min-height: 300px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .console .err { color: #ff8a80; }
+  .console .dim { color: #8b8fa3; }
   .next { margin-top: 4px; }
   .finished {
     background: var(--ok-bg);
@@ -197,12 +209,12 @@
 </head>
 <body>
 <header class="top">
-  <h1>Test 03 · Széchenyi Büfé · javítás (1. rész)</h1>
+  <h1>Test 03 · Széchenyi Büfé · javítás</h1>
   <div class="progress" id="progress"></div>
 </header>
 <nav class="steps" id="steps"></nav>
 <main>
-  <p class="intro">Minden feladatban egy hibás kód van, és ezek a hibák tényleg előfordultak a Test 03 tesztekben. Olvasd el, mit kért a feladat, mi történik most, és lépésről lépésre, mit csinál most a kód. A CSS-feladatoknál bal oldalt látod a teljes <code>index.html</code>-t: a színes pötty megmutatja, melyik sorra hat a CSS-ed, a „Mit jelöl ki a CSS-ed?” doboz pedig felsorolja ugyanezt (vidd fölé az egeret, és az oldalon is bekeretezi). Az oldal úgy néz ki, mint egy 1200px széles böngészőablakban. Javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
+  <p class="intro">Minden feladatban egy hibás kód van, és ezek a hibák tényleg előfordultak a Test 03 tesztekben. Olvasd el, mit kért a feladat, mi történik most, és lépésről lépésre, mit csinál most a kód. A CSS-feladatoknál bal oldalt látod a teljes <code>index.html</code>-t: a színes pötty megmutatja, melyik sorra hat a CSS-ed, a „Mit jelöl ki a CSS-ed?” doboz pedig felsorolja ugyanezt (vidd fölé az egeret, és az oldalon is bekeretezi). Az oldal úgy néz ki, mint egy 1200px széles böngészőablakban. Az 1–8. feladat az 1. rész (HTML/CSS), a 9–13. a 2. rész (JavaScript): ott jobbra a Console-t látod. Javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
   <div id="finished"></div>
   <section id="task"></section>
 </main>
@@ -440,8 +452,94 @@ function cardGaps(cards) {
 // Vertical middle of an element, relative to .page.
 function mid(el) { return el.offsetTop + el.offsetHeight / 2; }
 
+// ---------- JavaScript (Part 2 tasks) ----------
+
+// The given top of script.js. It runs before the student's code, fresh every time.
+const MENU_SRC = `const menu = [
+  { name: "Sonkás szendvics", price: 450, veggie: false, stock: 12 },
+  { name: "Sajtos pogácsa", price: 250, veggie: true, stock: 30 },
+  { name: "Rántott csirkés wrap", price: 890, veggie: false, stock: 0 },
+  { name: "Gyümölcssaláta", price: 600, veggie: true, stock: 5 },
+  { name: "Túró Rudi", price: 220, veggie: true, stock: 40 },
+];`;
+const MENU = [
+  { name: "Sonkás szendvics", price: 450, veggie: false, stock: 12 },
+  { name: "Sajtos pogácsa", price: 250, veggie: true, stock: 30 },
+  { name: "Rántott csirkés wrap", price: 890, veggie: false, stock: 0 },
+  { name: "Gyümölcssaláta", price: 600, veggie: true, stock: 5 },
+  { name: "Túró Rudi", price: 220, veggie: true, stock: 40 },
+];
+const BOARD = [
+  "1. Sonkás szendvics - 450 Ft",
+  "2. Sajtos pogácsa - 250 Ft",
+  "3. Rántott csirkés wrap - 890 Ft (SOLD OUT)",
+  "4. Gyümölcssaláta - 600 Ft",
+  "5. Túró Rudi - 220 Ft",
+];
+// A different menu, to check that a loop isn't tied to 5 items.
+const OTHER_MENU_SRC = `const menu = [
+  { name: "Lángos", price: 700, veggie: true, stock: 0 },
+  { name: "Perec", price: 300, veggie: true, stock: 6 },
+];`;
+const OTHER_BOARD = ["1. Lángos - 700 Ft (SOLD OUT)", "2. Perec - 300 Ft"];
+
+function show(v) {
+  if (typeof v === "string") return '"' + v + '"';
+  if (v === undefined) return "undefined";
+  if (typeof v === "object" && v !== null) { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+  return String(v);
+}
+
+// Run the given menu + the student's code with a fake console. Returns { logs, error, vals }.
+function runJs(code, menuSrc) {
+  const logs = [];
+  const fake = { log: (...a) => logs.push(a.map(x => typeof x === "string" ? x : show(x)).join(" ")) };
+  fake.error = fake.warn = fake.info = fake.log;
+  let vals = {}, error;
+  try {
+    vals = new Function("console", (menuSrc || MENU_SRC) + "\n" + code +
+      `\n;return {
+        special: typeof special !== "undefined" ? special : undefined,
+        countAvailable: typeof countAvailable === "function" ? countAvailable : undefined,
+        mostExpensive: typeof mostExpensive === "function" ? mostExpensive : undefined,
+      };`)(fake);
+  } catch (e) {
+    error = e;
+  }
+  return { logs, error, vals, code };
+}
+
+function sameLines(got, want) { return got.length === want.length && got.every((l, i) => l === want[i]); }
+function linesTable(got, want) {
+  const n = Math.max(got.length, want.length);
+  let rows = "";
+  for (let i = 0; i < n; i++) {
+    const g = got[i], w = want[i];
+    rows += `<tr><td><code>${esc(w ?? "")}</code></td><td><code>${g === undefined ? "(nincs)" : esc(g)}</code></td><td>${g === w ? "✓" : "✗"}</td></tr>`;
+  }
+  return `<table class="exp"><tr><th>Elvárt</th><th>Most</th><th></th></tr>${rows}</table>`;
+}
+
+function callCases(fn, name, cases) {
+  const p = [];
+  if (typeof fn !== "function") return [`Nincs <code>${name}</code> nevű függvény.`];
+  for (const [label, args, want] of cases) {
+    let got;
+    try { got = fn(...args); }
+    catch (e) { p.push(`<code>${esc(label)}</code> hibára fut: ${esc(e.name + ": " + e.message)}`); continue; }
+    if (got !== want) p.push(`<code>${esc(label)}</code><br>elvárt: <code>${esc(show(want))}</code><br>kaptuk: <code>${esc(show(got))}</code>`);
+  }
+  return p;
+}
+
+const TEST_ITEMS = [
+  { name: "A", price: 100, veggie: true, stock: 1 },
+  { name: "B", price: 300, veggie: false, stock: 0 },
+  { name: "C", price: 200, veggie: true, stock: 3 },
+];
+
 // ---------- Tasks ----------
-// Each task: id, title, tag, count, paper, now, bridge, learn, start, kind ("css" | "html"), check(root) -> problems, hint, solution, why, measure(root) -> HTML (optional).
+// Each task: id, title, tag, count, paper, now, bridge, learn, start, kind ("css" | "html" | "js"), check(ctx) -> problems, hint, solution, why, measure(root) -> HTML (optional).
 
 const CARD_OK = `.card {
   box-sizing: border-box;
@@ -884,6 +982,233 @@ nav ul {
     },
   },
   {
+    id: "object",
+    title: "9. Objektum, nem tömb",
+    tag: "E · JavaScript",
+    kind: "js",
+    count: `9 tesztben`,
+    paper: `Create a variable <code>special</code>: an object with the same fields as the menu items, for <i>Kakaós csiga</i>, 380 Ft, vegetarian, 8 in stock. Do not add it to <code>menu</code>.<br>One <i>Kakaós csiga</i> is sold. Decrease the stock of <code>special</code> by 1 by changing the object, then log its stock.<br><i>Expected:</i> <code>7</code>`,
+    now: `A Console-ban <code>NaN</code> jelenik meg a <code>7</code> helyett.`,
+    learn: `<p>A <code>{ }</code> egy <b>objektum</b>: mezői vannak, névvel érsz el egyet: <code>book.title</code>. A <code>[ ]</code> egy <b>tömb</b>: elemei vannak, sorszámmal érsz el egyet: <code>books[0]</code>.</p><p>A <code>[{ ... }]</code> tehát egy <b>tömb, amiben egy objektum van</b>. A tömbnek nincs <code>stock</code> mezője, csak az objektumnak benne.</p><pre>const book = { title: "Egri csillagok", pages: 400 };   // objektum
+const books = [ { title: "Egri csillagok", pages: 400 } ]; // tömb, benne egy objektum
+book.pages      // 400
+books.pages     // undefined
+books[0].pages  // 400</pre>`,
+    bridge: `<ol>
+<li>Az első sor egy <code>special</code> változót hoz létre. Az értéke <code>[</code>-vel kezdődik: ez egy <b>tömb</b>. A tömbben egy elem van: a <code>{ ... }</code> objektum.</li>
+<li>A <code>special.stock</code> a <b>tömb</b> <code>stock</code> mezőjét keresi. Egy tömbnek nincs ilyen mezője, ezért az értéke <code>undefined</code>.<table class="exp"><tr><th>Kifejezés</th><th>Értéke</th></tr><tr><td><code>special</code></td><td>egy tömb, benne 1 objektum</td></tr><tr><td><code>special.stock</code></td><td><code>undefined</code></td></tr><tr><td><code>special.stock - 1</code></td><td><code>undefined - 1</code> = <code>NaN</code> („nem szám”)</td></tr></table></li>
+<li>Ezért lesz a kiírt érték <code>NaN</code>. Az objektum <code>stock</code>-ja közben 8 maradt.</li>
+<li>A feladat azt kérte, hogy a <code>special</code> maga legyen az objektum, tömb nélkül. A második és a harmadik sor jó, azokhoz nem kell nyúlni.</li>
+</ol>`,
+    start: `const special = [
+  { name: "Kakaós csiga", price: 380, veggie: true, stock: 8 }
+];
+
+special.stock = special.stock - 1;
+console.log(special.stock);`,
+    hint: `Melyik két jel teszi tömbbé a <code>special</code>-t? Ha azokat kiveszed, a <code>special</code> maga lesz az objektum.`,
+    solution: `const special = { name: "Kakaós csiga", price: 380, veggie: true, stock: 8 };
+
+special.stock = special.stock - 1;
+console.log(special.stock);`,
+    why: `A <code>[</code> és a <code>]</code> kikerült: a <code>special</code> most maga az objektum, ezért a <code>special.stock</code> létezik, 8, és a csökkentés után 7.`,
+    check(run) {
+      const p = [];
+      const s = run.vals.special;
+      if (Array.isArray(s)) p.push("A <code>special</code> még mindig tömb (<code>[ ]</code>), nem objektum.");
+      else if (!s || typeof s !== "object") p.push("Nincs <code>special</code> objektum.");
+      else {
+        if (s.name !== "Kakaós csiga" || s.price !== 380 || s.veggie !== true) p.push("A <code>special</code> mezői nem stimmelnek (<code>name</code>, <code>price</code> számként, <code>veggie</code>).");
+        if (s.stock !== 7) p.push(`A <code>special.stock</code> most ${esc(show(s.stock))}, nem 7.`);
+      }
+      if (!/stock\s*:\s*8/.test(run.code)) p.push("Az objektumban a készlet 8 legyen: a csökkentést a kód csinálja, ne írd be a 7-et.");
+      if (run.logs[run.logs.length - 1] !== "7") p.push("A Console utolsó sora nem <code>7</code>.");
+      return p;
+    },
+  },
+  {
+    id: "index",
+    title: "10. Tömb → sorszám → mező",
+    tag: "E · JavaScript",
+    kind: "js",
+    count: `4 tesztben (és ettől leállt az egész fájl)`,
+    paper: `Write each line below with <code>console.log</code>:<br>1. <code>Items today: </code> followed by the number of items on the menu.<br>2. The name of the first item on the menu.<br>3. The price of the last item on the menu. Do not type its position as a number.<table class="exp"><tr><th>Elvárt kimenet</th></tr><tr><td><code>Items today: 5</code></td></tr><tr><td><code>Sonkás szendvics</code></td></tr><tr><td><code>220</code></td></tr></table>`,
+    now: `Az első sor megjelenik, a második piros hibával leáll, és utána semmi nem fut le.`,
+    learn: `<p>A <code>menu</code> egy tömb, benne objektumok. Egy mezőhöz két lépésben jutsz el, mindig ebben a sorrendben:</p><ol><li><b>melyik elem?</b> sorszám szögletes zárójelben: <code>menu[2]</code> (a sorszám 0-tól indul);</li><li><b>melyik mező?</b> pont és a mező neve: <code>menu[2].name</code>.</li></ol><p>Az utolsó elem sorszáma <code>menu.length - 1</code>, mert 5 elemnél a sorszámok 0, 1, 2, 3, 4. Így akkor is az utolsót kapod, ha a tömb hosszabb lesz.</p><p>Egy piros hiba (például <code>TypeError</code>) <b>leállítja az egész fájlt</b>: ami utána jön, le sem fut. Mindig az első piros hibát javítsd először.</p>`,
+    bridge: `<ol>
+<li>Az első sor jó: <code>menu.length</code> = 5, kiírja: <code>Items today: 5</code>.</li>
+<li>A második sor: <code>menu.name[0]</code>. Balról jobbra olvasva: <code>menu</code> a tömb, <code>.name</code> a tömb <code>name</code> mezője. A <b>tömbnek</b> nincs <code>name</code> mezője (az elemeinek van), ezért <code>menu.name</code> = <code>undefined</code>.</li>
+<li>Utána <code>undefined[0]</code>: egy nem létező valaminek a 0. elemét kérjük. Ez a piros <code>TypeError: Cannot read properties of undefined (reading '0')</code>.</li>
+<li>A hiba leállítja a fájlt, ezért a harmadik sor le sem fut. Abban ugyanez a hiba van: <code>menu.price[...]</code>.</li>
+<li>Fordítsd meg a sorrendet mindkét sorban: előbb az elem a sorszámmal, utána a mező.</li>
+</ol>`,
+    start: `console.log("Items today: " + menu.length);
+console.log(menu.name[0]);
+console.log(menu.price[menu.length - 1]);`,
+    hint: `Előbb az elem, aztán a mező: <code>menu[sorszám].mező</code>. Az utolsó elem sorszáma <code>menu.length - 1</code>.`,
+    solution: `console.log("Items today: " + menu.length);
+console.log(menu[0].name);
+console.log(menu[menu.length - 1].price);`,
+    why: `<code>menu.name[0]</code> helyett <code>menu[0].name</code>, és <code>menu.price[menu.length - 1]</code> helyett <code>menu[menu.length - 1].price</code>: előbb az elem, utána a mező.`,
+    check(run) {
+      const p = [];
+      if (run.error) p.push(`A kód hibára fut: <code>${esc(run.error.name + ": " + run.error.message)}</code>`);
+      const want = ["Items today: 5", "Sonkás szendvics", "220"];
+      if (!sameLines(run.logs, want)) p.push("A Console nem pontosan ezt a három sort mutatja:" + linesTable(run.logs, want));
+      if (/menu\s*\[\s*4\s*\]/.test(run.code)) p.push("Az utolsó elem sorszámát ne írd be számmal (<code>4</code>): bővülő menünél már nem az utolsó lenne.");
+      if (/["']\s*Sonk|\b220\b/.test(run.code.replace(/console\.log\("Items today: " \+ menu\.length\);/, ""))) p.push("Az értékeket a tömbből olvasd ki, ne írd be őket.");
+      return p;
+    },
+  },
+  {
+    id: "item",
+    title: "11. Az aktuális elem a ciklusban",
+    tag: "F · JavaScript",
+    kind: "js",
+    count: `2 tesztben (<code>menu.stock</code>, <code>menu.name[i]</code>)`,
+    paper: `Use a loop to log one line for every item on the menu. An item with nothing in stock gets <code> (SOLD OUT)</code> at the end.<table class="exp"><tr><th>Elvárt kimenet</th></tr>${BOARD.map(l => `<tr><td><code>${l}</code></td></tr>`).join("")}</table>`,
+    now: `Az öt sor megjelenik, de a wrap mögül hiányzik a <code> (SOLD OUT)</code>.`,
+    learn: `<p>A ciklusban az <code>i</code> minden körben más szám: 0, 1, 2, 3, 4. Az <b>aktuális</b> elem a <code>menu[i]</code>, a mezője <code>menu[i].stock</code>.</p><p>A <code>menu.stock</code> nem „az aktuális elem készlete”: a tömbnek nincs <code>stock</code> mezője, ezért mindig <code>undefined</code>, minden körben.</p><p>Példa: <code>for (let i = 0; i < books.length; i++) { console.log(books[i].title); }</code> minden körben a következő könyv címét írja ki.</p>`,
+    bridge: `<ol>
+<li>A ciklus 5 kört megy: az <code>i</code> 0, 1, 2, 3, 4. A sor összerakása jó: <code>menu[i].name</code>, <code>menu[i].price</code>.</li>
+<li>Az <code>if</code> ezt kérdezi: <code>menu.stock === 0</code>? A <code>menu</code> a <b>tömb</b>, nem az aktuális elem.</li>
+<li>Kövessük a 3. kört (a wrap):<table class="exp"><tr><th>Kifejezés</th><th>Értéke</th></tr><tr><td><code>i</code></td><td><code>2</code></td></tr><tr><td><code>menu[i].stock</code></td><td><code>0</code> (ezt kellene nézni)</td></tr><tr><td><code>menu.stock</code></td><td><code>undefined</code></td></tr><tr><td><code>undefined === 0</code></td><td><code>false</code></td></tr></table></li>
+<li>A feltétel minden körben <code>false</code>, ezért a <code> (SOLD OUT)</code> sosem kerül a sor végére.</li>
+<li>Az <code>if</code>-ben is az aktuális elem kell, ugyanúgy, mint a sor összerakásánál.</li>
+</ol>`,
+    start: `for (let i = 0; i < menu.length; i++) {
+  let line = (i + 1) + ". " + menu[i].name + " - " + menu[i].price + " Ft";
+  if (menu.stock === 0) {
+    line = line + " (SOLD OUT)";
+  }
+  console.log(line);
+}`,
+    hint: `Az <code>if</code>-ben ugyanúgy az aktuális elem kell, mint a sor összerakásánál: <code>menu[i]....</code>`,
+    solution: `for (let i = 0; i < menu.length; i++) {
+  let line = (i + 1) + ". " + menu[i].name + " - " + menu[i].price + " Ft";
+  if (menu[i].stock === 0) {
+    line = line + " (SOLD OUT)";
+  }
+  console.log(line);
+}`,
+    why: `<code>menu.stock</code> helyett <code>menu[i].stock</code>: az aktuális elem készletét nézi, ezért a wrapnél (3. kör) igaz.`,
+    check(run) {
+      const p = [];
+      if (run.error) p.push(`A kód hibára fut: <code>${esc(run.error.name + ": " + run.error.message)}</code>`);
+      if (!sameLines(run.logs, BOARD)) p.push("A Console nem pontosan az öt elvárt sort mutatja:" + linesTable(run.logs, BOARD));
+      else {
+        const other = runJs(run.code, OTHER_MENU_SRC);
+        if (other.error || !sameLines(other.logs, OTHER_BOARD)) p.push("Egy másik, kételemű menüvel nem működne: a ciklus legyen <code>menu.length</code>-ig, és ne írd be a sorokat kézzel.");
+      }
+      return p;
+    },
+  },
+  {
+    id: "from0",
+    title: "12. 0-tól indul, 1-től számozunk",
+    tag: "F · JavaScript",
+    kind: "js",
+    count: `3 tesztben (1-től indult a ciklus, vagy nem volt sorszám)`,
+    paper: `The lines are numbered from <code>1</code>, in the format shown below. The loop must still work if items are added to or removed from the menu.<table class="exp"><tr><th>Elvárt kimenet</th></tr>${BOARD.map(l => `<tr><td><code>${l}</code></td></tr>`).join("")}</table>`,
+    now: `Csak négy sor jelenik meg, és a Sonkás szendvics hiányzik: az első sor a Sajtos pogácsa, 1-es számmal.`,
+    learn: `<p>A tömb sorszámai (indexei) <b>0-tól</b> indulnak: az első elem a <code>menu[0]</code>. Ezért a ciklus <code>let i = 0</code>-val kezdődik.</p><p>Az emberek viszont 1-től számoznak. A kiírt sorszám ezért <code>i + 1</code>: a 0. elem az „1.”, az 1. elem a „2.”, és így tovább.</p><p>Röviden: <b>az index 0-tól megy, a kiírt szám 1-től.</b> Ezt a kettőt ne keverd össze.</p>`,
+    bridge: `<ol>
+<li>A ciklus <code>let i = 1</code>-gyel kezdődik, ezért az első kör a <code>menu[1]</code>-et, a Sajtos pogácsát írja ki. A <code>menu[0]</code>-t (Sonkás szendvics) soha nem nézi meg.</li>
+<li>A kiírt sorszám <code>i</code>. Az első körben <code>i</code> = 1, ezért a Sajtos pogácsa kapja az „1.”-et.<table class="exp"><tr><th>Kör</th><th><code>i</code></th><th>elem</th><th>kiírt szám</th></tr><tr><td>1.</td><td>1</td><td>Sajtos pogácsa</td><td>1.</td></tr><tr><td>2.</td><td>2</td><td>Rántott csirkés wrap</td><td>2.</td></tr><tr><td>3.</td><td>3</td><td>Gyümölcssaláta</td><td>3.</td></tr><tr><td>4.</td><td>4</td><td>Túró Rudi</td><td>4.</td></tr></table></li>
+<li>Amikor <code>i</code> = 5, az <code>i < menu.length</code> (5 < 5) hamis, a ciklus véget ér. Így csak 4 sor lesz.</li>
+<li>Két javítás kell: a ciklus a 0. elemtől induljon, a kiírt szám pedig eggyel nagyobb legyen, mint az index.</li>
+</ol>`,
+    start: `for (let i = 1; i < menu.length; i++) {
+  let line = i + ". " + menu[i].name + " - " + menu[i].price + " Ft";
+  if (menu[i].stock === 0) {
+    line = line + " (SOLD OUT)";
+  }
+  console.log(line);
+}`,
+    hint: `Az első elem indexe 0. A kiírt szám az index + 1 (zárójelben, hogy összeadás legyen, ne szövegösszefűzés).`,
+    solution: `for (let i = 0; i < menu.length; i++) {
+  let line = (i + 1) + ". " + menu[i].name + " - " + menu[i].price + " Ft";
+  if (menu[i].stock === 0) {
+    line = line + " (SOLD OUT)";
+  }
+  console.log(line);
+}`,
+    why: `<code>let i = 1</code> helyett <code>let i = 0</code>, és a sorszám <code>(i + 1)</code>. A zárójel kell: nélküle <code>0 + 1 + ". "</code> még jó lenne, de <code>"..." + i + 1</code> már „01”-et adna.`,
+    check(run) {
+      const p = [];
+      if (run.error) p.push(`A kód hibára fut: <code>${esc(run.error.name + ": " + run.error.message)}</code>`);
+      if (!sameLines(run.logs, BOARD)) p.push("A Console nem pontosan az öt elvárt sort mutatja:" + linesTable(run.logs, BOARD));
+      else {
+        const other = runJs(run.code, OTHER_MENU_SRC);
+        if (other.error || !sameLines(other.logs, OTHER_BOARD)) p.push("Egy másik, kételemű menüvel nem működne: a ciklus legyen <code>menu.length</code>-ig, és ne írd be a sorokat kézzel.");
+      }
+      return p;
+    },
+  },
+  {
+    id: "count",
+    title: "13. countAvailable",
+    tag: "G · JavaScript",
+    kind: "js",
+    count: `3 tesztben (<code>return</code> a cikluson belül, <code>&lt;</code>, nincs készletfeltétel)`,
+    paper: `Write a function named <code>countAvailable</code> with two parameters: an array of items and a maximum price. It <b>returns</b> how many items cost at most the maximum price <b>and</b> are in stock.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>countAvailable(menu, 1000)</code></td><td><code>4</code></td></tr><tr><td><code>countAvailable(menu, 250)</code></td><td><code>2</code></td></tr><tr><td><code>countAvailable(menu, 100)</code></td><td><code>0</code></td></tr></table>`,
+    now: `A Console-ban <code>1</code>, <code>0</code>, <code>0</code> jelenik meg <code>4</code>, <code>2</code>, <code>0</code> helyett.`,
+    learn: `<p>A <code>return</code> <b>azonnal kilép</b> a függvényből, akkor is, ha a ciklus még nem ért végig. Ezért egy számlálót a ciklus <b>után</b> adunk vissza, amikor már minden elemet megnézett.</p><p>„At most” = „legfeljebb” = <code>&lt;=</code>. A <code>&lt;</code> „kevesebb mint”: annál az egyenlő nem számít bele.</p><pre>function countLong(books, minPages) {
+  let n = 0;
+  for (let i = 0; i < books.length; i++) {
+    if (books[i].pages >= minPages) {
+      n = n + 1;
+    }
+  }
+  return n;   // a ciklus UTÁN
+}</pre>`,
+    bridge: `<ol>
+<li>Az első hívás: <code>countAvailable(menu, 1000)</code>. A paraméterek: <code>items</code> = a <code>menu</code> tömb, <code>maxPrice</code> = <code>1000</code>.</li>
+<li>Kövessük a függvényt:<table class="exp"><tr><th>Sor</th><th>Mi történik</th><th><code>count</code></th></tr><tr><td><code>let count = 0;</code></td><td>a számláló 0</td><td>0</td></tr><tr><td><code>i = 0</code>, <code>if</code></td><td>Sonkás szendvics: 450 &lt; 1000 és 12 &gt; 0 → igaz</td><td>1</td></tr><tr><td><code>return count;</code></td><td>még a ciklusban van, ezért <b>kilép</b> a függvényből</td><td>1</td></tr></table></li>
+<li>A többi négy elemet meg sem nézi, ezért lesz az eredmény 1. A második hívásnál a Sonkás szendvics 450 &gt; 250, a számláló 0 marad, és rögtön 0-t ad vissza.</li>
+<li>Nézd meg a <code>}</code> jeleket: a <code>return</code> a ciklus <code>}</code>-je <b>előtt</b> van, tehát a cikluson belül.</li>
+<li>Még egy hiba: a Sajtos pogácsa ára pontosan 250. A <code>250 &lt; 250</code> hamis, pedig a feladat „at most”-ot, legfeljebbet kér.</li>
+</ol>`,
+    start: `function countAvailable(items, maxPrice) {
+  let count = 0;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].price < maxPrice && items[i].stock > 0) {
+      count = count + 1;
+    }
+    return count;
+  }
+}
+
+console.log(countAvailable(menu, 1000));
+console.log(countAvailable(menu, 250));
+console.log(countAvailable(menu, 100));`,
+    hint: `A <code>return count;</code> sort vidd a ciklus záró <code>}</code>-je után. A „legfeljebb” jele <code>&lt;=</code>.`,
+    solution: `function countAvailable(items, maxPrice) {
+  let count = 0;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].price <= maxPrice && items[i].stock > 0) {
+      count = count + 1;
+    }
+  }
+  return count;
+}
+
+console.log(countAvailable(menu, 1000));
+console.log(countAvailable(menu, 250));
+console.log(countAvailable(menu, 100));`,
+    why: `A <code>return count;</code> a ciklus után került, így minden elemet megnéz, és a <code>&lt;</code> helyett <code>&lt;=</code> áll, így a 250-es pogácsa is beleszámít.`,
+    check(run) {
+      const p = callCases(run.vals.countAvailable, "countAvailable", [
+        ["countAvailable(menu, 1000)", [MENU, 1000], 4],
+        ["countAvailable(menu, 250)", [MENU, 250], 2],
+        ["countAvailable(menu, 100)", [MENU, 100], 0],
+        ["countAvailable(másik tömb, 200)", [TEST_ITEMS, 200], 2],
+      ]);
+      if (!run.error && !sameLines(run.logs, ["4", "2", "0"])) p.push("A Console nem pontosan ezt mutatja: <code>4</code>, <code>2</code>, <code>0</code>.");
+      return p;
+    },
+  },
+  {
     id: "bonus",
     title: "★ Extra: Sold out",
     tag: "Bónusz · CSS",
@@ -931,6 +1256,73 @@ nav ul {
       return p;
     },
   },
+  {
+    id: "bonus2",
+    title: "★ Extra: mostExpensive",
+    tag: "Bónusz · JavaScript",
+    kind: "js",
+    extra: true,
+    count: `11-en próbálták, 5-nek sikerült teljesen`,
+    paper: `Write a function named <code>mostExpensive</code> with one parameter: an array of items. It returns the <b>name</b> of the most expensive item that is in stock. If there is no such item, it returns <code>nothing available</code>.<table class="exp"><tr><th>Hívás</th><th>Elvárt kimenet</th></tr><tr><td><code>mostExpensive(menu)</code></td><td><code>Gyümölcssaláta</code></td></tr><tr><td><code>mostExpensive([])</code></td><td><code>nothing available</code></td></tr></table>`,
+    now: `A két kötelező hívás jó. A harmadik (egy másik menü, ahol a legdrágább elfogyott) a <code>Lángos</code>-t adja, pedig az nincs raktáron.`,
+    learn: `<p>Ha a legjobbat keresed, az első tippet úgy válaszd, hogy <b>ne lehessen rossz</b>. Az <code>items[0]</code> rossz kezdés lehet: üres tömbnél nem létezik, és lehet, hogy éppen elfogyott.</p><p>Biztonságos kezdés: „még nincs találat” (ár 0, a név a <code>nothing available</code> szöveg), és csak akkor írod felül, ha egy elem <b>raktáron van és drágább</b>. Ha egyik sem ilyen, a kezdő szöveg marad, és pont azt kell visszaadni.</p>`,
+    bridge: `<ol>
+<li>A harmadik hívásban két elem van: <code>Lángos</code> (700, készlet 0) és <code>Perec</code> (300, készlet 6). A jó válasz a Perec, mert csak az van raktáron.</li>
+<li>A függvény <code>let best = 0;</code>-val indul: a 0. elemet, a Lángost tekinti a legjobbnak, <b>anélkül, hogy megnézné a készletét</b>.</li>
+<li>Kövessük a ciklust:<table class="exp"><tr><th><code>i</code></th><th>elem</th><th>feltétel</th><th><code>best</code> utána</th></tr><tr><td>0</td><td>Lángos (700)</td><td>700 &gt; 700? hamis</td><td>0</td></tr><tr><td>1</td><td>Perec (300)</td><td>300 &gt; 700? hamis</td><td>0</td></tr></table></li>
+<li>A Perec olcsóbb a kezdő tippnél, ezért soha nem nyer, és a függvény a <code>items[0].name</code>-et, a Lángost adja vissza.</li>
+<li>Kezdj olyan tippel, ami nem egy valódi elem (lásd lent), és csak raktáron lévő elemmel írd felül.</li>
+</ol>`,
+    start: `function mostExpensive(items) {
+  if (items.length === 0) {
+    return "nothing available";
+  }
+  let best = 0;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].price > items[best].price && items[i].stock > 0) {
+      best = i;
+    }
+  }
+  return items[best].name;
+}
+
+console.log(mostExpensive(menu));
+console.log(mostExpensive([]));
+console.log(mostExpensive([
+  { name: "Lángos", price: 700, veggie: true, stock: 0 },
+  { name: "Perec", price: 300, veggie: true, stock: 6 },
+]));`,
+    hint: `Kezdj két változóval: a legjobb ár <code>0</code>, a legjobb név <code>"nothing available"</code>. A ciklusban csak akkor írd felül mindkettőt, ha az elem raktáron van és drágább a mostani legjobbnál.`,
+    solution: `function mostExpensive(items) {
+  let bestName = "nothing available";
+  let bestPrice = 0;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].stock > 0 && items[i].price > bestPrice) {
+      bestPrice = items[i].price;
+      bestName = items[i].name;
+    }
+  }
+  return bestName;
+}
+
+console.log(mostExpensive(menu));
+console.log(mostExpensive([]));
+console.log(mostExpensive([
+  { name: "Lángos", price: 700, veggie: true, stock: 0 },
+  { name: "Perec", price: 300, veggie: true, stock: 6 },
+]));`,
+    why: `A kezdés nem a 0. elem, hanem „nincs találat” (0 Ft, <code>nothing available</code>). Így az üres tömb sem kell külön, és az elfogyott Lángos soha nem lesz a legjobb.`,
+    check(run) {
+      const p = callCases(run.vals.mostExpensive, "mostExpensive", [
+        ["mostExpensive(menu)", [MENU], "Gyümölcssaláta"],
+        ["mostExpensive([])", [[]], "nothing available"],
+        ["mostExpensive([Lángos (elfogyott), Perec])", [[{ name: "Lángos", price: 700, stock: 0 }, { name: "Perec", price: 300, stock: 6 }]], "Perec"],
+        ["mostExpensive([csak elfogyott])", [[{ name: "Lángos", price: 700, stock: 0 }]], "nothing available"],
+      ]);
+      if (!run.error && !sameLines(run.logs, ["Gyümölcssaláta", "nothing available", "Perec"])) p.push("A Console nem pontosan ezt a három sort mutatja: <code>Gyümölcssaláta</code>, <code>nothing available</code>, <code>Perec</code>.");
+      return p;
+    },
+  },
 ];
 
 // ---------- State (per browser, optional) ----------
@@ -967,9 +1359,10 @@ function renderSteps() {
   const required = TASKS.filter(t => !t.extra);
   const n = required.filter(t => state.done[t.id]).length;
   const shown = required.filter(t => state.done[t.id] && state.revealed[t.id]).length;
-  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (state.done.bonus ? " + extra ★" : "");
+  const extras = TASKS.filter(t => t.extra && state.done[t.id]).length;
+  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (extras ? ` + ${extras} extra ★` : "");
   $finished.innerHTML = n === required.length
-    ? `<div class="finished">Mind a ${required.length} feladat kész. Ha van időd, jöhet a ★ Extra.</div>`
+    ? `<div class="finished">Mind a ${required.length} feladat kész. Ha van időd, jöhetnek a ★ Extra feladatok.</div>`
     : "";
 }
 
@@ -1022,6 +1415,17 @@ function renderTask() {
     <div class="block">
       <p class="label">Mit jelöl ki a CSS-ed?</p>
       <div class="matches" id="matches"></div>
+    </div>` : t.kind === "js" ? `
+    <div class="grid">
+      <div>
+        <p class="label">script.js eleje (adott, ezt nem kell átírni)</p>
+        <pre class="snippet">${esc(MENU_SRC)}</pre>
+        ${editorHtml("script.js, a te részed: ezt javítsd")}
+      </div>
+      <div>
+        <p class="label">Console (F12)</p>
+        <div id="out" class="console"></div>
+      </div>
     </div>` : `
     <div class="grid">
       <div>${editorHtml("index.html (az Order rész): ezt javítsd")}</div>
@@ -1062,6 +1466,14 @@ function renderTask() {
 function runOutput(t) {
   const code = document.getElementById("code").value;
   const out = document.getElementById("out");
+  if (t.kind === "js") {
+    const run = runJs(code);
+    let html = run.logs.map(l => esc(l)).join("\n");
+    if (run.error) html += (html ? "\n" : "") + `<span class="err">Uncaught ${esc(run.error.name)}: ${esc(run.error.message)}</span>`;
+    if (!html) html = '<span class="dim">(üres: semmi nem jelent meg a Console-ban)</span>';
+    out.innerHTML = html;
+    return run;
+  }
   const root = renderPage(out, code, null, t.kind);
   if (t.kind === "css") {
     const matches = matchRules(root, code);
@@ -1124,7 +1536,7 @@ function showSolution(t) {
     <h4>Megoldás</h4>
     <p>${t.why}</p>
     <pre>${lines}</pre>
-    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és nézd meg, mi változik az oldalon.</p>
+    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és nézd meg, mi változik ${t.kind === "js" ? "a Console-ban" : "az oldalon"}.</p>
     <button id="load">Betöltöm a szerkesztőbe</button>
   </div>`;
   document.getElementById("load").addEventListener("click", () => {
