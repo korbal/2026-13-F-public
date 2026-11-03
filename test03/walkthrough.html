@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 03 javítás</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  header.top h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header.top .progress { margin-left: auto; font-size: 15px; opacity: .9; }
+  nav.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  nav.steps button {
+    border: 2px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  nav.steps button.extra { border-style: dashed; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 0; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
+  .solution pre div { white-space: pre; padding: 0 12px; }
+  .solution pre div.new { background: #d3f0dc; box-shadow: inset 4px 0 #1a7f37; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+  }
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  .task-head h2 { margin: 0 0 4px; font-size: 24px; }
+  .task-head .tag { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .goal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0 16px;
+  }
+  .goal p { margin: 0 0 6px; }
+  .goal p:last-child { margin-bottom: 0; }
+  .goal ul { margin: 0 0 6px; padding-left: 22px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal .paper { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
+  .goal .now { color: var(--bad); font-weight: 600; }
+  .goal .count { float: right; font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 10px; margin-left: 12px; }
+  .goal .learn { background: #eef3fb; border-radius: 6px; padding: 10px 14px; }
+  .goal .learn pre { margin: 6px 0; background: rgba(255,255,255,.7); border-radius: 4px; padding: 6px 10px; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
+  table.exp { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+  table.exp th { background: var(--bg); font-weight: 600; }
+  table.exp code { white-space: pre; }
+  pre.snippet {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid > div { min-width: 0; }
+  .block { margin-top: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+  textarea.code {
+    width: 100%;
+    min-height: 300px;
+    resize: vertical;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-radius: 8px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    tab-size: 2;
+  }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button {
+    font: inherit;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .buttons .kbd { align-self: center; font-size: 13px; color: var(--muted); }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .result code, .goal code, .hint code, table.exp code, .measure code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .preview-host {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .preview-host .frame { transform-origin: 0 0; }
+  .measure { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px 14px; font-size: 14px; margin: -6px 0 0; }
+  .measure .bad { color: var(--bad); font-weight: 600; }
+  .measure .good { color: var(--ok); font-weight: 600; }
+  .next { margin-top: 4px; }
+  .finished {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-radius: 8px;
+    padding: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .goal .bridge { background: #f3f0fa; border-radius: 6px; padding: 10px 14px 10px 8px; }
+  .goal .bridge ol { margin: 0; padding-left: 26px; }
+  .goal .bridge li { margin: 0 0 6px; }
+  .goal .bridge li:last-child { margin-bottom: 0; }
+  .goal .bridge code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .listing {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 0;
+    font: 13px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+    overflow-x: auto;
+  }
+  .listing .ln { white-space: pre; padding: 0 12px 0 0; display: flex; }
+  .listing .gut { flex: 0 0 46px; display: flex; gap: 3px; justify-content: flex-end; align-items: center; padding-right: 10px; }
+  .listing .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .matches { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .matches ul { list-style: none; margin: 0; padding: 0; }
+  .matches li { padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: default; }
+  .matches li:last-child { border-bottom: 0; }
+  .matches li:hover { background: var(--bg); }
+  .matches .chip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .matches .file { color: var(--muted); font-size: 13px; }
+  .matches .zero { color: var(--bad); font-weight: 600; }
+  .matches .okk { color: var(--ok); font-weight: 600; }
+  .matches .tags { font: 13px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; color: var(--muted); margin: 2px 0 0 18px; white-space: pre-wrap; }
+  .matches .note2 { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .matches code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Test 03 · Széchenyi Büfé · javítás (1. rész)</h1>
+  <div class="progress" id="progress"></div>
+</header>
+<nav class="steps" id="steps"></nav>
+<main>
+  <p class="intro">Minden feladatban egy hibás kód van, és ezek a hibák tényleg előfordultak a Test 03 tesztekben. Olvasd el, mit kért a feladat, mi történik most, és lépésről lépésre, mit csinál most a kód. A CSS-feladatoknál bal oldalt látod a teljes <code>index.html</code>-t: a színes pötty megmutatja, melyik sorra hat a CSS-ed, a „Mit jelöl ki a CSS-ed?” doboz pedig felsorolja ugyanezt (vidd fölé az egeret, és az oldalon is bekeretezi). Az oldal úgy néz ki, mint egy 1200px széles böngészőablakban. Javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
+  <div id="finished"></div>
+  <section id="task"></section>
+</main>
+<footer class="bottom"><button id="resetAll">Minden feladat visszaállítása</button></footer>
+
+<script>
+"use strict";
+
+// ---------- Shared fixtures ----------
+
+const PAGE_HTML = `
+<header>
+  <h1>Széchenyi Büfé</h1>
+  <nav>
+    <ul>
+      <li><a href="#today">Today</a></li>
+      <li><a href="#order">Order</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section id="today">
+    <h2>Today</h2>
+    <p>Open every school day from 7:30 to 14:00, next to the gym.</p>
+    <div class="cards">
+      <article class="card">
+        <h3>Sonkás szendvics</h3>
+        <p class="price">450 Ft</p>
+      </article>
+      <article class="card">
+        <h3>Sajtos pogácsa</h3>
+        <p class="price">250 Ft</p>
+      </article>
+      <article class="card sold-out">
+        <h3>Rántott csirkés wrap</h3>
+        <p class="price">890 Ft</p>
+      </article>
+      <article class="card">
+        <h3>Gyümölcssaláta</h3>
+        <p class="price">600 Ft</p>
+      </article>
+    </div>
+  </section>
+  <section id="order">
+    <h2>Order</h2>
+    <p>Order before 9:00 and pick it up in the long break.</p>
+  </section>
+</main>
+<footer>
+  <p>Run by the student council.</p>
+</footer>`;
+
+// The preview behaves like the browser's defaults; the dashed line only shows where <main> is.
+const PREVIEW_CSS = `:host { all: initial; display: block; font-family: Arial, sans-serif; color: black; background: white; }
+.page { position: relative; padding: 0 0 12px; }
+main { outline: 1px dashed #b9b9b9; }`;
+
+const FORM_CSS = `:host { all: initial; display: block; font-family: Arial, sans-serif; color: black; background: white; }
+.page { position: relative; padding: 12px 16px; }
+form, .page > * { margin: 0 0 8px; }
+label { margin-right: 6px; }
+input[type=text], select { margin: 0 12px 8px 0; font: inherit; padding: 2px 4px; }
+fieldset { margin: 8px 0 12px; }
+.sent { color: #1a7f37; font-weight: bold; }`;
+
+const VIEW_WIDTH = 1200;
+
+// ---------- Helpers ----------
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+const px = v => parseFloat(v) || 0;
+const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
+
+// Render the page fixture with the student's CSS inside a shadow root, so it cannot touch this page.
+// CSS tasks are laid out in a 1200px wide "window" and scaled down to fit.
+function renderPage(host, css, html, kind) {
+  host.innerHTML = "";
+  const frame = document.createElement("div");
+  frame.className = "frame";
+  host.appendChild(frame);
+  const scaled = kind === "css";
+  frame.style.width = scaled ? VIEW_WIDTH + "px" : "100%";
+  const root = frame.attachShadow({ mode: "open" });
+  if (kind === "css") {
+    root.innerHTML = "<style>" + PREVIEW_CSS + "</style>" + '<style id="student">' + css + "</style>" + '<div class="page">' + (html || PAGE_HTML) + "</div>";
+  } else {
+    root.innerHTML = "<style>" + FORM_CSS + "</style>" + '<div class="page">' + css + "</div>";
+    root.querySelectorAll("form").forEach(f => f.addEventListener("submit", e => {
+      e.preventDefault();
+      let msg = root.querySelector(".sent");
+      if (!msg) { msg = document.createElement("p"); msg.className = "sent"; f.after(msg); }
+      msg.textContent = "✓ Elküldve (ez csak gyakorlás, nem megy el sehova).";
+    }));
+  }
+  root.querySelectorAll("a").forEach(a => a.addEventListener("click", e => e.preventDefault()));
+  if (scaled) fitPreview(host);
+  return root;
+}
+
+function fitPreview(host) {
+  const frame = host.querySelector(".frame");
+  if (!frame) return;
+  const scale = Math.min(1, host.clientWidth / VIEW_WIDTH);
+  frame.style.transform = `scale(${scale})`;
+  host.style.height = Math.ceil(frame.offsetHeight * scale) + 2 + "px";
+}
+window.addEventListener("resize", () => { const h = document.querySelector(".preview-host.scaled"); if (h) fitPreview(h); });
+
+// ---------- Which HTML elements does each CSS rule select? ----------
+
+const COLORS = ["#e8590c", "#1971c2", "#2f9e44", "#ae3ec9", "#c2255c", "#0c8599"];
+const LINES = PAGE_HTML.replace(/^\n/, "").split("\n");
+// The n-th opening tag in the source is the n-th element in document order, so this maps element index -> line.
+const ELEMENT_LINE = [];
+LINES.forEach((line, i) => (line.match(/<[a-zA-Z]/g) || []).forEach(() => ELEMENT_LINE.push(i)));
+
+// Selectors of every rule in a CSS text, read from the text itself so a broken selector still shows up.
+function cssSelectors(css) {
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const out = [];
+  const re = /([^{}]+)\{[^{}]*\}/g;
+  let m;
+  while ((m = re.exec(clean))) {
+    const sel = m[1].trim();
+    if (sel && !sel.startsWith("@")) out.push(sel);
+  }
+  return out;
+}
+
+function matchRules(root, css) {
+  const page = root.querySelector(".page");
+  return cssSelectors(css).map((selector, k) => {
+    let els = null;
+    try { els = [...page.querySelectorAll(selector)]; } catch (e) { /* invalid selector */ }
+    return { selector, els, color: COLORS[k % COLORS.length] };
+  });
+}
+
+function openTag(el) {
+  const h = el.outerHTML;
+  return h.slice(0, h.indexOf(">") + 1);
+}
+
+function renderListing(root, matches) {
+  const host = document.getElementById("listing");
+  if (!host) return;
+  const all = [...root.querySelector(".page").querySelectorAll("*")];
+  const marks = LINES.map(() => []);
+  matches.forEach(m => (m.els || []).forEach(el => {
+    const line = ELEMENT_LINE[all.indexOf(el)];
+    if (line !== undefined && !marks[line].includes(m.color)) marks[line].push(m.color);
+  }));
+  host.innerHTML = LINES.map((line, i) => {
+    const dots = marks[i].map(c => `<span class="dot" style="background:${c}"></span>`).join("");
+    const bg = marks[i].length ? ` style="background:${marks[i][0]}1f"` : "";
+    return `<div class="ln"${bg}><span class="gut">${dots}</span>${esc(line) || " "}</div>`;
+  }).join("");
+}
+
+function hoverOutline(host, items) {
+  host.querySelectorAll("li[data-k]").forEach(li => {
+    const m = items[+li.dataset.k];
+    li.addEventListener("mouseenter", () => (m.els || []).forEach(e => { e.style.outline = `3px solid ${m.color || "#e8590c"}`; e.style.outlineOffset = "2px"; }));
+    li.addEventListener("mouseleave", () => (m.els || []).forEach(e => { e.style.outline = ""; e.style.outlineOffset = ""; }));
+  });
+}
+
+function renderMatches(css, matches) {
+  const host = document.getElementById("matches");
+  if (!host) return;
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const open = (clean.match(/\{/g) || []).length, close = (clean.match(/\}/g) || []).length;
+  const rows = matches.map((m, k) => {
+    let what;
+    if (m.els === null) what = `<span class="zero">Hibás szelektor: a böngésző az egész szabályt kihagyja.</span>`;
+    else if (m.els.length === 0) what = `<span class="zero">0 elem: ez a szabály semmire nem hat!</span>`;
+    else what = `${m.els.length} elem:<div class="tags">${m.els.map(e => esc(openTag(e))).join("\n")}</div>`;
+    return `<li data-k="${k}"><span class="chip" style="background:${m.color}"></span><code>${esc(m.selector)}</code> → ${what}</li>`;
+  }).join("");
+  host.innerHTML = `<ul>${rows || "<li>Nincs egy szabály sem.</li>"}</ul>` +
+    (open !== close ? `<p class="zero">Valahol hiányzik egy <code>{</code> vagy egy <code>}</code>.</p>` : "") +
+    `<p class="note2">Vidd az egeret egy sor fölé: az oldalon bekeretezi, amit kijelöl.</p>`;
+  hoverOutline(host, matches);
+}
+
+// ---------- What does the browser see in the form? (HTML tasks) ----------
+
+function renderFormView(root) {
+  const host = document.getElementById("matches");
+  if (!host) return;
+  const page = root.querySelector(".page");
+  const items = [];
+  const row = (html, els) => { items.push({ els }); return `<li data-k="${items.length - 1}">${html}</li>`; };
+  let out = "";
+  page.querySelectorAll("label").forEach(l => {
+    const c = l.control;
+    const tag = esc(openTag(l));
+    out += c
+      ? row(`<code>${tag}</code> → <span class="okk">össze van kötve</span> ezzel:<div class="tags">${esc(openTag(c))}</div>`, [l, c])
+      : row(`<code>${tag}</code> → <span class="zero">semmivel nincs összekötve</span>${l.htmlFor ? ` (nincs <code>id="${esc(l.htmlFor)}"</code> elem)` : ""}`, [l]);
+  });
+  page.querySelectorAll("input:not([type=radio]):not([type=submit]):not([type=button]), select, textarea").forEach(el => {
+    if (!el.labels || el.labels.length === 0) out += row(`<code>${esc(openTag(el))}</code> → <span class="zero">nincs hozzá címke</span>`, [el]);
+  });
+  page.querySelectorAll("select").forEach(s => {
+    out += row(`<code>${esc(openTag(s))}</code> → ${s.options.length} választási lehetőség: ${[...s.options].map(o => `<code>${esc(o.text)}</code>`).join(", ") || "<span class=\"zero\">nincs</span>"}`, [s]);
+  });
+  const groups = {};
+  page.querySelectorAll("input[type=radio]").forEach(r => { (groups[r.name || "(nincs name)"] ||= []).push(r); });
+  const names = Object.keys(groups);
+  names.forEach(n => {
+    out += row(`Rádiógomb-csoport <code>name="${esc(n)}"</code> → ${groups[n].length} gomb, ebből egyszerre egy lehet bekapcsolva`, groups[n]);
+  });
+  if (names.length > 1) out += `<li><span class="zero">${names.length} külön csoport van, ezért mindegyikben bekapcsolható egy-egy gomb.</span></li>`;
+  const form = page.querySelector("form");
+  if (!form) out += `<li><span class="zero">Nincs &lt;form&gt;: a gomb nem küld semmit, és a required sem ellenőrződik.</span></li>`;
+  else {
+    const btn = form.querySelector("button, input[type=submit]");
+    out += row(`<code>&lt;form&gt;</code> → benne ${form.elements.length} elem${btn ? ", a küldés gombbal együtt" : `, <span class="zero">de nincs benne küldés gomb</span>`}`, [form]);
+  }
+  host.innerHTML = `<ul>${out || "<li>Nincs űrlapelem.</li>"}</ul><p class="note2">Vidd az egeret egy sor fölé: az oldalon bekeretezi. Az oldalon ki is próbálhatod: kattints a címkékre, a gombokra.</p>`;
+  hoverOutline(host, items);
+}
+
+// ---------- Measuring (CSS tasks) ----------
+
+const cardsOf = root => [...root.querySelectorAll(".card")];
+function sameRow(cards) { return cards.every(c => near(c.offsetTop, cards[0].offsetTop, 2)); }
+function cardGaps(cards) {
+  const s = [...cards].sort((a, b) => a.offsetLeft - b.offsetLeft);
+  return s.slice(1).map((c, i) => c.offsetLeft - (s[i].offsetLeft + s[i].offsetWidth));
+}
+// Vertical middle of an element, relative to .page.
+function mid(el) { return el.offsetTop + el.offsetHeight / 2; }
+
+// ---------- Tasks ----------
+// Each task: id, title, tag, count, paper, now, bridge, learn, start, kind ("css" | "html"), check(root) -> problems, hint, solution, why, measure(root) -> HTML (optional).
+
+const CARD_OK = `.card {
+  box-sizing: border-box;
+  width: 220px;
+  padding: 16px;
+  border: 2px solid #333;
+  border-radius: 8px;
+}`;
+const MAIN_OK = `main {
+  max-width: 960px;
+  margin: 0 auto;
+}`;
+const CARDS_OK = `.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}`;
+
+const TASKS = [
+  {
+    id: "padding",
+    title: "1. Belső térköz",
+    tag: "B · Box model",
+    kind: "css",
+    count: `4 tesztben (a kártyánál 2-ben)`,
+    paper: `The header has <code>16px</code> of space inside at the top and bottom, and <code>24px</code> on the left and right.`,
+    now: `A sárga sáv ugyanolyan vékony maradt, a cím a sáv széléhez tapad, és az egész sáv elcsúszott a lap szélétől.`,
+    learn: `<p>Minden elem egy doboz, belülről kifelé így épül fel: <b>tartalom → padding → keret (border) → margin</b>.</p><ul><li>A <code>padding</code> a kereten <b>belül</b> van. Ott a háttérszín is, ezért a doboz nagyobb lesz, és a tartalom eltávolodik a szélétől.</li><li>A <code>margin</code> a kereten <b>kívül</b> van, átlátszó. A dobozt eltolja a szomszédaitól, de magát a dobozt nem nagyítja.</li></ul><p>Példa: <code>button { padding: 10px 20px; }</code> nagyobb gombot ad, a <code>button { margin: 10px; }</code> csak arrébb tolja. Rövidítés: két értéknél az első a fent-lent, a második a balra-jobbra.</p>`,
+    bridge: `<ol>
+<li>A szelektor <code>header</code>. Előtte nincs se pont, se <code>#</code>, ezért ez egy <b>elem neve</b>: a <code>&lt;header&gt;</code> elemet jelöli ki. Bal oldalt a legelső sor kapott pöttyöt.</li>
+<li>Az oldalon ez a sárga sáv a tetején (a sárga háttér csak azért van ott, hogy lásd a doboz szélét).</li>
+<li>A négy sor mind <code>margin</code>. A margin a dobozon <b>kívül</b> ad helyet: ezért van fehér rés a sárga sáv körül, és ezért tolódott el a lap szélétől.</li>
+<li>A sárga sávon <b>belül</b> semmi nem változott: a cím ugyanúgy a sáv széléhez tapad, mint előtte.</li>
+<li>A feladat azt kérte, hogy <i>inside</i>, vagyis a dobozon belül legyen hely. A tulajdonság neve tehát rossz, a számok jók.</li>
+</ol>`,
+    start: `header {
+  background-color: #ffd166;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  margin-left: 24px;
+  margin-right: 24px;
+}`,
+    hint: `A dobozon belüli hely nem margin. W3Schools: <b>CSS Box Model</b> és <b>CSS Padding</b>.`,
+    solution: `header {
+  background-color: #ffd166;
+  padding: 16px 24px;
+}`,
+    why: `A négy <code>margin</code> helyett <code>padding: 16px 24px;</code>: fent-lent 16px, balra-jobbra 24px, a sárga dobozon belül.`,
+    measure(root) {
+      const h = root.querySelector("header"), cs = getComputedStyle(h);
+      return `<code>header</code>: padding <b>${px(cs.paddingTop)} ${px(cs.paddingRight)} ${px(cs.paddingBottom)} ${px(cs.paddingLeft)}</b> · margin <b>${px(cs.marginTop)} ${px(cs.marginRight)} ${px(cs.marginBottom)} ${px(cs.marginLeft)}</b> (fent, jobbra, lent, balra)`;
+    },
+    check(root) {
+      const p = [];
+      const cs = getComputedStyle(root.querySelector("header"));
+      if (px(cs.paddingTop) !== 16 || px(cs.paddingBottom) !== 16) p.push("A fejlécen belül fent és lent még nincs 16px hely.");
+      if (px(cs.paddingLeft) !== 24 || px(cs.paddingRight) !== 24) p.push("A fejlécen belül balra és jobbra még nincs 24px hely.");
+      if ([cs.marginTop, cs.marginRight, cs.marginBottom, cs.marginLeft].some(v => px(v) !== 0)) p.push("A <code>margin</code> még ott van: a sárga sáv körül, kívül is van hely. Töröld.");
+      return p;
+    },
+  },
+  {
+    id: "boxsizing",
+    title: "2. Pontosan 220px",
+    tag: "B · Box model",
+    kind: "css",
+    count: `8 tesztben`,
+    paper: `Every card is <b>exactly <code>220px</code> wide on the screen, including its padding and border</b>.<br><i>Done when:</i> in the browser, press F12, open Elements and move the mouse over a card's <code>&lt;article&gt;</code> line: the label on the page shows <code>article.card 220 × ...</code>.`,
+    now: `A kártyák 256px szélesek, ezért a negyedik már nem fér ki a sorba.`,
+    learn: `<p>Alapból (<code>box-sizing: content-box</code>) a <code>width</code> csak a <b>tartalom</b> szélessége. A padding és a keret <b>hozzáadódik</b>.</p><p>A <code>box-sizing: border-box</code> ezt megfordítja: a <code>width</code>-be beleszámít a padding és a keret is, a tartalom pedig annyival kisebb lesz.</p><p>Példa: <code>.box { box-sizing: border-box; width: 100px; padding: 10px; }</code> → a doboz 100px széles, a tartalma 80px. A <code>box-sizing</code> nélkül 120px lenne.</p>`,
+    bridge: `<ol>
+<li>Az utolsó szabály szelektora <code>.card</code>. A <b>pont</b> azt jelenti: azok az elemek, amiken <code>class="card"</code> van. Bal oldalt a négy <code>&lt;article class="card"&gt;</code> sor kapott pöttyöt (a wrapé is, mert annak két class-a van: <code>card</code> és <code>sold-out</code>).</li>
+<li>A <code>width: 220px</code> alapból csak a <b>tartalom</b> szélessége. A padding és a keret kívülről rakódik rá.<table class="exp"><tr><th>Rész</th><th>px</th></tr><tr><td>tartalom (<code>width</code>)</td><td>220</td></tr><tr><td>padding balra + jobbra</td><td>16 + 16</td></tr><tr><td>keret balra + jobbra</td><td>2 + 2</td></tr><tr><th>a kártya a képernyőn</th><th>256</th></tr></table></li>
+<li>Négy kártya és három 16px-es köz: 4 × 256 + 3 × 16 = 1072px. A <code>&lt;main&gt;</code> legfeljebb 960px széles (a szaggatott vonal), ezért a negyedik kártya átkerül a következő sorba.</li>
+<li>A feladat azt kérte, hogy a 220px <b>a paddinggel és a kerettel együtt</b> legyen. A böngészőnek meg kell mondani, hogy a <code>width</code>-be ezeket is számolja bele (lásd lent).</li>
+</ol>`,
+    start: MAIN_OK + "\n\n" + CARDS_OK + `
+
+.card {
+  width: 220px;
+  padding: 16px;
+  border: 2px solid #333;
+  border-radius: 8px;
+}`,
+    hint: `Egy sor kell a <code>.card</code>-ba, ami megmondja, hogy a <code>width</code> a paddinget és a keretet is tartalmazza. W3Schools: <b>CSS Box Sizing</b>.`,
+    solution: MAIN_OK + "\n\n" + CARDS_OK + "\n\n" + CARD_OK,
+    why: `Egy új sor: <code>box-sizing: border-box;</code>. Így a 220px-be beleszámít a 2 × 16px padding és a 2 × 2px keret is.`,
+    measure(root) {
+      const c = cardsOf(root);
+      const w = c[0].offsetWidth, h = c[0].offsetHeight;
+      return `<code>article.card</code> <b class="${w === 220 ? "good" : "bad"}">${w} × ${h}</b> · ${sameRow(c) ? `<span class="good">mind a 4 kártya egy sorban</span>` : `<span class="bad">nem fér ki mind egy sorba</span>`}`;
+    },
+    check(root) {
+      const p = [];
+      const c = cardsOf(root);
+      const cs = getComputedStyle(c[0]);
+      if (c[0].offsetWidth !== 220) p.push(`A kártya ${c[0].offsetWidth}px széles a képernyőn, nem 220px.`);
+      if (px(cs.paddingTop) !== 16 || px(cs.paddingLeft) !== 16) p.push("A kártyán belül nincs 16px padding. Azt ne vedd ki, a feladat kéri.");
+      if (px(cs.borderTopWidth) !== 2 || cs.borderTopStyle !== "solid") p.push("A kártyának nincs 2px-es folytonos kerete. Azt ne vedd ki, a feladat kéri.");
+      if (!sameRow(c)) p.push("A négy kártya még nem fér ki egy sorba.");
+      return p;
+    },
+  },
+  {
+    id: "centre",
+    title: "3. A main középen",
+    tag: "B · Box model",
+    kind: "css",
+    count: `5 tesztben`,
+    paper: `The content of <code>&lt;main&gt;</code> is at most <code>960px</code> wide and is centred on the page.`,
+    now: `A szövegek középre kerültek, de a <code>&lt;main&gt;</code> doboza (a szaggatott vonal) a lap bal szélén maradt.`,
+    learn: `<p>Egy dobozt úgy teszel középre, hogy a bal és a jobb <code>margin</code>-ja <code>auto</code>: a böngésző a szabad helyet egyenlően osztja el a két oldal között. Rövidítve: <code>margin: 0 auto;</code> (fent-lent 0, balra-jobbra auto).</p><p>Ehhez a doboznak keskenyebbnek kell lennie, mint a helye, például egy <code>width</code> vagy <code>max-width</code> miatt.</p><p>A <code>text-align: center</code> mást csinál: a dobozon <b>belül</b> teszi középre a szöveget, a dobozt nem mozdítja. Példa: <code>.box { width: 300px; margin: 0 auto; }</code> → a 300px-es doboz középen, a szöveg benne balra.</p>`,
+    bridge: `<ol>
+<li>A szelektor <code>main</code>: a <code>&lt;main&gt;</code> elemet jelöli ki. Bal oldalt a <code>&lt;main&gt;</code> sor kapott pöttyöt, az oldalon ez a szaggatott vonallal jelölt doboz.</li>
+<li>A <code>max-width: 960px</code> működik: a doboz 960px széles. Az ablak 1200px, tehát 240px szabad hely marad.</li>
+<li>Alapból az egész szabad hely a doboz <b>jobb</b> oldalára kerül. Ezért van a doboz a bal szélen.</li>
+<li>A <code>text-align: center</code> a dobozon <b>belül</b> igazítja középre a szöveget. Ezért kerültek középre a címek és a bekezdések, de maga a doboz nem mozdult.</li>
+<li>A doboz két oldalán kell elosztani a szabad helyet (lásd lent). A <code>text-align</code> sort törölheted.</li>
+</ol>`,
+    start: `main {
+  max-width: 960px;
+  text-align: center;
+}`,
+    hint: `Nem a szöveget kell középre tenni, hanem a dobozt: ehhez a bal és a jobb <code>margin</code> kell. W3Schools: <b>CSS Margins → The auto Value</b>.`,
+    solution: `main {
+  max-width: 960px;
+  margin: 0 auto;
+}`,
+    why: `A <code>text-align: center</code> helyett <code>margin: 0 auto;</code>: a 240px szabad hely fele balra, fele jobbra kerül.`,
+    measure(root) {
+      const m = root.querySelector("main");
+      const left = m.offsetLeft, right = VIEW_WIDTH - m.offsetLeft - m.offsetWidth;
+      return `<code>main</code>: <b>${m.offsetWidth}px</b> széles · bal oldalt <b class="${near(left, right) ? "good" : "bad"}">${left}px</b>, jobb oldalt <b class="${near(left, right) ? "good" : "bad"}">${right}px</b> hely`;
+    },
+    check(root) {
+      const p = [];
+      const m = root.querySelector("main");
+      const left = m.offsetLeft, right = VIEW_WIDTH - m.offsetLeft - m.offsetWidth;
+      if (m.offsetWidth !== 960) p.push(`A <code>main</code> ${m.offsetWidth}px széles egy 1200px-es ablakban, nem 960px.`);
+      if (getComputedStyle(m).maxWidth !== "960px") p.push("A <code>main</code>-nek nincs <code>max-width: 960px</code>-e (keskeny ablakban így nem tudna összemenni).");
+      if (!near(left, right) || left < 10) p.push(`A <code>main</code> doboza nincs középen: balra ${left}px, jobbra ${right}px a hely.`);
+      return p;
+    },
+  },
+  {
+    id: "parent",
+    title: "4. A flex a szülőre kerül",
+    tag: "C · Flexbox",
+    kind: "css",
+    count: `4 tesztben (a li-re, az a-ra vagy a .card-ra)`,
+    paper: `The two menu links are next to each other, with <code>16px</code> between them, and the list has no bullets.`,
+    now: `A pöttyök eltűntek, de a két link egymás alatt maradt.`,
+    learn: `<p>A <code>display: flex</code> nem magát az elemet mozgatja, hanem a <b>gyerekeit</b> rendezi egymás mellé. Arra az elemre kell írni, amelyiknek a gyerekeit egymás mellé akarod tenni: ez a <b>szülő</b> (flex container).</p><p>A <code>gap</code> is a szülőre kerül: a gyerekek közé tesz helyet.</p><p>Példa: <code>&lt;div class="row"&gt;&lt;img&gt;&lt;img&gt;&lt;img&gt;&lt;/div&gt;</code> esetén a <code>.row { display: flex; gap: 8px; }</code> teszi egymás mellé a három képet, nem az <code>img { display: flex; }</code>.</p>`,
+    bridge: `<ol>
+<li>A második szabály szelektora <code>nav li</code>. A <b>szóköz</b> azt jelenti: „azon belül”. Tehát: minden <code>&lt;li&gt;</code>, ami a <code>&lt;nav&gt;</code>-ban van. Bal oldalt a két <code>&lt;li&gt;</code> sor kapott pöttyöt.</li>
+<li>A <code>display: flex</code> egy <code>&lt;li&gt;</code>-n azt rendezi el, ami <b>a <code>&lt;li&gt;</code>-n belül</b> van. Egy <code>&lt;li&gt;</code>-ben egyetlen elem van, egy <code>&lt;a&gt;</code>. Egy elemet nincs mi mellé tenni, ezért nem változik semmi.</li>
+<li>A <code>gap</code> ugyanígy a <code>&lt;li&gt;</code> <b>gyerekei</b> közé tenne helyet, de egy gyerek mellett nincs köz.</li>
+<li>Ki a két <code>&lt;li&gt;</code> szülője? Nézd meg bal oldalt: mindkettő a <code>&lt;ul&gt;</code>-on belül van. A <code>&lt;ul&gt;</code> tudja őket egymás mellé tenni.</li>
+<li>Írd át a szelektort úgy, hogy a <code>&lt;nav&gt;</code>-on belüli <code>&lt;ul&gt;</code>-t jelölje ki. Ha jó, a doboz 1 elemet mutat, és a <code>&lt;ul&gt;</code> sor kap pöttyöt.</li>
+</ol>`,
+    start: `header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+nav li {
+  display: flex;
+  gap: 16px;
+  list-style-type: none;
+}`,
+    hint: `A két link szülője a <code>&lt;ul&gt;</code>, nem a <code>&lt;li&gt;</code>. Melyik szelektor jelöli ki a <code>&lt;nav&gt;</code>-on belüli <code>&lt;ul&gt;</code>-t?`,
+    solution: `header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+nav ul {
+  display: flex;
+  gap: 16px;
+  list-style-type: none;
+}`,
+    why: `A <code>nav li</code> helyett <code>nav ul</code>: a <code>&lt;ul&gt;</code> a két <code>&lt;li&gt;</code> szülője, ezért ő teszi őket egymás mellé, és ő tesz közéjük 16px-et.`,
+    measure(root) {
+      const li = [...root.querySelectorAll("nav li")];
+      const side = near(li[0].offsetTop, li[1].offsetTop, 2);
+      const gap = li[1].offsetLeft - (li[0].offsetLeft + li[0].offsetWidth);
+      return side ? `A két menüpont <span class="good">egymás mellett</span>, köztük <b class="${near(gap, 16, 0.6) ? "good" : "bad"}">${Math.round(gap)}px</b>` : `A két menüpont <span class="bad">egymás alatt</span>`;
+    },
+    check(root) {
+      const p = [];
+      const li = [...root.querySelectorAll("nav li")];
+      if (!near(li[0].offsetTop, li[1].offsetTop, 2)) p.push("A két menüpont még egymás alatt van.");
+      else {
+        const gap = li[1].offsetLeft - (li[0].offsetLeft + li[0].offsetWidth);
+        if (!near(gap, 16, 0.6)) p.push(`A két menüpont között ${Math.round(gap)}px van, nem 16px.`);
+      }
+      if (li.some(l => getComputedStyle(l).listStyleType !== "none")) p.push("A menüpontok előtt még ott vannak a pöttyök.");
+      return p;
+    },
+  },
+  {
+    id: "header",
+    title: "5. Cím balra, menü jobbra",
+    tag: "C · Flexbox",
+    kind: "css",
+    count: `12 tesztben hiányzott legalább az egyik`,
+    paper: `In the header, the canteen's name is on the left and the menu is on the right, vertically centred with each other.`,
+    now: `A cím és a menü egymás mellett van, de a menü a cím mellé tapad, és nincs egy magasságban vele.`,
+    learn: `<p>Egy flex sorban két irány van:</p><ul><li><b>a sor iránya</b> (vízszintesen): ezt a <code>justify-content</code> állítja. A <code>space-between</code> az első gyereket az elejére, az utolsót a végére teszi, a szabad hely közéjük kerül.</li><li><b>keresztben</b> (függőlegesen): ezt az <code>align-items</code> állítja. A <code>center</code> a gyerekeket függőlegesen középre teszi.</li></ul><p>Mindkettő a <b>szülőre</b> kerül. Példa: <code>.bar { display: flex; justify-content: space-between; align-items: center; }</code> → a sáv első eleme balra, az utolsó jobbra, mind egy vonalban.</p>`,
+    bridge: `<ol>
+<li>Az első szabály szelektora <code>header</code>: a <code>&lt;header&gt;</code> sor kapott pöttyöt.</li>
+<li>A <code>&lt;header&gt;</code> két gyereke a <code>&lt;h1&gt;</code> és a <code>&lt;nav&gt;</code>. A <code>display: flex</code> egymás mellé teszi őket, <b>balról kezdve</b>.</li>
+<li>Vízszintesen az összes szabad hely a sor végére kerül, ezért a <code>&lt;nav&gt;</code> közvetlenül a cím után áll.</li>
+<li>Függőlegesen alapból mindkettő olyan magas, mint a header (<code>stretch</code>), és a tartalmuk felülről indul. A <code>&lt;h1&gt;</code>-nek és a <code>&lt;ul&gt;</code>-nak más a margója, ezért a cím és a linkek más magasságban vannak.</li>
+<li>A szelektor jó. A <code>header</code> szabályába két tulajdonság hiányzik: egy a vízszintes elosztáshoz, egy a függőleges igazításhoz.</li>
+</ol>`,
+    start: `header {
+  display: flex;
+  padding: 16px 24px;
+}
+
+nav ul {
+  display: flex;
+  gap: 16px;
+  list-style-type: none;
+}`,
+    hint: `W3Schools: <b>CSS Flex Container</b> → a <code>justify-content</code> (vízszintesen) és az <code>align-items</code> (függőlegesen) tulajdonság. Mindkettő a <code>header</code>-re kerül.`,
+    solution: `header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+nav ul {
+  display: flex;
+  gap: 16px;
+  list-style-type: none;
+}`,
+    why: `Két új sor a <code>header</code>-ben: <code>justify-content: space-between;</code> a menüt a jobb szélre viszi, az <code>align-items: center;</code> egy vonalba hozza a címmel.`,
+    measure(root) {
+      const h = root.querySelector("header"), h1 = root.querySelector("header h1"), nav = root.querySelector("header nav"), a = root.querySelector("nav a");
+      const rightGap = h.offsetWidth - (nav.offsetLeft + nav.offsetWidth);
+      const dy = Math.round(mid(a) - mid(h1));
+      return `A menü jobb széle és a header jobb széle között <b class="${near(rightGap, 24, 2) ? "good" : "bad"}">${Math.round(rightGap)}px</b> · a cím és a linkek közepe között függőlegesen <b class="${Math.abs(dy) <= 3 ? "good" : "bad"}">${Math.abs(dy)}px</b>`;
+    },
+    check(root) {
+      const p = [];
+      const h = root.querySelector("header"), h1 = root.querySelector("header h1"), nav = root.querySelector("header nav"), a = root.querySelector("nav a");
+      const rightGap = h.offsetWidth - (nav.offsetLeft + nav.offsetWidth);
+      if (!near(h1.offsetLeft, 24, 2)) p.push("A cím nincs a fejléc bal szélén.");
+      if (!near(rightGap, 24, 2)) p.push("A menü még nincs a fejléc jobb szélén.");
+      if (Math.abs(mid(a) - mid(h1)) > 3) p.push("A cím és a menü nincs függőlegesen egy vonalban.");
+      if (getComputedStyle(nav).position !== "static" || getComputedStyle(h1).position !== "static") p.push("Ne pozicionálással (<code>position</code>), hanem flexbox-szal oldd meg.");
+      return p;
+    },
+  },
+  {
+    id: "cards",
+    title: "6. A kártyák egy sorban",
+    tag: "C · Flexbox",
+    kind: "css",
+    count: `6 tesztben hiányzott vagy rossz elemre került`,
+    paper: `The cards are next to each other in a row, with <code>16px</code> between them, centred in the row. When the window is narrow, they wrap to a new line.`,
+    now: `A kártyák egymás alatt vannak, a kártyákon belül pedig a név és az ár került egymás mellé.`,
+    learn: `<p>Ugyanaz a szabály, mint a 4. feladatban: a <code>display: flex</code> a <b>gyerekeket</b> rendezi. Ha a kártyára írod, a kártya gyerekei (a cím és az ár) kerülnek egymás mellé. Ha a kártyák <b>közös szülőjére</b>, akkor a kártyák.</p><p>A szülőre kerül a <code>gap</code>, a <code>flex-wrap: wrap</code> (keskeny ablakban új sorba tördel) és a <code>justify-content: center</code> (a sort középre teszi) is.</p>`,
+    bridge: `<ol>
+<li>A <code>main</code> szabály jó. Utána a <code>.card</code> szabály a négy <code>&lt;article class="card"&gt;</code>-ot jelöli ki: méret, padding, keret. Ez is jó.</li>
+<li>Az utolsó szabály szelektora <b>szintén</b> <code>.card</code>, ugyanaz a négy sor kapott pöttyöt.</li>
+<li>A <code>display: flex</code> egy <code>&lt;article&gt;</code>-on azt rendezi el, ami <b>az <code>&lt;article&gt;</code>-on belül</b> van: a <code>&lt;h3&gt;</code>-at és a <code>&lt;p class="price"&gt;</code>-t. Ezért került a név és az ár egymás mellé a kártyán belül.</li>
+<li>Nézd meg bal oldalt: a négy <code>&lt;article&gt;</code> közös szülője a <code>&lt;div class="cards"&gt;</code>. Ennek a sornak most nincs pöttye: semmi nem jelöli ki.</li>
+<li>Írd át az utolsó szabály szelektorát úgy, hogy a <code>&lt;div class="cards"&gt;</code>-t jelölje ki. Ha jó, az a sor kap pöttyöt.</li>
+</ol>`,
+    start: MAIN_OK + "\n\n" + CARD_OK + `
+
+.card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}`,
+    hint: `A kártyák szülője a <code>&lt;div class="cards"&gt;</code>. Az utolsó szabály szelektora egyetlen betűvel különbözik attól, ami most ott van.`,
+    solution: MAIN_OK + "\n\n" + CARD_OK + "\n\n" + CARDS_OK,
+    why: `Az utolsó szabályban <code>.card</code> helyett <code>.cards</code>: a <code>&lt;div class="cards"&gt;</code> a négy kártya szülője, ezért ő teszi őket egymás mellé.`,
+    measure(root) {
+      const c = cardsOf(root);
+      if (!sameRow(c)) return `A kártyák <span class="bad">nincsenek egy sorban</span>`;
+      const g = cardGaps(c);
+      return `Mind a 4 kártya <span class="good">egy sorban</span>, közük: <b>${g.map(Math.round).join(", ")}px</b>`;
+    },
+    check(root) {
+      const p = [];
+      const c = cardsOf(root);
+      const wrap = root.querySelector(".cards");
+      if (!sameRow(c)) p.push("A kártyák még nincsenek egy sorban.");
+      else {
+        if (cardGaps(c).some(g => !near(g, 16, 0.6))) p.push("A kártyák között nem 16px a köz.");
+        const left = c[0].offsetLeft - wrap.offsetLeft, right = wrap.offsetLeft + wrap.offsetWidth - (c[3].offsetLeft + c[3].offsetWidth);
+        if (!near(left, right, 2)) p.push("A kártyák sora nincs középen.");
+      }
+      if (getComputedStyle(wrap).flexWrap !== "wrap") p.push("Keskeny ablakban a kártyák nem tördelődnének új sorba (<code>flex-wrap</code>).");
+      if (c.some(x => getComputedStyle(x).display === "flex")) p.push("A kártyákon belül a név és az ár még egymás mellett van: a <code>.card</code>-ra nem kell <code>display: flex</code>.");
+      return p;
+    },
+  },
+  {
+    id: "select",
+    title: "7. Címke és legördülő lista",
+    tag: "A · HTML űrlap",
+    kind: "html",
+    count: `7 tesztben hiányzott a <code>&lt;select&gt;</code>, 6-ban nem volt összekötve a címke`,
+    paper: `In the Order section, after its paragraph, a form with:<ul><li>a text field for the name, with a label that is connected to it, and it must be filled in before sending;</li><li>a drop-down list of the three pickup times, with a connected label;</li></ul><i>Done when:</i> clicking the text "Your name" puts the cursor in the name field.`,
+    now: `Ha a „Your name” szövegre kattintasz, nem kerül a kurzor a mezőbe. Az időpontok csak szövegként vannak ott, nem lehet közülük választani.`,
+    learn: `<p>A <code>&lt;label for="valami"&gt;</code> ahhoz az elemhez tartozik, amin <code>id="valami"</code> van. A <code>for</code> és az <code>id</code> betűre ugyanaz kell legyen. A <code>name</code> nem ugyanaz: az az elküldött adat neve.</p><p>A legördülő lista egy <code>&lt;select&gt;</code>, benne minden választási lehetőség egy <code>&lt;option&gt;</code>. Neki is kell <code>id</code> és saját címke. Példa:</p><pre>&lt;label for="colour"&gt;Colour&lt;/label&gt;
+&lt;select id="colour" name="colour"&gt;
+  &lt;option&gt;red&lt;/option&gt;
+  &lt;option&gt;blue&lt;/option&gt;
+&lt;/select&gt;</pre>`,
+    bridge: `<ol>
+<li>Az első sor: <code>&lt;label for="text"&gt;</code>. A <code>for</code> azt mondja: „én ahhoz az elemhez tartozom, amin <code>id="text"</code> van”.</li>
+<li>Keress <code>id="text"</code>-et a kódban: nincs. A mezőn csak <code>name="name"</code> van, <code>id</code> egyáltalán nincs rajta. Ezért a címke <b>semmihez nem tartozik</b>. A jobb oldali doboz is ezt mutatja.</li>
+<li>Ha egy címke semmihez nem tartozik, a rákattintás nem csinál semmit. Ezért nem kerül a kurzor a mezőbe.</li>
+<li>A <code>&lt;p&gt;Pickup time: 9:45, 10:40, 11:35&lt;/p&gt;</code> egy bekezdés, vagyis sima szöveg. A böngésző nem tudja, hogy ezek választási lehetőségek.</li>
+<li>Két javítás kell: a mezőn egy <code>id</code>, ami egyezik a <code>for</code>-ral (vagy a <code>for</code> átírása), és a bekezdés helyére egy legördülő lista a három időponttal, saját, összekötött címkével.</li>
+</ol>`,
+    start: `<form>
+  <label for="text">Your name</label>
+  <input type="text" name="name" required>
+
+  <p>Pickup time: 9:45, 10:40, 11:35</p>
+
+  <button type="submit">Send order</button>
+</form>`,
+    hint: `A <code>for</code> értékének meg kell egyeznie a mező <code>id</code>-jével. A legördülő lista elemei: W3Schools, <b>HTML Form Elements → The &lt;select&gt; Element</b>.`,
+    solution: `<form>
+  <label for="name">Your name</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="pickup">Pickup time</label>
+  <select id="pickup" name="pickup">
+    <option>9:45</option>
+    <option>10:40</option>
+    <option>11:35</option>
+  </select>
+
+  <button type="submit">Send order</button>
+</form>`,
+    why: `A mező kapott egy <code>id="name"</code>-et, és a <code>for</code> is <code>name</code> lett. A bekezdés helyére egy <code>&lt;select&gt;</code> került három <code>&lt;option&gt;</code>-nel és egy saját <code>&lt;label for="pickup"&gt;</code>-lel.`,
+    check(root) {
+      const p = [];
+      const page = root.querySelector(".page");
+      const name = page.querySelector("input[type=text]");
+      if (!name) p.push("Nincs szöveges mező (<code>&lt;input type=\"text\"&gt;</code>) a névhez.");
+      else {
+        if (!name.labels || ![...name.labels].some(l => /name/i.test(l.textContent))) p.push("A „Your name” címke még nincs összekötve a mezővel.");
+        if (!name.required) p.push("A névmező nem kötelező (<code>required</code>). Azt ne vedd ki.");
+      }
+      const sel = page.querySelector("select");
+      if (!sel) p.push("Nincs legördülő lista (<code>&lt;select&gt;</code>).");
+      else {
+        const texts = [...sel.options].map(o => o.text.trim());
+        if (texts.join("|") !== "9:45|10:40|11:35") p.push(`A listában ezek vannak: ${texts.map(t => "<code>" + esc(t) + "</code>").join(", ") || "semmi"}. A három időpont kell: 9:45, 10:40, 11:35.`);
+        if (!sel.labels || sel.labels.length === 0) p.push("A legördülő listának nincs összekötött címkéje.");
+      }
+      if (page.querySelector("p") && /9:45/.test(page.querySelector("p").textContent)) p.push("A régi szöveges bekezdés az időpontokkal még ott van. Töröld.");
+      return p;
+    },
+  },
+  {
+    id: "radios",
+    title: "8. Fizetés és küldés",
+    tag: "A · HTML űrlap",
+    kind: "html",
+    count: `5 tesztben nem volt <code>&lt;form&gt;</code>, 3-ban különbözött a rádiók <code>name</code>-je`,
+    paper: `<ul><li>the two payment options as radio buttons inside a <code>&lt;fieldset&gt;</code> with a <code>&lt;legend&gt;</code>. Only one of them can be selected at a time;</li><li>a <i>Send order</i> button.</li></ul><i>Done when:</i> selecting <i>card</i> unselects <i>cash</i>, and clicking <i>Send order</i> with an empty name shows a warning.`,
+    now: `A cash és a card egyszerre is bekapcsolható. A Send order gomb üres névvel sem szól, és semmit nem küld.`,
+    learn: `<p>A rádiógombokat a <code>name</code> fogja egy csoportba: <b>azonos <code>name</code></b> = egy csoport, és egy csoportban egyszerre csak egy lehet bekapcsolva. Az <code>id</code> másra kell: azzal köti össze a böngésző a címkét a gombbal.</p><pre>&lt;input type="radio" id="small" name="size"&gt; &lt;label for="small"&gt;small&lt;/label&gt;
+&lt;input type="radio" id="large" name="size"&gt; &lt;label for="large"&gt;large&lt;/label&gt;</pre><p>A küldés gomb azt a <code>&lt;form&gt;</code>-ot küldi el, amelyiken belül van, és a <code>required</code> is csak küldéskor ellenőrződik. <code>&lt;form&gt;</code> nélkül nincs mit elküldeni, ezért nincs figyelmeztetés sem.</p>`,
+    bridge: `<ol>
+<li>A két rádiógomb: <code>name="cash"</code> és <code>name="card"</code>. Más a <code>name</code>-jük, ezért a böngésző szerint <b>két külön csoport</b>, mindkettőben egy gombbal. A jobb oldali doboz is két csoportot mutat.</li>
+<li>Minden csoportban bekapcsolható egy gomb, ezért a cash és a card is bekapcsolható egyszerre.</li>
+<li>Az <code>id</code>-k jók: azok kötik a gombokat a címkékhez (a „cash” szövegre kattintva bekapcsol). A <code>name</code> nem erre való, hanem a csoportra.</li>
+<li>Nézd meg a kód elejét és végét: nincs <code>&lt;form&gt;</code>. A gomb nem tudja, mit küldjön, ezért kattintásra nem történik semmi, és a <code>required</code> sem szól.</li>
+<li>Két javítás kell: a két rádiógomb kapjon <b>ugyanolyan</b> <code>name</code>-et, és az egész kerüljön egy <code>&lt;form&gt;</code> … <code>&lt;/form&gt;</code> közé.</li>
+</ol>`,
+    start: `<label for="name">Your name</label>
+<input type="text" id="name" name="name" required>
+
+<fieldset>
+  <legend>Payment</legend>
+  <input type="radio" id="cash" name="cash">
+  <label for="cash">cash</label>
+  <input type="radio" id="card" name="card">
+  <label for="card">card</label>
+</fieldset>
+
+<button type="submit">Send order</button>`,
+    hint: `A rádiógombok csoportját a <code>name</code> adja: ugyanaz a <code>name</code> kell mindkettőre (például <code>payment</code>). A <code>&lt;form&gt;</code> az első sor elé, a <code>&lt;/form&gt;</code> az utolsó után kerül.`,
+    solution: `<form>
+  <label for="name">Your name</label>
+  <input type="text" id="name" name="name" required>
+
+  <fieldset>
+    <legend>Payment</legend>
+    <input type="radio" id="cash" name="payment">
+    <label for="cash">cash</label>
+    <input type="radio" id="card" name="payment">
+    <label for="card">card</label>
+  </fieldset>
+
+  <button type="submit">Send order</button>
+</form>`,
+    why: `Mindkét rádiógomb <code>name="payment"</code> lett (egy csoport), és az egész egy <code>&lt;form&gt;</code>-ba került, így a gomb elküldi, és üres névnél szól a <code>required</code>.`,
+    check(root) {
+      const p = [];
+      const page = root.querySelector(".page");
+      const radios = [...page.querySelectorAll("input[type=radio]")];
+      const form = page.querySelector("form");
+      if (radios.length !== 2) p.push(`Két rádiógomb kell (most ${radios.length} van).`);
+      else if (!radios[0].name || radios[0].name !== radios[1].name) p.push("A két rádiógombnak még nem ugyanaz a <code>name</code>-je, ezért mindkettő bekapcsolható.");
+      if (radios.some(r => !r.labels || r.labels.length === 0)) p.push("Valamelyik rádiógomb címkéje nincs összekötve. Az <code>id</code>-ket ne vedd ki.");
+      const fs = page.querySelector("fieldset");
+      if (!fs || !fs.querySelector("legend") || radios.some(r => !fs.contains(r))) p.push("A rádiógombok legyenek egy <code>&lt;fieldset&gt;</code>-ben, <code>&lt;legend&gt;</code>-del.");
+      if (!form) p.push("Nincs <code>&lt;form&gt;</code>.");
+      else {
+        const name = page.querySelector("#name");
+        const btn = page.querySelector("button, input[type=submit]");
+        if (!name || !form.contains(name) || radios.some(r => !form.contains(r))) p.push("Nem minden mező van a <code>&lt;form&gt;</code>-on belül.");
+        if (!btn || !form.contains(btn)) p.push("A Send order gomb nincs a <code>&lt;form&gt;</code>-on belül.");
+        else if (btn.type !== "submit") p.push("A gomb nem küld (<code>type=\"submit\"</code> kell, vagy semmi).");
+        if (name && name.required && form.checkValidity()) p.push("Üres névvel a form elküldhető lenne.");
+        if (name && !name.required) p.push("A névmező nem kötelező (<code>required</code>). Azt ne vedd ki.");
+      }
+      return p;
+    },
+  },
+  {
+    id: "bonus",
+    title: "★ Extra: Sold out",
+    tag: "Bónusz · CSS",
+    kind: "css",
+    extra: true,
+    count: `6 tesztben sikerült`,
+    paper: `The <i>Rántott csirkés wrap</i> is sold out today. Give its card the class <code>sold-out</code> as well (it keeps <code>card</code>). In <code>style.css</code>, make that card half transparent. Make it appear as the <b>last</b> card in the row, without moving it in <code>index.html</code>.`,
+    now: `A wrap kártyája halvány, de még mindig a harmadik helyen van.`,
+    learn: `<p>Egy flex szülő a gyerekeit alapból a HTML sorrendjében teszi ki. Ezt a gyerekre írt <code>order</code> tulajdonsággal lehet megváltoztatni: minden gyerek <code>order</code>-je alapból <code>0</code>, a böngésző kisebbtől a nagyobb felé rakja őket, az egyformák maradnak a HTML sorrendjében.</p><p>Példa: <code>.first { order: -1; }</code> → ez az elem kerül előre, a HTML átírása nélkül.</p>`,
+    bridge: `<ol>
+<li>Az utolsó szabály szelektora <code>.sold-out</code>: bal oldalt a wrap sora kapott pöttyöt (<code>class="card sold-out"</code>: két class, szóközzel elválasztva, ezért a <code>.card</code> és a <code>.sold-out</code> is kijelöli).</li>
+<li>Az <code>opacity: 0.5</code> működik: a kártya félig átlátszó.</li>
+<li>A kártyákat a <code>.cards</code> (a flex szülő) rakja egymás mellé, a HTML sorrendjében: a wrap a harmadik <code>&lt;article&gt;</code>, ezért a harmadik helyen van.</li>
+<li>A HTML-t nem szabad átírni. A sorrendet a <b>kártyára</b> írt tulajdonsággal lehet megváltoztatni (lásd lent).</li>
+</ol>`,
+    start: MAIN_OK + "\n\n" + CARD_OK + "\n\n" + CARDS_OK + `
+
+.sold-out {
+  opacity: 0.5;
+}`,
+    hint: `A flex gyerekek sorrendje: W3Schools, <b>CSS Flex Items → The order Property</b>. Mennyi a többi kártya <code>order</code>-je, ha nem írsz semmit?`,
+    solution: MAIN_OK + "\n\n" + CARD_OK + "\n\n" + CARDS_OK + `
+
+.sold-out {
+  opacity: 0.5;
+  order: 1;
+}`,
+    why: `Egy új sor: <code>order: 1;</code>. A többi kártya <code>order</code>-je 0, ezért az 1-es a sor végére kerül.`,
+    measure(root) {
+      const c = cardsOf(root);
+      const s = [...c].sort((a, b) => a.offsetTop - b.offsetTop || a.offsetLeft - b.offsetLeft);
+      const pos = s.indexOf(root.querySelector(".sold-out")) + 1;
+      return `A wrap kártyája a sorban a <b class="${pos === 4 ? "good" : "bad"}">${pos}.</b> helyen van`;
+    },
+    check(root) {
+      const p = [];
+      const c = cardsOf(root);
+      const so = root.querySelector(".sold-out");
+      const s = [...c].sort((a, b) => a.offsetTop - b.offsetTop || a.offsetLeft - b.offsetLeft);
+      const op = parseFloat(getComputedStyle(so).opacity);
+      if (!(op > 0.2 && op < 0.8)) p.push("A wrap kártyája nem félig átlátszó.");
+      if (c.some(x => x !== so && parseFloat(getComputedStyle(x).opacity) < 1)) p.push("Más kártya is halvány lett.");
+      if (s[3] !== so) p.push("A wrap kártyája még nem az utolsó a sorban.");
+      if (!sameRow(c)) p.push("A kártyák már nincsenek egy sorban.");
+      return p;
+    },
+  },
+];
+
+// ---------- State (per browser, optional) ----------
+
+const KEY = "test03-javitas-v1";
+let state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (saved && typeof saved === "object") state = Object.assign(state, saved);
+} catch (e) { /* storage unavailable: start fresh */ }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+// ---------- UI ----------
+
+const $steps = document.getElementById("steps");
+const $task = document.getElementById("task");
+const $progress = document.getElementById("progress");
+const $finished = document.getElementById("finished");
+
+function renderSteps() {
+  $steps.innerHTML = "";
+  TASKS.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    if (i === state.current) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (t.extra) b.classList.add("extra");
+    b.addEventListener("click", () => { state.current = i; save(); renderAll(); });
+    $steps.appendChild(b);
+  });
+  const required = TASKS.filter(t => !t.extra);
+  const n = required.filter(t => state.done[t.id]).length;
+  const shown = required.filter(t => state.done[t.id] && state.revealed[t.id]).length;
+  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (state.done.bonus ? " + extra ★" : "");
+  $finished.innerHTML = n === required.length
+    ? `<div class="finished">Mind a ${required.length} feladat kész. Ha van időd, jöhet a ★ Extra.</div>`
+    : "";
+}
+
+function editorHtml(label) {
+  return `
+        <p class="label">${label}</p>
+        <textarea class="code" id="code" spellcheck="false" wrap="off"></textarea>
+        <div class="buttons">
+          <button class="primary" id="check">Ellenőrzés</button>
+          <button id="reset">Visszaállítás</button>
+          <span class="kbd">vagy Ctrl+Enter</span>
+        </div>
+        <div id="result"></div>
+        <div id="hint"></div>
+        <div id="solution"></div>`;
+}
+
+function renderTask() {
+  const t = TASKS[state.current];
+  const code = state.code[t.id] ?? t.start;
+  $task.innerHTML = `
+    <div class="task-head">
+      <div class="tag">${esc(t.tag)}</div>
+      <h2>${esc(t.title)}</h2>
+    </div>
+    <div class="goal">
+      <span class="count">Előfordult: ${t.count}</span>
+      <h3>A feladatban ez állt</h3>
+      <div class="paper">${t.paper}</div>
+      <h3>Mi történik most</h3>
+      <p class="now">${t.now}</p>
+      <h3>Lépésről lépésre: mit csinál most a kód</h3>
+      <div class="bridge">${t.bridge}</div>
+      <h3>Amit tudni kell</h3>
+      <div class="learn">${t.learn}</div>
+    </div>
+    ${t.kind === "css" ? `
+    <div class="grid">
+      <div>
+        <p class="label">index.html (ezt nem kell átírni). A pötty jelöli, melyik sorra hat a CSS-ed.</p>
+        <div class="listing" id="listing"></div>
+      </div>
+      <div>${editorHtml("style.css: ezt javítsd")}</div>
+    </div>
+    <div class="block">
+      <p class="label">Így néz ki az oldal egy 1200px széles ablakban (a szaggatott vonal a &lt;main&gt; doboza)</p>
+      <div id="out" class="preview-host scaled"></div>
+      <div class="measure" id="measure"></div>
+    </div>
+    <div class="block">
+      <p class="label">Mit jelöl ki a CSS-ed?</p>
+      <div class="matches" id="matches"></div>
+    </div>` : `
+    <div class="grid">
+      <div>${editorHtml("index.html (az Order rész): ezt javítsd")}</div>
+      <div>
+        <p class="label">Így néz ki az oldal (kipróbálhatod)</p>
+        <div id="out" class="preview-host"></div>
+        <p class="label" style="margin-top:16px">Mit lát a böngésző?</p>
+        <div class="matches" id="matches"></div>
+      </div>
+    </div>`}`;
+  const $code = document.getElementById("code");
+  $code.value = code;
+  const fit = () => { $code.style.height = "auto"; $code.style.height = Math.max(300, $code.scrollHeight + 4) + "px"; };
+  fit();
+  $code.addEventListener("input", fit);
+  $code.addEventListener("input", () => { state.code[t.id] = $code.value; save(); runOutput(t); });
+  $code.addEventListener("keydown", e => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const s = $code.selectionStart, en = $code.selectionEnd;
+      $code.value = $code.value.slice(0, s) + "  " + $code.value.slice(en);
+      $code.selectionStart = $code.selectionEnd = s + 2;
+      $code.dispatchEvent(new Event("input"));
+    }
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doCheck(t); }
+  });
+  document.getElementById("check").addEventListener("click", () => doCheck(t));
+  document.getElementById("reset").addEventListener("click", () => {
+    delete state.code[t.id];
+    save();
+    renderTask();
+  });
+  runOutput(t);
+  if (state.revealed[t.id]) showSolution(t);
+}
+
+// Live output: the scaled page for CSS, the form for HTML.
+function runOutput(t) {
+  const code = document.getElementById("code").value;
+  const out = document.getElementById("out");
+  const root = renderPage(out, code, null, t.kind);
+  if (t.kind === "css") {
+    const matches = matchRules(root, code);
+    renderListing(root, matches);
+    renderMatches(code, matches);
+    const $m = document.getElementById("measure");
+    try { $m.innerHTML = t.measure ? t.measure(root) : ""; } catch (e) { $m.innerHTML = ""; }
+  } else {
+    renderFormView(root);
+  }
+  return root;
+}
+
+function doCheck(t) {
+  const root = runOutput(t);
+  let problems;
+  try { problems = t.check(root); }
+  catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message) + ". Lehet, hogy hiányzik vagy elromlott egy elem, amit a feladat nem kért átírni."]; }
+  const $r = document.getElementById("result");
+  const $h = document.getElementById("hint");
+  if (problems.length === 0) {
+    state.done[t.id] = true;
+    save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.current && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button class="next" id="next">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("next").addEventListener("click", () => {
+      state.current = nextIdx; save(); renderAll();
+    });
+    renderSteps();
+  } else {
+    $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    state.fails[t.id] = (state.fails[t.id] || 0) + 1;
+    save();
+    $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+    if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+      $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
+      document.getElementById("stuck").addEventListener("click", () => {
+        if (!confirm("Biztos? Előbb olvasd el még egyszer a „Lépésről lépésre” részt és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+        document.getElementById("stuck").remove();
+        state.revealed[t.id] = true;
+        save();
+        showSolution(t);
+        renderSteps();
+      });
+    }
+  }
+}
+
+// After this many failed checks the student may open the solution.
+const STUCK_AFTER = 2;
+
+// The solution, with the lines that differ from the broken start marked.
+function showSolution(t) {
+  const before = t.start.split("\n").map(l => l.trim());
+  const lines = t.solution.split("\n").map(l =>
+    `<div${l.trim() && !before.includes(l.trim()) ? ' class="new"' : ""}>${esc(l) || " "}</div>`).join("");
+  const $s = document.getElementById("solution");
+  $s.innerHTML = `<div class="solution">
+    <h4>Megoldás</h4>
+    <p>${t.why}</p>
+    <pre>${lines}</pre>
+    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és nézd meg, mi változik az oldalon.</p>
+    <button id="load">Betöltöm a szerkesztőbe</button>
+  </div>`;
+  document.getElementById("load").addEventListener("click", () => {
+    const $code = document.getElementById("code");
+    $code.value = t.solution;
+    $code.dispatchEvent(new Event("input"));
+    doCheck(t);
+  });
+}
+
+function renderAll() { renderSteps(); renderTask(); }
+
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Biztosan visszaállítod az összes feladatot?")) return;
+  state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+  save();
+  renderAll();
+});
+
+if (!(state.current >= 0 && state.current < TASKS.length)) state.current = 0;
+renderAll();
+</script>
+</body>
+</html>

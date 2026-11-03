@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 03 bemutató</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --bad: #b42318;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 22px/1.45 system-ui, "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 18px;
+  }
+  header.top .count { margin-left: auto; opacity: .85; }
+  header.top button {
+    font: inherit;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  main { flex: 1; padding: 24px 32px 32px; max-width: 1500px; width: 100%; margin: 0 auto; }
+  h1 { font-size: 40px; margin: 0 0 8px; }
+  .lead { font-size: 26px; margin: 0 0 20px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .pair > div { min-width: 0; }
+  @media (max-width: 1000px) { .pair { grid-template-columns: 1fr; } }
+  .side h2 { font-size: 24px; margin: 0 0 8px; }
+  .side.bad h2 { color: var(--bad); }
+  .side.good h2 { color: var(--ok); }
+  .html { font: 15px/1.4 Consolas, "Cascadia Mono", "Courier New", monospace; color: var(--muted); margin: 0 0 6px; white-space: pre; overflow-x: auto; }
+  textarea {
+    width: 100%;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-left: 6px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font: 21px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+    resize: vertical;
+    tab-size: 2;
+  }
+  .side.bad textarea { border-left-color: var(--bad); }
+  .side.good textarea { border-left-color: var(--ok); }
+  .run {
+    margin: 10px 0 0;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+  }
+  .view {
+    margin-top: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px 8px 0 0;
+    min-height: 90px;
+    overflow: hidden;
+  }
+  .meter {
+    background: #000;
+    color: #e8e8ec;
+    border-radius: 0 0 8px 8px;
+    padding: 8px 16px;
+    font: 19px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+  .meter .b { color: #ff8a80; }
+  .meter .g { color: #8ce99a; }
+  .rule {
+    margin-top: 22px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 26px;
+  }
+  .rule b { color: var(--accent); }
+  code { background: rgba(0,0,0,.07); padding: 1px 6px; border-radius: 4px; font-family: Consolas, "Cascadia Mono", "Courier New", monospace; }
+  .say {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 17px;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  .say.hidden { display: none; }
+  .end { text-align: center; padding-top: 80px; }
+  .end h1 { font-size: 52px; }
+  .end p { font-size: 30px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <span>Test 03 · bemutató</span>
+  <button id="prev">← Előző</button>
+  <button id="next">Következő →</button>
+  <button id="notes">Jegyzet (N)</button>
+  <span class="count" id="count"></span>
+</header>
+<main id="slide"></main>
+
+<script>
+"use strict";
+
+// Each slide: title, lead, html (the fixed page piece), base (hidden CSS), bad / good (editable CSS), measure(root) -> HTML, rule (HTML), say (teacher notes).
+const CARDS_HTML = `<div class="cards">
+  <article class="card"><h3>Szendvics</h3><p>450 Ft</p></article>
+  <article class="card"><h3>Pogácsa</h3><p>250 Ft</p></article>
+  <article class="card"><h3>Wrap</h3><p>890 Ft</p></article>
+</div>`;
+const HEADER_HTML = `<header>
+  <h1>Széchenyi Büfé</h1>
+  <nav><ul><li>Today</li><li>Order</li></ul></nav>
+</header>`;
+
+const SLIDES = [
+  {
+    title: "A padding belül van, a margin kívül",
+    lead: "A feladat: „16px of space inside”. Belül = padding.",
+    html: `<header><h1>Széchenyi Büfé</h1></header>`,
+    base: `h1 { margin: 0; font-size: 26px; }`,
+    bad: `header {
+  background: #ffd166;
+  margin: 16px 24px;
+}`,
+    good: `header {
+  background: #ffd166;
+  padding: 16px 24px;
+}`,
+    measure(root) {
+      const h = root.querySelector("header");
+      return `header: ${h.offsetWidth} × <span class="${h.offsetHeight > 50 ? "g" : "b"}">${h.offsetHeight}</span> px`;
+    },
+    rule: `A <code>padding</code> a kereten <b>belül</b> van, ott a háttérszín is: a doboz nagyobb lesz. A <code>margin</code> a kereten <b>kívül</b>, átlátszó: a dobozt csak arrébb tolja.`,
+    say: `Kattints a rossznál a Megjelenítésre: a sárga sáv ugyanolyan vékony, csak elcsúszott, a cím a széléhez tapad. Kérdezd meg: „hol van most a 16px?”. Aztán a jót: a sáv magasabb lett. 4 tesztben a header, 2-ben a kártya térköze is margin volt.`,
+  },
+  {
+    title: "220px = tartalom + padding + keret",
+    lead: "Alapból a width csak a tartalom szélessége.",
+    html: `<article class="card"><h3>Szendvics</h3><p>450 Ft</p></article>`,
+    base: `h3 { margin: 0 0 6px; } p { margin: 0; } .page { padding: 12px; }`,
+    bad: `.card {
+  width: 220px;
+  padding: 16px;
+  border: 2px solid #333;
+}`,
+    good: `.card {
+  box-sizing: border-box;
+  width: 220px;
+  padding: 16px;
+  border: 2px solid #333;
+}`,
+    measure(root) {
+      const c = root.querySelector(".card");
+      return `article.card <span class="${c.offsetWidth === 220 ? "g" : "b"}">${c.offsetWidth}</span> × ${c.offsetHeight}`;
+    },
+    rule: `220 + 2 × 16 + 2 × 2 = <b>256</b>. A <code>box-sizing: border-box</code> után a <code>width</code>-be <b>beleszámít</b> a padding és a keret is. Ugyanezt mutatja az F12 → Elements, ha a kártya fölé viszed az egeret.`,
+    say: `Kattints a rossznál a Megjelenítésre: 256. Kérdezd meg: „honnan jön a 36?”. Írd fel a táblára: 220 + 16 + 16 + 2 + 2. Aztán a jót: 220. Mondd el, hogy a width: 184px is jó megoldás, csak ott neked kell számolni. 8 tesztben nem 220 volt a kártya.`,
+  },
+  {
+    title: "A flex a szülőre kerül",
+    lead: "A display: flex a gyerekeket rendezi egymás mellé.",
+    html: CARDS_HTML,
+    base: `.card { border: 2px solid #333; border-radius: 8px; padding: 8px 14px; } h3 { margin: 0 8px 0 0; font-size: 20px; } p { margin: 0; } .page { padding: 12px; }`,
+    bad: `.card {
+  display: flex;
+  gap: 16px;
+}`,
+    good: `.cards {
+  display: flex;
+  gap: 16px;
+}`,
+    measure(root) {
+      const c = [...root.querySelectorAll(".card")];
+      const row = c.every(x => Math.abs(x.offsetTop - c[0].offsetTop) < 2);
+      return row ? `<span class="g">a 3 kártya egymás mellett</span>` : `<span class="b">a kártyák egymás alatt</span>, a név és az ár egymás mellett`;
+    },
+    rule: `Arra az elemre írd a <code>display: flex</code>-et, amelyiknek a <b>gyerekeit</b> egymás mellé akarod tenni. A kártyák szülője a <code>&lt;div class="cards"&gt;</code>. Ugyanígy: a menüpontok szülője az <code>&lt;ul&gt;</code>, nem a <code>&lt;li&gt;</code>.`,
+    say: `Kattints a rossznál a Megjelenítésre, és kérdezd meg: „mi került egymás mellé?” (a név és az ár, a kártyán belül). Mutasd meg a HTML-t: ki kinek a gyereke. Aztán a jót: egy betű a különbség. 4 tesztben a li-re, az a-ra vagy a .card-ra került a flex, 4 tesztben a kártyák sorához nem volt flexbox.`,
+  },
+  {
+    title: "Cím balra, menü jobbra, egy vonalban",
+    lead: "Két irány: a sor mentén és keresztben.",
+    html: HEADER_HTML,
+    base: `header { padding: 12px 20px; background: #f0eee8; } nav ul { display: flex; gap: 16px; list-style-type: none; padding: 0; } h1 { font-size: 30px; }`,
+    bad: `header {
+  display: flex;
+}`,
+    good: `header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}`,
+    measure(root) {
+      const h = root.querySelector("header"), nav = root.querySelector("nav"), h1 = root.querySelector("h1"), li = root.querySelector("li");
+      const right = h.offsetWidth - (nav.offsetLeft - h.offsetLeft + nav.offsetWidth) - 20;
+      const dy = Math.round(Math.abs((li.offsetTop + li.offsetHeight / 2) - (h1.offsetTop + h1.offsetHeight / 2)));
+      return `menü a jobb széltől: <span class="${right < 2 ? "g" : "b"}">${Math.round(right)}px</span> · függőleges eltérés: <span class="${dy <= 2 ? "g" : "b"}">${dy}px</span>`;
+    },
+    rule: `<code>justify-content</code>: a sor mentén (vízszintesen), a <code>space-between</code> az elsőt balra, az utolsót jobbra teszi. <code>align-items</code>: keresztben (függőlegesen), a <code>center</code> egy vonalba hozza őket. Mindkettő a <b>szülőre</b>, a <code>header</code>-re kerül.`,
+    say: `Kattints a rossznál a Megjelenítésre: a menü a cím mellé tapad, és kicsit feljebb van. Írd be élőben csak a justify-content-et (az oldal rögtön frissül), aztán az align-items-et. Csak 6-an csinálták meg az egyiket, 6-an a másikat. A position: absolute (1 tesztben) is a jobb szélre tette, de a feladat flexboxot kért.`,
+  },
+  {
+    end: true,
+    title: "Most ti jöttök",
+    lead: "Nyissátok meg: <code>korbal.github.io/2026-13-F-public</code> → Test 03 → Javítás",
+    say: `Járj körbe, nézd a „Kész: x / 8” számlálót. Akinél piros marad, ahhoz menj oda. A 7. és a 8. feladat az űrlap (select, label for, rádiók name-je, form).`,
+  },
+];
+
+let current = 0;
+let showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, +(sessionStorage.getItem("demo03-slide") || 0))); } catch (e) { /* ignore */ }
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Render the slide's HTML with the given CSS in a shadow root, then measure it.
+function draw(el, s, css) {
+  const view = el.querySelector(".view");
+  view.innerHTML = "";
+  const box = document.createElement("div");
+  view.appendChild(box);
+  const root = box.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>:host { all: initial; display: block; font-family: Arial, sans-serif; color: black; } .page { position: relative; padding: 8px; }</style><style>${s.base}</style><style>${css}</style><div class="page">${s.html}</div>`;
+  let m;
+  try { m = s.measure(root); } catch (e) { m = '<span class="b">nem mérhető: ' + esc(e.message) + "</span>"; }
+  el.querySelector(".meter").innerHTML = m;
+}
+
+function side(kind, label, code, html) {
+  const rows = code.split("\n").length + 1;
+  return `<div class="side ${kind}">
+    <h2>${label}</h2>
+    <textarea rows="${rows}" spellcheck="false" wrap="off">${esc(code)}</textarea>
+    <button class="run">▶ Megjelenítés</button>
+    <div class="shown" hidden>
+      <div class="view"></div>
+      <div class="meter"></div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const s = SLIDES[current];
+  const $m = document.getElementById("slide");
+  if (s.end) {
+    $m.innerHTML = `<div class="end"><h1>${esc(s.title)}</h1><p>${s.lead}</p></div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+  } else {
+    $m.innerHTML = `<h1>${esc(s.title)}</h1>
+      <p class="lead">${esc(s.lead)}</p>
+      <p class="html">${esc(s.html)}</p>
+      <div class="pair">${side("bad", "✗ Rossz", s.bad)}${side("good", "✓ Jó", s.good)}</div>
+      <div class="rule">${s.rule}</div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+    $m.querySelectorAll(".side").forEach(el => {
+      const ta = el.querySelector("textarea");
+      const shown = el.querySelector(".shown"), btn = el.querySelector(".run");
+      const show = () => { shown.hidden = false; btn.hidden = true; draw(el, s, ta.value); };
+      btn.addEventListener("click", show);
+      ta.addEventListener("input", () => { if (!shown.hidden) draw(el, s, ta.value); });
+      ta.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); show(); } });
+      ta.addEventListener("keydown", e => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const a = ta.selectionStart, b = ta.selectionEnd;
+          ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b);
+          ta.selectionStart = ta.selectionEnd = a + 2;
+          if (!shown.hidden) draw(el, s, ta.value);
+        }
+      });
+    });
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("demo03-slide", current); } catch (e) { /* ignore */ }
+}
+
+function go(d) {
+  current = Math.min(SLIDES.length - 1, Math.max(0, current + d));
+  render();
+}
+
+document.getElementById("prev").addEventListener("click", () => go(-1));
+document.getElementById("next").addEventListener("click", () => go(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; render(); });
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") go(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; render(); }
+});
+
+render();
+</script>
+</body>
+</html>
