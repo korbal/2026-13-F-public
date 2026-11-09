@@ -38,7 +38,11 @@ button {
   cursor: pointer;
 }
 
-/* B: a flex a SZÜLŐRE (.cards) kerül, nem a kártyára */
+/* B: a kártyák egymás mellé.
+   A flex a SZÜLŐRE kerül (.cards, a doboz, amiben a kártyák vannak), nem a kártyára.
+   display: flex  -> a gyerekei egy sorba állnak
+   flex-wrap: wrap -> ha nem férnek el, új sorba törnek (4 + 2)
+   gap: 16px       -> 16px hely a kártyák között */
 .cards {
   display: flex;
   flex-wrap: wrap;

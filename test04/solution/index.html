@@ -32,7 +32,10 @@
 
     <section id="filter">
       <h2>Szűrés típus szerint</h2>
-      <!-- D: a <select> connected label-lel (for = id) -->
+      <!-- D: a címke és a legördülő lista.
+           A label for="type-select" és a select id="type-select" UGYANAZ: így van összekötve
+           (a "Típus:" szóra kattintva a lista kap fókuszt).
+           A value-t kapja meg a JS. Betűre ugyanaz legyen, mint a type az adatban (script.js). -->
       <label for="type-select">Típus:</label>
       <select id="type-select">
         <option value="all">Összes</option>
