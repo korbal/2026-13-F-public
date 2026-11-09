@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 04 bemutató</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --bad: #b42318;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 22px/1.45 system-ui, "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 18px;
+  }
+  header.top .count { margin-left: auto; opacity: .85; }
+  header.top button {
+    font: inherit;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  main { flex: 1; padding: 24px 32px 32px; max-width: 1500px; width: 100%; margin: 0 auto; }
+  h1 { font-size: 40px; margin: 0 0 8px; }
+  .lead { font-size: 26px; margin: 0 0 20px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .pair > div { min-width: 0; }
+  @media (max-width: 1000px) { .pair { grid-template-columns: 1fr; } }
+  .side h2 { font-size: 24px; margin: 0 0 8px; }
+  .side.bad h2 { color: var(--bad); }
+  .side.good h2 { color: var(--ok); }
+  .html { font: 15px/1.4 Consolas, "Cascadia Mono", "Courier New", monospace; color: var(--muted); margin: 0 0 6px; white-space: pre; overflow-x: auto; }
+  textarea {
+    width: 100%;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-left: 6px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font: 21px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+    resize: vertical;
+    tab-size: 2;
+  }
+  .side.bad textarea { border-left-color: var(--bad); }
+  .side.good textarea { border-left-color: var(--ok); }
+  .run {
+    margin: 10px 0 0;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+  }
+  .view {
+    margin-top: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px 8px 0 0;
+    min-height: 90px;
+    overflow: hidden;
+  }
+  .meter {
+    background: #000;
+    color: #e8e8ec;
+    border-radius: 0 0 8px 8px;
+    padding: 8px 16px;
+    font: 19px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+  .meter .b { color: #ff8a80; }
+  .meter .g { color: #8ce99a; }
+  .meter .dim { color: #8b8fa3; font-size: 16px; }
+  .rule {
+    margin-top: 22px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 26px;
+  }
+  .rule b { color: var(--accent); }
+  code { background: rgba(0,0,0,.07); padding: 1px 6px; border-radius: 4px; font-family: Consolas, "Cascadia Mono", "Courier New", monospace; }
+  .say {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 17px;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  .say.hidden { display: none; }
+  .end { text-align: center; padding-top: 80px; }
+  .end h1 { font-size: 52px; }
+  .end p { font-size: 30px; }
+  .view iframe { display: block; width: 100%; height: 190px; border: 0; }
+</style>
+</head>
+<body>
+<header class="top">
+  <span>Test 04 · bemutató</span>
+  <button id="prev">← Előző</button>
+  <button id="next">Következő →</button>
+  <button id="notes">Jegyzet (N)</button>
+  <span class="count" id="count"></span>
+</header>
+<main id="slide"></main>
+
+<script>
+"use strict";
+
+// Each slide: title, lead, html (the page piece), data (hidden script before the code), bad / good (editable JS), rule (HTML), say (teacher notes).
+const PAGE_CSS = `body { font-family: Arial, sans-serif; margin: 0; padding: 10px 14px; color: #222; font-size: 18px; }
+button { font-size: 17px; padding: 6px 14px; border: none; border-radius: 6px; background: #3b2a8f; color: white; cursor: pointer; margin-right: 6px; }
+button:disabled, .full { background: #999; cursor: not-allowed; }
+.cards { display: flex; flex-wrap: wrap; gap: 10px; }
+.card { width: 170px; padding: 8px 10px; border: 2px solid #3b2a8f; border-radius: 8px; }
+.card h3 { margin: 0 0 4px; font-size: 18px; } .card p { margin: 0; }
+p { margin: 8px 0; }`;
+
+const DATA = `const programs = [
+  { title: "Focikupa", place: "Tornaterem", time: "9:00" },
+  { title: "Karaoke", place: "Aula", time: "10:30" },
+  { title: "Társasjáték-sarok", place: "Könyvtár", time: "11:00" }
+];
+const workshop = { seats: 3 };`;
+
+const SLIDES = [
+  {
+    title: "A bal oldal dönt: melyik elem változik?",
+    lead: "Kattintás után a bekezdésnek kell megváltoznia, nem a gombnak.",
+    html: `<button id="morning-btn">Reggel</button>
+<p id="day-text">Válassz napszakot!</p>`,
+    bad: `const morningBtn = document.getElementById("morning-btn");
+
+morningBtn.addEventListener("click", function () {
+  morningBtn.textContent = "Reggel 9-kor Focikupa.";
+});`,
+    good: `const morningBtn = document.getElementById("morning-btn");
+const dayText = document.getElementById("day-text");
+
+morningBtn.addEventListener("click", function () {
+  dayText.textContent = "Reggel 9-kor Focikupa.";
+});`,
+    rule: `<b>melyik elem</b><code>.textContent =</code> <b>milyen szöveg</b>: az egyenlőségjel bal oldalán az az elem áll, amelyiknek a szövege változik. Az <code>alert</code> nem az oldalra ír.`,
+    say: `Futtasd a rosszat, kattints a Reggel gombra a dobozban: a gomb felirata cserélődik. Kérdezd: „melyik szó mondja meg, mi változik?” (a morningBtn a bal oldalon). 5 tesztben volt így: 3-nál a gomb változott, 2-nél alert. Aztán a jó: egy új változó a day-text-re, és az áll bal oldalt.`,
+  },
+  {
+    title: "Az objektumból a mezőit írd ki",
+    lead: "programs[i] egy egész program. A kártyára a title, a place és a time kell.",
+    html: `<div id="cards" class="cards"></div>`,
+    bad: `const cards = document.getElementById("cards");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  card.textContent = programs[i];
+  cards.appendChild(card);
+}`,
+    good: `const cards = document.getElementById("cards");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  const title = document.createElement("h3");
+  title.textContent = programs[i].title;
+  const info = document.createElement("p");
+  info.textContent = programs[i].place + ", " + programs[i].time;
+
+  card.appendChild(title);
+  card.appendChild(info);
+  cards.appendChild(card);
+}`,
+    rule: `<code>programs</code> = a tömb · <code>programs[i]</code> = egy program (objektum) · <code>programs[i].title</code> = a címe. Új elem: <b>létrehozom</b> (<code>createElement</code>), <b>kitöltöm</b> (<code>textContent</code>), <b>beteszem</b> (<code>appendChild</code>).`,
+    say: `Ez a fő téma: a kártyáknál vált ketté az osztály, 9 tesztben nem lett egy jó kártya sem. Futtasd a rosszat: [object Object]. Kérdezd: „mi van a programs[0]-ban?” Írd a táblára: programs → programs[0] → programs[0].title. A jónál mutasd a három lépést: létrehoz, kitölt, betesz. Ha van idő, írd át élőben a jóban a place-t time-ra, hogy lássák, a mező neve dönt.`,
+  },
+  {
+    title: "Egy rossz id mindent leállít",
+    lead: "A getElementById csendben null-t ad. A hiba csak a használatnál jön, és onnantól semmi nem fut le.",
+    html: `<div id="cards" class="cards"></div>
+<p>Szabad helyek: <span id="seats">?</span></p>`,
+    bad: `const cards = document.getElementById("card");
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  card.textContent = programs[i].title;
+  cards.appendChild(card);
+}
+
+// C: ez jó, mégsem fut le
+const seats = document.getElementById("seats");
+seats.textContent = workshop.seats;`,
+    good: `const cards = document.getElementById("cards");
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  card.textContent = programs[i].title;
+  cards.appendChild(card);
+}
+
+// C
+const seats = document.getElementById("seats");
+seats.textContent = workshop.seats;`,
+    rule: `<code>Cannot read properties of null (reading 'appendChild')</code> = ami az <code>.appendChild</code> előtt áll, az <code>null</code>. Keresd meg, honnan kapta az értékét, és vesd össze az id-t az <code>index.html</code>-lel. Amit nem tudsz megjavítani, tedd kommentbe, hogy a többi lefusson.`,
+    say: `4 oldal halt meg betöltéskor, és egy diák kommentben le is írta, hogy B nélkül működne, mégis benne hagyta. Futtasd a rosszat: nincs kártya, és a ? is marad, pedig a C sora jó. Olvassátok fel együtt a hibát, és keressétek meg a null-t. Egy diák egyetlen befejezetlen sorral (innerHTML = ;) az egész oldalát elvesztette: mentés előtt mindig nyissátok meg az oldalt.`,
+  },
+  {
+    title: "Előbb csökkents, aztán vizsgáld a 0-t",
+    lead: "A kód fentről lefelé fut: az if azt látja, ami abban a pillanatban a változóban van.",
+    html: `<p>Szabad helyek: <span id="seats">?</span></p>
+<button id="join-btn">Jelentkezem</button>`,
+    bad: `const seats = document.getElementById("seats");
+const joinBtn = document.getElementById("join-btn");
+seats.textContent = workshop.seats;
+
+joinBtn.addEventListener("click", function () {
+  if (workshop.seats === 0) {
+    joinBtn.textContent = "Betelt";
+    joinBtn.disabled = true;
+  }
+  workshop.seats = workshop.seats - 1;
+  seats.textContent = workshop.seats;
+});`,
+    good: `const seats = document.getElementById("seats");
+const joinBtn = document.getElementById("join-btn");
+seats.textContent = workshop.seats;
+
+joinBtn.addEventListener("click", function () {
+  workshop.seats = workshop.seats - 1;
+  seats.textContent = workshop.seats;
+  if (workshop.seats === 0) {
+    joinBtn.textContent = "Betelt";
+    joinBtn.disabled = true;
+    joinBtn.classList.add("full");
+  }
+});`,
+    rule: `Előbb <b>változik</b> az adat, aztán <b>vizsgálod</b>. A „Betelt” a <b>gombra</b> kerül (<code>textContent</code>, <code>disabled = true</code>, <code>classList.add("full")</code>), a <code>workshop.seats</code> szám marad.`,
+    say: `Kattints a rosszban háromszor: 0 látszik, de a gomb még él. Negyedszer: Betelt és -1. Kérdezd: „a 3. kattintásnál mennyi volt a szám, amikor az if megnézte?” (1). Aztán a jó: háromszor, és kész. Mondd el a másik hibát is: 3 tesztben a Betelt a szám helyére került (workshop.seats = "Betelt"), és utána NaN lett belőle; 3-nál nem lett letiltva a gomb (egyiknél enabled = false).`,
+  },
+  {
+    end: true,
+    title: "Most ti jöttök",
+    lead: "Nyissátok meg: <code>korbal.github.io/2026-13-F-public</code> → Test 04 → Javítás<br><br>Ott van a teljes megoldás is, és a kiinduló fájlok gyakorláshoz.",
+    say: `Járj körbe, nézd a „Kész: x / 8” számlálót. Akinél piros marad, ahhoz menj oda. Az 1–3. feladat a gyenge félnek a legfontosabb (A és B), a 7–8. a D, amit kevesen értek el. A bónusz a ★. A megoldás és a kiinduló fájlok linkje a Javítás oldal tetején van.`,
+  },
+];
+
+let current = 0;
+let showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, +(sessionStorage.getItem("demo04-slide") || 0))); } catch (e) { /* ignore */ }
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Run the slide's page piece with the code in an iframe; red errors go to the bar under it.
+function draw(el, s, code) {
+  const view = el.querySelector(".view"), meter = el.querySelector(".meter");
+  view.innerHTML = "";
+  meter.innerHTML = '<span class="dim">Console: (üres, nincs hiba)</span>';
+  const fr = document.createElement("iframe");
+  view.appendChild(fr);
+  const safe = x => String(x).replace(/<\/script/gi, "<\\/script");
+  fr.addEventListener("load", () => {
+    const errs = fr.contentWindow.__errs || [];
+    if (errs.length) meter.innerHTML = errs.map(m => `<span class="b">${esc(m)}</span>`).join("<br>");
+  }, { once: true });
+  fr.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>${PAGE_CSS}</style>
+<script>window.__errs = []; window.addEventListener("error", function (e) { window.__errs.push(e.message); }); window.alert = function (m) { window.__errs.push("alert: " + m); };<\/script></head>
+<body>${s.html}<script>${safe(DATA)}<\/script><script>${safe(code)}<\/script></body></html>`;
+}
+
+function side(kind, label, code) {
+  const rows = code.split("\n").length + 1;
+  return `<div class="side ${kind}">
+    <h2>${label}</h2>
+    <textarea rows="${rows}" spellcheck="false" wrap="off">${esc(code)}</textarea>
+    <button class="run">▶ Futtatás</button>
+    <div class="shown" hidden>
+      <div class="view"></div>
+      <div class="meter"></div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const s = SLIDES[current];
+  const $m = document.getElementById("slide");
+  if (s.end) {
+    $m.innerHTML = `<div class="end"><h1>${esc(s.title)}</h1><p>${s.lead}</p></div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+  } else {
+    $m.innerHTML = `<h1>${esc(s.title)}</h1>
+      <p class="lead">${esc(s.lead)}</p>
+      <p class="html">${esc(s.html)}</p>
+      <div class="pair">${side("bad", "✗ Rossz", s.bad)}${side("good", "✓ Jó", s.good)}</div>
+      <div class="rule">${s.rule}</div>
+      <div class="say ${showNotes ? "" : "hidden"}"><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+    $m.querySelectorAll(".side").forEach(el => {
+      const ta = el.querySelector("textarea");
+      const shown = el.querySelector(".shown"), btn = el.querySelector(".run");
+      const show = () => { shown.hidden = false; btn.textContent = "↻ Újra"; draw(el, s, ta.value); };
+      btn.addEventListener("click", show);
+      ta.addEventListener("keydown", e => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); show(); }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const a = ta.selectionStart, b = ta.selectionEnd;
+          ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b);
+          ta.selectionStart = ta.selectionEnd = a + 2;
+        }
+      });
+    });
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("demo04-slide", current); } catch (e) { /* ignore */ }
+}
+
+function go(d) {
+  current = Math.min(SLIDES.length - 1, Math.max(0, current + d));
+  render();
+}
+
+document.getElementById("prev").addEventListener("click", () => go(-1));
+document.getElementById("next").addEventListener("click", () => go(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; render(); });
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") go(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; render(); }
+});
+
+render();
+</script>
+</body>
+</html>

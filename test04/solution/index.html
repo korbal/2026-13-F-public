@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Diáknap 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Diáknap 2026</h1>
+  </header>
+
+  <main>
+    <section id="day">
+      <h2>Mi lesz ma?</h2>
+      <button id="morning-btn">Reggel</button>
+      <button id="noon-btn">Délben</button>
+      <button id="evening-btn">Este</button>
+      <p id="day-text">Válassz napszakot!</p>
+    </section>
+
+    <section id="programs">
+      <h2>Programok</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section id="workshop">
+      <h2>Robotépítő műhely</h2>
+      <p>Szabad helyek: <span id="seats">?</span></p>
+      <button id="join-btn">Jelentkezem</button>
+    </section>
+
+    <section id="filter">
+      <h2>Szűrés típus szerint</h2>
+      <!-- D: a <select> connected label-lel (for = id) -->
+      <label for="type-select">Típus:</label>
+      <select id="type-select">
+        <option value="all">Összes</option>
+        <option value="sport">Sport</option>
+        <option value="zene">Zene</option>
+        <option value="játék">Játék</option>
+      </select>
+      <ul id="results"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Széchenyi Diákönkormányzat</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

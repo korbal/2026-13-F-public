@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test 04 javítás</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif;
+  }
+  header.top {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  header.top h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header.top .progress { margin-left: auto; font-size: 15px; opacity: .9; }
+  nav.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  nav.steps button {
+    border: 2px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  nav.steps button.extra { border-style: dashed; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 0; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
+  .solution pre div { white-space: pre; padding: 0 12px; }
+  .solution pre div.new { background: #d3f0dc; box-shadow: inset 4px 0 #1a7f37; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+  }
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  .task-head h2 { margin: 0 0 4px; font-size: 24px; }
+  .task-head .tag { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .goal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0 16px;
+  }
+  .goal p { margin: 0 0 6px; }
+  .goal p:last-child { margin-bottom: 0; }
+  .goal ul { margin: 0 0 6px; padding-left: 22px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal .paper { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
+  .goal .now { color: var(--bad); font-weight: 600; }
+  .goal .count { float: right; font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 10px; margin-left: 12px; }
+  .goal .learn { background: #eef3fb; border-radius: 6px; padding: 10px 14px; }
+  .goal .learn pre { margin: 6px 0; background: rgba(255,255,255,.7); border-radius: 4px; padding: 6px 10px; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
+  table.exp { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+  table.exp th { background: var(--bg); font-weight: 600; }
+  table.exp code { white-space: pre; }
+  pre.snippet {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid > div { min-width: 0; }
+  .block { margin-top: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+  textarea.code {
+    width: 100%;
+    min-height: 300px;
+    resize: vertical;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 0;
+    border-radius: 8px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    tab-size: 2;
+  }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button {
+    font: inherit;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .buttons .kbd { align-self: center; font-size: 13px; color: var(--muted); }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .result code, .goal code, .hint code, table.exp code, .measure code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .preview-host {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .preview-host .frame { transform-origin: 0 0; }
+  .measure { background: var(--panel); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px 14px; font-size: 14px; margin: -6px 0 0; }
+  .measure .bad { color: var(--bad); font-weight: 600; }
+  .measure .good { color: var(--ok); font-weight: 600; }
+  .console {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 8px;
+    min-height: 300px;
+    padding: 14px;
+    font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .console .err { color: #ff8a80; }
+  .console .dim { color: #8b8fa3; }
+  .next { margin-top: 4px; }
+  .finished {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-radius: 8px;
+    padding: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .goal .bridge { background: #f3f0fa; border-radius: 6px; padding: 10px 14px 10px 8px; }
+  .goal .bridge ol { margin: 0; padding-left: 26px; }
+  .goal .bridge li { margin: 0 0 6px; }
+  .goal .bridge li:last-child { margin-bottom: 0; }
+  .goal .bridge code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  .listing {
+    margin: 0 0 12px;
+    background: #f0eee8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 0;
+    font: 13px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace;
+    overflow-x: auto;
+  }
+  .listing .ln { white-space: pre; padding: 0 12px 0 0; display: flex; }
+  .listing .gut { flex: 0 0 46px; display: flex; gap: 3px; justify-content: flex-end; align-items: center; padding-right: 10px; }
+  .listing .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .matches { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .matches ul { list-style: none; margin: 0; padding: 0; }
+  .matches li { padding: 6px 4px; border-bottom: 1px solid var(--line); cursor: default; }
+  .matches li:last-child { border-bottom: 0; }
+  .matches li:hover { background: var(--bg); }
+  .matches .chip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .matches .file { color: var(--muted); font-size: 13px; }
+  .matches .zero { color: var(--bad); font-weight: 600; }
+  .matches .okk { color: var(--ok); font-weight: 600; }
+  .matches .tags { font: 13px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; color: var(--muted); margin: 2px 0 0 18px; white-space: pre-wrap; }
+  .matches .note2 { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .matches code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .frame-host { background: #fff; border: 1px solid var(--line); border-radius: 8px 8px 0 0; overflow: hidden; }
+  .frame-host iframe { display: block; width: 100%; height: 460px; border: 0; }
+  .console.small { min-height: 90px; border-radius: 0 0 8px 8px; font-size: 14px; padding: 10px 14px; }
+  .console .alert { color: #ffd479; }
+  .files { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; }
+  .files a { margin-right: 14px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Test 04 · Diáknap 2026 · javítás</h1>
+  <div class="progress" id="progress"></div>
+</header>
+<nav class="steps" id="steps"></nav>
+<main>
+  <p class="intro">Minden feladatban egy hibás kód van, és ezek a hibák tényleg előfordultak a Test 04 tesztekben. Olvasd el, mit kért a feladat, mi történik most, és lépésről lépésre, mit csinál most a kód. Jobbra az oldal él: kattinthatsz a gombokra, választhatsz a listából, alatta pedig a Console-t látod (piros = hiba, sárga = <code>alert</code>). Javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Az ellenőrzés egy friss oldalon maga kattintgat végig. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
+  <div class="files"><b>A teljes megoldás:</b> <a href="solution/index.html">a kész oldal (próbáld ki)</a><a href="solution/script.js">script.js</a><a href="solution/style.css">style.css</a><a href="test04-megoldas.zip">mindhárom fájl (zip)</a><br><b>Gyakorláshoz</b> (csomagold ki, és írd meg az egészet újra, a megoldás nélkül): <a href="paper.html">a feladatlap</a><a href="test04-kiindulo.zip">a kiinduló fájlok (zip)</a></div>
+  <div id="finished"></div>
+  <section id="task"></section>
+</main>
+<footer class="bottom"><button id="resetAll">Minden feladat visszaállítása</button></footer>
+
+<script>
+"use strict";
+
+// ---------- The Test 04 page (given files) ----------
+
+const DATA_SRC = `const programs = [
+  { title: "Focikupa", place: "Tornaterem", time: "9:00", type: "sport" },
+  { title: "Karaoke", place: "Aula", time: "10:30", type: "zene" },
+  { title: "Társasjáték-sarok", place: "Könyvtár", time: "11:00", type: "játék" },
+  { title: "Kosárdobó verseny", place: "Udvar", time: "12:00", type: "sport" },
+  { title: "Tanárzenekar", place: "Aula", time: "13:30", type: "zene" },
+  { title: "Kahoot-bajnokság", place: "Informatika terem", time: "14:00", type: "játék" }
+];
+
+const workshop = { name: "Robotépítő műhely", seats: 3 };`;
+
+// Other data: a fix that only works with the given numbers or titles fails here.
+const OTHER_SRC = `const programs = [
+  { title: "Sakkverseny", place: "Könyvtár", time: "8:00", type: "játék" },
+  { title: "Gitárest", place: "Aula", time: "15:00", type: "zene" }
+];
+
+const workshop = { name: "Robotépítő műhely", seats: 5 };`;
+
+const PAGE_CSS = `* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f8; color: #222; }
+header { background: #3b2a8f; color: white; padding: 16px 24px; }
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+section { background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+button { font-size: 16px; padding: 8px 16px; border: none; border-radius: 6px; background: #3b2a8f; color: white; cursor: pointer; }
+.card { width: 200px; padding: 12px; border: 2px solid #3b2a8f; border-radius: 8px; }
+.card h3 { margin-top: 0; }
+.full { background: #999; cursor: not-allowed; }
+.heart { background: none; color: #3b2a8f; font-size: 24px; padding: 0; }
+.fav { color: crimson; }
+footer { text-align: center; padding: 16px; }
+.cards { display: flex; flex-wrap: wrap; gap: 16px; }`;
+
+const FILTER_OK = `<h2>Szűrés típus szerint</h2>
+<label for="type-select">Típus:</label>
+<select id="type-select">
+  <option value="all">Összes</option>
+  <option value="sport">Sport</option>
+  <option value="zene">Zene</option>
+  <option value="játék">Játék</option>
+</select>
+<ul id="results"></ul>`;
+
+function pageBody(filterHtml) {
+  return `<header>
+    <h1>Diáknap 2026</h1>
+  </header>
+  <main>
+    <section id="day">
+      <h2>Mi lesz ma?</h2>
+      <button id="morning-btn">Reggel</button>
+      <button id="noon-btn">Délben</button>
+      <button id="evening-btn">Este</button>
+      <p id="day-text">Válassz napszakot!</p>
+    </section>
+    <section id="programs">
+      <h2>Programok</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+    <section id="workshop">
+      <h2>Robotépítő műhely</h2>
+      <p>Szabad helyek: <span id="seats">?</span></p>
+      <button id="join-btn">Jelentkezem</button>
+    </section>
+    <section id="filter">
+      ${filterHtml}
+    </section>
+  </main>
+  <footer>
+    <p>Széchenyi Diákönkormányzat</p>
+  </footer>`;
+}
+
+const D_JS = `const typeSelect = document.getElementById("type-select");
+const results = document.getElementById("results");
+
+typeSelect.addEventListener("change", function () {
+  results.innerHTML = "";
+  for (let i = 0; i < programs.length; i++) {
+    if (typeSelect.value === "all" || programs[i].type === typeSelect.value) {
+      const li = document.createElement("li");
+      li.textContent = programs[i].title;
+      results.appendChild(li);
+    }
+  }
+});`;
+
+// ---------- Running a page in an iframe ----------
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+let frameSeq = 0;
+// The page with the given data and the student's code. Console lines, red errors and alerts are collected in window.__out and sent to this page.
+function buildDoc(js, opts, id) {
+  const safe = s => String(s).replace(/<\/script/gi, "<\\/script");
+  const pre = `(function () {
+  var out = window.__out = [];
+  function push(k, m) { out.push({ k: k, m: String(m) }); try { parent.postMessage({ w4: ${id}, k: k, m: String(m) }, "*"); } catch (e) {} }
+  window.addEventListener("error", function (e) { push("err", e.message); });
+  console.log = function () { push("log", [].map.call(arguments, function (x) { return typeof x === "string" ? x : (function () { try { return JSON.stringify(x); } catch (e) { return String(x); } })(); }).join(" ")); };
+  window.alert = function (m) { push("alert", m); };
+})();`;
+  return `<!doctype html><html lang="hu"><head><meta charset="utf-8"><style>${PAGE_CSS}</style><script>${pre}<\/script></head><body>
+${pageBody(opts.filterHtml || FILTER_OK)}
+<script>${safe(opts.data || DATA_SRC)}<\/script>
+<script>${safe(opts.before || "")}\n${safe(js)}\n<\/script>
+</body></html>`;
+}
+
+// Load a page into an iframe; resolves when its scripts have run.
+function makeFrame(host, js, opts) {
+  return new Promise(resolve => {
+    const id = ++frameSeq;
+    const fr = document.createElement("iframe");
+    fr.title = "Az oldal";
+    host.appendChild(fr);
+    fr.addEventListener("load", () => {
+      const win = fr.contentWindow, doc = fr.contentDocument;
+      const f = {
+        id, fr, win, doc,
+        out: () => win.__out || [],
+        errors: () => (win.__out || []).filter(x => x.k === "err").map(x => x.m),
+        alerts: () => (win.__out || []).filter(x => x.k === "alert").map(x => x.m),
+        el: sel => doc.querySelector(sel),
+        text: sel => { const e = doc.querySelector(sel); return e ? e.textContent.trim() : null; },
+        click: sel => { const e = doc.querySelector(sel); if (e) e.click(); return !!e; },
+        val: expr => { try { return win.eval(expr); } catch (e) { return undefined; } },
+        choose: v => {
+          const s = doc.getElementById("type-select");
+          if (!s || s.tagName !== "SELECT") return false;
+          if (![...s.options].some(o => o.value === v)) return false;
+          s.value = v;
+          s.dispatchEvent(new win.Event("input", { bubbles: true }));
+          s.dispatchEvent(new win.Event("change", { bubbles: true }));
+          return true;
+        },
+        items: () => [...doc.querySelectorAll("#results li")].map(l => l.textContent.trim()),
+      };
+      resolve(f);
+    }, { once: true });
+    fr.srcdoc = buildDoc(js, opts, id);
+  });
+}
+
+let checkHost;
+async function checkFrame(js, opts) {
+  if (!checkHost) {
+    checkHost = document.createElement("div");
+    checkHost.style.cssText = "position:absolute;left:-10000px;top:0;width:1200px;height:900px;overflow:hidden";
+    document.body.appendChild(checkHost);
+  }
+  return makeFrame(checkHost, js, opts);
+}
+function dropFrame(f) { if (f && f.fr) f.fr.remove(); }
+
+const errLine = f => f.errors().length ? [`A Console-ban piros hiba van: <code>${esc(f.errors()[0])}</code>`] : [];
+const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+const listOf = a => a.length ? a.map(x => `<code>${esc(x)}</code>`).join(", ") : "(üres)";
+
+// ---------- Tasks ----------
+// Each task: id, title, tag, count, focus (section id), paper, now, bridge, learn, start, edit ("js" | "html"), opts, check(f, code) -> problems (async), hint, solution, why.
+
+const A_OK = `const dayText = document.getElementById("day-text");
+const morningBtn = document.getElementById("morning-btn");
+const noonBtn = document.getElementById("noon-btn");
+const eveningBtn = document.getElementById("evening-btn");
+
+morningBtn.addEventListener("click", function () {
+  dayText.textContent = "Reggel 9-kor indul a Focikupa a tornateremben.";
+});
+noonBtn.addEventListener("click", function () {
+  dayText.textContent = "Délben kosárdobó verseny az udvaron.";
+});
+eveningBtn.addEventListener("click", function () {
+  dayText.textContent = "Este 6-kor diákdisco az aulában.";
+});`;
+
+const A_NAMES = { "#morning-btn": "A Reggel", "#noon-btn": "A Délben", "#evening-btn": "Az Este" };
+const A_TEXTS = {
+  "#morning-btn": "Reggel 9-kor indul a Focikupa a tornateremben.",
+  "#noon-btn": "Délben kosárdobó verseny az udvaron.",
+  "#evening-btn": "Este 6-kor diákdisco az aulában.",
+};
+
+const B_OK = `const cards = document.getElementById("cards");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  const title = document.createElement("h3");
+  title.textContent = programs[i].title;
+
+  const info = document.createElement("p");
+  info.textContent = programs[i].place + ", " + programs[i].time;
+
+  card.appendChild(title);
+  card.appendChild(info);
+  cards.appendChild(card);
+}`;
+
+const az = n => (n === 1 || n === 5 ? "Az" : "A");
+// Cards as the data says: [title, "place, time"] per card.
+function cardProblems(f, data) {
+  const p = [];
+  const want = data.map(x => [x.title, x.place + ", " + x.time]);
+  const arts = [...f.doc.querySelectorAll("#cards > article")];
+  if (arts.length !== want.length) { p.push(`A <code>#cards</code>-ban ${arts.length} <code>&lt;article&gt;</code> van, ${want.length} kellene.`); return p; }
+  if (!arts.every(a => a.classList.contains("card"))) p.push("Nem minden <code>&lt;article&gt;</code> kapta meg a <code>card</code> osztályt.");
+  arts.forEach((a, i) => {
+    const h = a.querySelector("h3"), q = a.querySelector("p");
+    if (!h || h.textContent.trim() !== want[i][0]) p.push(`${az(i + 1)} ${i + 1}. kártya <code>&lt;h3&gt;</code>-ja: ${h ? `<code>${esc(h.textContent.trim())}</code>` : "nincs"}, elvárt: <code>${esc(want[i][0])}</code>.`);
+    if (!q || q.textContent.trim() !== want[i][1]) p.push(`${az(i + 1)} ${i + 1}. kártya <code>&lt;p&gt;</code>-je: ${q ? `<code>${esc(q.textContent.trim())}</code>` : "nincs"}, elvárt: <code>${esc(want[i][1])}</code>.`);
+  });
+  return p.slice(0, 4);
+}
+const PROGRAMS = [
+  { title: "Focikupa", place: "Tornaterem", time: "9:00", type: "sport" },
+  { title: "Karaoke", place: "Aula", time: "10:30", type: "zene" },
+  { title: "Társasjáték-sarok", place: "Könyvtár", time: "11:00", type: "játék" },
+  { title: "Kosárdobó verseny", place: "Udvar", time: "12:00", type: "sport" },
+  { title: "Tanárzenekar", place: "Aula", time: "13:30", type: "zene" },
+  { title: "Kahoot-bajnokság", place: "Informatika terem", time: "14:00", type: "játék" },
+];
+const OTHER_PROGRAMS = [
+  { title: "Sakkverseny", place: "Könyvtár", time: "8:00", type: "játék" },
+  { title: "Gitárest", place: "Aula", time: "15:00", type: "zene" },
+];
+
+const C_OK = `const seats = document.getElementById("seats");
+const joinBtn = document.getElementById("join-btn");
+
+seats.textContent = workshop.seats;
+
+joinBtn.addEventListener("click", function () {
+  workshop.seats = workshop.seats - 1;
+  seats.textContent = workshop.seats;
+
+  if (workshop.seats <= 0) {
+    joinBtn.textContent = "Betelt";
+    joinBtn.disabled = true;
+    joinBtn.classList.add("full");
+  }
+});`;
+
+// The full C check: 3 on load, 2 and 1 still open, 0 closes, a 4th click changes nothing.
+function seatProblems(f) {
+  const p = [];
+  const b = () => f.el("#join-btn");
+  const state = () => `a szám <code>${esc(f.text("#seats"))}</code>, a gomb <code>${esc(b().textContent.trim())}</code>${b().disabled ? ", letiltva" : ""}`;
+  if (f.text("#seats") !== "3") p.push(`Betöltés után a <code>#seats</code> <code>${esc(f.text("#seats"))}</code>, nem <code>3</code>.`);
+  f.click("#join-btn"); f.click("#join-btn");
+  if (f.text("#seats") !== "1" || b().disabled || b().textContent.trim() !== "Jelentkezem") p.push(`2 kattintás után: ${state()}. Elvárt: <code>1</code>, a gomb még <code>Jelentkezem</code>.`);
+  f.click("#join-btn");
+  const at0 = [];
+  if (f.text("#seats") !== "0") at0.push(`a szám <code>${esc(f.text("#seats"))}</code>, nem <code>0</code>`);
+  if (b().textContent.trim() !== "Betelt") at0.push(`a gomb szövege <code>${esc(b().textContent.trim())}</code>, nem <code>Betelt</code>`);
+  if (!b().disabled) at0.push("a gomb nincs letiltva (<code>disabled</code>)");
+  if (!b().classList.contains("full")) at0.push("a gombon nincs <code>full</code> osztály");
+  if (at0.length) p.push("A 3. kattintás után " + at0.join(", ") + ".");
+  if (f.val("workshop.seats") !== 0) p.push(`A <code>workshop.seats</code> értéke most <code>${esc(JSON.stringify(f.val("workshop.seats")))}</code>, nem <code>0</code>: az objektumban a szám maradjon szám.`);
+  f.click("#join-btn");
+  if (!at0.length && f.text("#seats") !== "0") p.push(`A 4. kattintás után a szám <code>${esc(f.text("#seats"))}</code>: 0 alá nem mehet.`);
+  return p;
+}
+
+const TASKS = [
+  {
+    id: "daytext",
+    title: "1. Melyik elem változik?",
+    tag: "A · Napszak gombok",
+    count: "5 tesztben (3-nál a gomb felirata változott, 2-nél alert ugrott fel)",
+    focus: "day",
+    paper: `When a button is clicked, the paragraph shows that button's text:<table class="exp"><tr><th>Button clicked</th><th>The paragraph shows</th></tr><tr><td>Reggel</td><td><code>Reggel 9-kor indul a Focikupa a tornateremben.</code></td></tr><tr><td>Délben</td><td><code>Délben kosárdobó verseny az udvaron.</code></td></tr><tr><td>Este</td><td><code>Este 6-kor diákdisco az aulában.</code></td></tr></table>`,
+    now: `Kattints a Reggel gombra: a gomb felirata lesz a hosszú szöveg, a „Válassz napszakot!” bekezdés nem változik. Az Este gomb egy felugró ablakot nyit (a Console-ban sárgán látod).`,
+    bridge: `<ol>
+<li>Az első három sor kiválasztja a három <b>gombot</b>: a <code>morningBtn</code> a <code>&lt;button id="morning-btn"&gt;</code>, és így tovább. Ez jó.</li>
+<li>Az <code>addEventListener("click", function () { ... })</code> azt mondja: ha erre a gombra kattintanak, fusson le a kapcsos zárójelek közötti rész. Ez is jó.</li>
+<li>A belsejében: <code>morningBtn.textContent = "Reggel 9-kor ..."</code>. Az egyenlőségjel <b>bal oldala</b> mondja meg, <b>melyik elem</b> szövege változik. Itt a <code>morningBtn</code>, vagyis maga a gomb. Ezért a gomb felirata cserélődik.</li>
+<li>Az Este gombnál <code>alert(...)</code> áll: ez egy felugró ablak, az oldalon semmi nem változik tőle.</li>
+<li>Az <code>index.html</code>-ben a bekezdés így néz ki: <code>&lt;p id="day-text"&gt;Válassz napszakot!&lt;/p&gt;</code>. A kód sehol nem választja ki a <code>day-text</code>-et. Ki kell választani, és mindhárom figyelőben <b>annak</b> a szövegét kell átírni.</li>
+</ol>`,
+    learn: `<p>Egy szöveg átírása mindig ugyanígy néz ki: <b>melyik elem</b> <code>.textContent =</code> <b>milyen szöveg</b>. A bal oldalon az az elem áll, amelyiknek a szövege változik, nem az, amelyikre kattintottak.</p><pre>const title = document.getElementById("page-title");
+const helloBtn = document.getElementById("hello-btn");
+
+helloBtn.addEventListener("click", function () {
+  title.textContent = "Szia!";   // a cím változik, a gomb felirata marad
+});</pre><p>Az <code>alert("...")</code> nem írja az oldalra a szöveget, csak feldob egy ablakot.</p>`,
+    start: `const morningBtn = document.getElementById("morning-btn");
+const noonBtn = document.getElementById("noon-btn");
+const eveningBtn = document.getElementById("evening-btn");
+
+morningBtn.addEventListener("click", function () {
+  morningBtn.textContent = "Reggel 9-kor indul a Focikupa a tornateremben.";
+});
+noonBtn.addEventListener("click", function () {
+  noonBtn.textContent = "Délben kosárdobó verseny az udvaron.";
+});
+eveningBtn.addEventListener("click", function () {
+  alert("Este 6-kor diákdisco az aulában.");
+});`,
+    hint: `Válaszd ki a bekezdést egy új változóba (<code>document.getElementById("day-text")</code>), és mindhárom figyelőben az egyenlőségjel bal oldalán <b>ez</b> álljon. Az <code>alert</code> helyére is ilyen sor kell.`,
+    solution: A_OK,
+    why: `Új sor: <code>const dayText = document.getElementById("day-text");</code>, és mindhárom figyelőben <code>dayText.textContent = ...</code> áll, a gomb és az <code>alert</code> helyett.`,
+    async check(f) {
+      const p = errLine(f);
+      for (const sel of ["#morning-btn", "#evening-btn", "#noon-btn", "#morning-btn"]) {
+        f.click(sel);
+        const got = f.text("#day-text");
+        if (got !== A_TEXTS[sel]) { p.push(`${A_NAMES[sel]} gombra kattintva a bekezdés: <code>${esc(got)}</code>, elvárt: <code>${esc(A_TEXTS[sel])}</code>.`); break; }
+      }
+      const labels = [f.text("#morning-btn"), f.text("#noon-btn"), f.text("#evening-btn")];
+      if (!same(labels, ["Reggel", "Délben", "Este"])) p.push(`A gombok felirata megváltozott: ${listOf(labels)}. A gombok maradjanak <code>Reggel</code>, <code>Délben</code>, <code>Este</code>.`);
+      if (f.alerts().length) p.push("Még mindig felugrik egy <code>alert</code>: a szöveg a bekezdésbe kerüljön.");
+      return p;
+    },
+  },
+  {
+    id: "fields",
+    title: "2. A kártyán a mezők legyenek",
+    tag: "B · Programkártyák",
+    count: "9 tesztben nem lett egy jó kártya sem",
+    focus: "programs",
+    paper: `Use a loop to add one card to <code>&lt;div id="cards"&gt;</code> for every programme in <code>programs</code>:<ul><li>The card is an <code>&lt;article&gt;</code> with the class <code>card</code>.</li><li>Inside it: an <code>&lt;h3&gt;</code> with the programme's title, and a <code>&lt;p&gt;</code> with its place and time, like <code>Tornaterem, 9:00</code>.</li><li>The loop must still work if programmes are added to or removed from the array.</li></ul>`,
+    now: `Hat kártya megjelenik, de mindegyikben csak ennyi áll: <code>[object Object]</code>.`,
+    bridge: `<ol>
+<li>A <code>cards</code> a <code>&lt;div id="cards"&gt;</code>. A ciklus 6 kört megy: az <code>i</code> 0, 1, 2, 3, 4, 5 (<code>i &lt; programs.length</code>, és a tömbben 6 program van). Ez jó.</li>
+<li>Minden körben létrejön egy <code>&lt;article class="card"&gt;</code>, és a végén bekerül a <code>cards</code>-ba. Ez is jó: ezért látsz 6 kártyát.</li>
+<li>A gond ez a sor: <code>card.innerHTML = programs[i]</code>. Kövessük az első kört:<table class="exp"><tr><th>Kifejezés</th><th>Értéke</th></tr><tr><td><code>programs</code></td><td>a tömb, benne 6 objektum</td></tr><tr><td><code>programs[0]</code></td><td>egy egész objektum: <code>{ title: "Focikupa", place: "Tornaterem", time: "9:00", type: "sport" }</code></td></tr><tr><td><code>programs[0].title</code></td><td><code>"Focikupa"</code></td></tr><tr><td><code>programs[0].place + ", " + programs[0].time</code></td><td><code>"Tornaterem, 9:00"</code></td></tr></table></li>
+<li>Ha egy egész objektumot szövegként akarsz kiírni, a böngésző annyit ír ki, hogy <code>[object Object]</code>. Az objektumból a <b>mezőit</b> kell kivenni: előbb az elem a sorszámmal, aztán ponttal a mező.</li>
+<li>A kártyába két új elem kell: egy <code>&lt;h3&gt;</code> a címmel és egy <code>&lt;p&gt;</code> a hellyel és az idővel, és mindkettőt a <code>card</code>-ba kell tenni (<code>card.appendChild(...)</code>).</li>
+</ol>`,
+    learn: `<p>A <code>programs</code> egy <b>tömb</b>, benne <b>objektumok</b>. Egy mezőhöz két lépés vezet: <code>programs[i]</code> (melyik program?) és <code>.title</code> (melyik mező?). A <code>programs.title</code> nem létezik: a tömbnek nincs címe, csak az elemeinek.</p><p>Egy új elem három lépésben kerül az oldalra: <b>létrehozod</b>, <b>kitöltöd</b>, <b>beteszed</b> a szülőjébe.</p><pre>for (let i = 0; i &lt; books.length; i++) {
+  const item = document.createElement("li");       // 1. létrehozom
+  item.textContent = books[i].author;               // 2. kitöltöm egy mezővel
+  list.appendChild(item);                           // 3. beteszem a szülőbe
+}</pre>`,
+    start: `const cards = document.getElementById("cards");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  card.innerHTML = programs[i];
+
+  cards.appendChild(card);
+}`,
+    hint: `A <code>card.innerHTML = programs[i]</code> sor helyére: egy <code>document.createElement("h3")</code>, a szövege <code>programs[i].title</code>; egy <code>document.createElement("p")</code>, a szövege <code>programs[i].place + ", " + programs[i].time</code>; és mindkettő <code>card.appendChild(...)</code>.`,
+    solution: B_OK,
+    why: `A <code>card.innerHTML = programs[i]</code> helyett két új elem készül a mezőkből: a <code>&lt;h3&gt;</code> a <code>programs[i].title</code>-lel, a <code>&lt;p&gt;</code> a <code>programs[i].place + ", " + programs[i].time</code>-mal, és mindkettő bekerül a kártyába.`,
+    async check(f, code) {
+      const p = errLine(f).concat(cardProblems(f, PROGRAMS));
+      if (!p.length) {
+        const g = await checkFrame(code, { data: OTHER_SRC });
+        if (cardProblems(g, OTHER_PROGRAMS).length) p.push("Egy másik, kétprogramos tömbbel nem működne: a ciklus menjen <code>programs.length</code>-ig, és a szövegeket a mezőkből vedd, ne írd be őket.");
+        dropFrame(g);
+      }
+      return p;
+    },
+  },
+  {
+    id: "crash",
+    title: "3. Egy rossz id mindent leállít",
+    tag: "B és C · a piros hiba",
+    count: "4 tesztben állt le az oldal betöltéskor (ami utána jött, le sem futott)",
+    focus: "programs",
+    paper: `<b>A wrong id breaks everything after it.</b> <code>document.getElementById("wrong-id")</code> gives <code>null</code>, and <code>null.addEventListener(...)</code> is a red error in the Console (F12). The lines after it do not run, so the later features stop working too. Keep the Console open, and fix or comment out the broken part before moving on.`,
+    now: `Egy kártya sem jelenik meg, és a „Szabad helyek” is <code>?</code> marad, pedig a C része jó. A Console-ban piros hiba: <code>Cannot read properties of null (reading 'appendChild')</code>.`,
+    bridge: `<ol>
+<li>Az első sor: <code>document.getElementById("card")</code>. Az <code>index.html</code>-ben ez áll: <code>&lt;div id="cards" class="cards"&gt;</code>. Az id <code>cards</code>, többes számban. <code>card</code> id-jű elem nincs, ezért az eredmény <code>null</code> („nincs ilyen”), és a <code>cards</code> változóba <code>null</code> kerül.</li>
+<li>Ez még nem hiba: a <code>null</code> csak egy érték. A ciklus elindul, az első kártya elkészül.</li>
+<li>Az első kör végén: <code>cards.appendChild(card)</code>, vagyis <code>null.appendChild(card)</code>. A <code>null</code>-nak nincs <code>appendChild</code>-ja: ez a piros <code>TypeError</code>. A hibaüzenet ezt mondja: „nem tudom olvasni az <code>appendChild</code>-ot egy <code>null</code>-ból”.</li>
+<li>Egy piros hiba <b>leállítja az egész fájlt</b>. A C rész sorai (<code>seats.textContent = workshop.seats</code>) már le sem futnak, ezért marad a <code>?</code>.</li>
+<li>Hogyan találod meg? A hibaüzenetben a <code>reading 'appendChild'</code> előtti változó a <code>null</code>: a <code>cards</code>. Nézd meg, honnan kapta az értékét: abban a <code>getElementById</code>-ben rossz az id.</li>
+</ol>`,
+    learn: `<p>A <code>getElementById</code> <b>nem jelez hibát</b>, ha nincs ilyen id: csendben <code>null</code>-t ad. A hiba csak később, a használatnál jön ki (<code>.appendChild</code>, <code>.addEventListener</code>, <code>.textContent</code>).</p><p>Olvasd így a hibát: <code>Cannot read properties of null (reading 'X')</code> = „ami az <code>.X</code> előtt áll, az <code>null</code>”. Utána keresd meg, hol kapta az értékét, és vesd össze az id-t az <code>index.html</code>-lel betűre.</p><p>Ha valamit nem tudsz megjavítani, tedd kommentbe (<code>//</code>), hogy a többi rész lefusson.</p>`,
+    start: `// B
+const cards = document.getElementById("card");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  const title = document.createElement("h3");
+  title.textContent = programs[i].title;
+
+  const info = document.createElement("p");
+  info.textContent = programs[i].place + ", " + programs[i].time;
+
+  card.appendChild(title);
+  card.appendChild(info);
+  cards.appendChild(card);
+}
+
+// C (ez a rész jó)
+const seats = document.getElementById("seats");
+seats.textContent = workshop.seats;`,
+    hint: `A hiba az <code>appendChild</code> előtti változónál van: <code>cards</code>. Melyik sorban kapta az értékét? Abban az id-t vesd össze az <code>index.html</code>-lel: <code>&lt;div id="cards"&gt;</code>.`,
+    solution: B_OK.replace("const cards", "// B\nconst cards") + `
+
+// C (ez a rész jó)
+const seats = document.getElementById("seats");
+seats.textContent = workshop.seats;`,
+    why: `<code>getElementById("card")</code> helyett <code>getElementById("cards")</code>: így a <code>cards</code> a valódi div, nincs hiba, és a C rész is lefut.`,
+    async check(f) {
+      const p = errLine(f).concat(cardProblems(f, PROGRAMS));
+      if (f.text("#seats") !== "3") p.push(`A „Szabad helyek” most <code>${esc(f.text("#seats"))}</code>, nem <code>3</code>: a C rész nem futott le.`);
+      return p;
+    },
+  },
+  {
+    id: "order",
+    title: "4. Előbb csökkents, aztán vizsgáld a 0-t",
+    tag: "C · Jelentkezem gomb",
+    count: "3 tesztben (a gomb egy kattintással később telt be, vagy már 1-nél)",
+    focus: "workshop",
+    paper: `Every click on <i>Jelentkezem</i> takes one seat: decrease the seats <b>in the <code>workshop</code> object</b>, then show the new number on the page. When no seats are left, the button text changes to <code>Betelt</code>, the button is disabled, and it gets the class <code>full</code>.<br><i>Done when:</i> the page starts with <i>Szabad helyek: 3</i>. After 3 clicks it shows <i>0</i>, the button says <i>Betelt</i> and is grey, and clicking it again changes nothing (the number never goes below 0).`,
+    now: `3 kattintás után <code>0</code> látszik, de a gomb még <i>Jelentkezem</i>. Csak a 4. kattintásra lesz <i>Betelt</i>, és közben <code>-1</code> jelenik meg.`,
+    bridge: `<ol>
+<li>Betöltéskor a <code>workshop.seats</code> 3, ez jelenik meg. Ez jó.</li>
+<li>A figyelőben a sorrend: <b>előbb</b> az <code>if</code> megnézi, 0-e a szám, <b>utána</b> csökkenti. Kövessük kattintásonként:<table class="exp"><tr><th>Kattintás</th><th><code>workshop.seats</code> az <code>if</code>-nél</th><th>Betelt?</th><th>a csökkentés után</th></tr><tr><td>1.</td><td>3</td><td>nem</td><td>2</td></tr><tr><td>2.</td><td>2</td><td>nem</td><td>1</td></tr><tr><td>3.</td><td>1</td><td><b>nem</b></td><td>0</td></tr><tr><td>4.</td><td>0</td><td>igen</td><td><b>-1</b></td></tr></table></li>
+<li>A 3. kattintásnál az <code>if</code> még az 1-et látja, ezért nem zár be. A 0 csak a sor végén jön létre, amikor az <code>if</code> már lefutott.</li>
+<li>A 4. kattintásnál bezár, de utána a csökkentés még lefut, ezért lesz -1.</li>
+<li>Fordítsd meg a sorrendet: előbb a csökkentés és a kiírás, <b>utána</b> az <code>if</code>. Így az <code>if</code> már az új számot nézi.</li>
+</ol>`,
+    learn: `<p>A kód <b>fentről lefelé</b> fut. Az <code>if</code> azt az értéket látja, ami <b>abban a pillanatban</b> a változóban van. Ha a változás utána jön, az <code>if</code> még a régi értéket nézi.</p><pre>lives = lives - 1;          // 1. előbb változik
+livesText.textContent = lives;
+if (lives === 0) {          // 2. aztán az új értéket nézzük
+  gameOver();
+}</pre>`,
+    start: `const seats = document.getElementById("seats");
+const joinBtn = document.getElementById("join-btn");
+
+seats.textContent = workshop.seats;
+
+joinBtn.addEventListener("click", function () {
+  if (workshop.seats === 0) {
+    joinBtn.textContent = "Betelt";
+    joinBtn.disabled = true;
+    joinBtn.classList.add("full");
+  }
+
+  workshop.seats = workshop.seats - 1;
+  seats.textContent = workshop.seats;
+});`,
+    hint: `Vágd ki a két alsó sort (csökkentés, kiírás), és tedd őket a figyelő elejére, az <code>if</code> elé.`,
+    solution: C_OK.replace(" <= 0", " === 0"),
+    why: `A csökkentés és a kiírás az <code>if</code> elé került. A 3. kattintásnál a szám már 0, amikor az <code>if</code> megnézi, és a letiltott gombra kattintva semmi nem történik, így -1 sem lesz.`,
+    async check(f, code) {
+      const p = errLine(f).concat(seatProblems(f));
+      const body = code.slice(code.indexOf("addEventListener"));
+      const dec = body.search(/workshop\.seats\s*(=\s*workshop\.seats\s*-|-=|--)/), cond = body.search(/\bif\s*\(/);
+      if (!p.length && dec >= 0 && cond >= 0 && cond < dec) p.push("Működik, de az <code>if</code> még mindig a csökkentés előtt áll, ezért nem a 0-t, hanem az 1-et kell figyelnie. Tedd a csökkentést előre, és az <code>if</code> a 0-t nézze.");
+      return p;
+    },
+  },
+  {
+    id: "button",
+    title: "5. A gomb változik, a szám szám marad",
+    tag: "C · Jelentkezem gomb",
+    count: "6 tesztben (3-nál a Betelt a szám helyére került, 3-nál nem lett letiltva a gomb)",
+    focus: "workshop",
+    paper: `When no seats are left, <b>the button text</b> changes to <code>Betelt</code>, <b>the button</b> is disabled, and it gets the class <code>full</code>.<br><i>Done when:</i> after 3 clicks it shows <i>0</i>, the button says <i>Betelt</i> and is grey, and clicking it again changes nothing.`,
+    now: `A 3. kattintásra a szám helyén <i>Betelt</i> áll, a gomb pedig <i>Jelentkezem</i> marad, és kattintható. A 4. kattintásra <code>NaN</code> jelenik meg.`,
+    bridge: `<ol>
+<li>Az első két kattintás jó: 3 → 2 → 1, a szám a <code>#seats</code>-ben jelenik meg.</li>
+<li>A 3. kattintásnál a szám 0 lesz, az <code>if</code> igaz. Az első sor benne: <code>workshop.seats = "Betelt"</code>. Ez az <b>objektumba</b> ír egy szöveget a szám helyére. A következő sor ezt a szöveget írja a <code>#seats</code>-be, ezért áll ott a <i>Betelt</i>.</li>
+<li><code>joinBtn.enabled = false</code>: a gombnak nincs <code>enabled</code> tulajdonsága. A JavaScript ilyenkor nem jelez hibát, csak létrehoz egy új, semmire nem jó mezőt. A gomb kattintható marad. A letiltás neve <code>disabled</code>.</li>
+<li>A 4. kattintásnál: <code>workshop.seats - 1</code> = <code>"Betelt" - 1</code>. Szövegből nem lehet kivonni, az eredmény <code>NaN</code> („nem szám”).</li>
+<li>A feladat szerint három dolog változik, és mind a <b>gombon</b>: a felirata, a letiltása és az osztálya. A <code>workshop.seats</code> maradjon 0, a <code>#seats</code> pedig mutassa a 0-t.</li>
+</ol>`,
+    learn: `<p>Az <b>adat</b> (<code>workshop.seats</code>) mindig szám marad: abból számolsz. Az <b>oldal</b> mutatja az állapotot. Ha valaminek a feliratát kell átírni, annak az elemnek a <code>textContent</code>-jét írd át.</p><p>Egy gomb három dolga: <code>btn.textContent = "..."</code> (felirat), <code>btn.disabled = true</code> (letiltva, nem kattintható), <code>btn.classList.add("...")</code> (osztály, ettől lesz szürke).</p><pre>if (tickets === 0) {
+  buyBtn.textContent = "Elfogyott";
+  buyBtn.disabled = true;
+  buyBtn.classList.add("sold-out");
+}</pre>`,
+    start: `const seats = document.getElementById("seats");
+const joinBtn = document.getElementById("join-btn");
+
+seats.textContent = workshop.seats;
+
+joinBtn.addEventListener("click", function () {
+  workshop.seats = workshop.seats - 1;
+  seats.textContent = workshop.seats;
+
+  if (workshop.seats === 0) {
+    workshop.seats = "Betelt";
+    seats.textContent = workshop.seats;
+    joinBtn.enabled = false;
+  }
+});`,
+    hint: `Az <code>if</code> belsejében egyik sor se nyúljon a <code>workshop.seats</code>-hez és a <code>seats</code>-hez. Három sor kell, mind a <code>joinBtn</code>-nal: <code>textContent</code>, <code>disabled</code>, <code>classList.add</code>.`,
+    solution: C_OK.replace(" <= 0", " === 0"),
+    why: `Az <code>if</code>-ben a szám helyett a gomb változik: <code>joinBtn.textContent = "Betelt"</code>, <code>joinBtn.disabled = true</code> (nem <code>enabled = false</code>), <code>joinBtn.classList.add("full")</code>. A <code>workshop.seats</code> 0 marad.`,
+    async check(f) { return errLine(f).concat(seatProblems(f)); },
+  },
+  {
+    id: "onload",
+    title: "6. Betöltéskor: csak írd ki",
+    tag: "C · Jelentkezem gomb",
+    count: "4 tesztben (3-nál load figyelő a span-on, 1-nél a seats maga a span volt)",
+    focus: "workshop",
+    paper: `When the page loads, the <code>?</code> is replaced with the number of free seats from <code>workshop</code>. Do not type the number.`,
+    now: `Az oldal betöltése után is <code>?</code> látszik a szám helyén.`,
+    bridge: `<ol>
+<li>Az első sor kiválasztja a <code>&lt;span id="seats"&gt;?&lt;/span&gt;</code>-t. Ez jó.</li>
+<li>A második: <code>seats.addEventListener("load", ...)</code>. Ez azt mondja: „ha ez a span betöltődik, fusson le a függvény”. Egy <code>span</code> viszont semmit nem tölt be (képnek vagy az egész ablaknak van <code>load</code>-ja), ezért ez az esemény <b>soha nem jön el</b>, és a függvény soha nem fut le.</li>
+<li>Pedig nem kell várni semmire: a <code>script.js</code> az <code>index.html</code> végén van (<code>&lt;script src="script.js"&gt;</code> a <code>&lt;/body&gt;</code> előtt), tehát amikor fut, a span már létezik. A script maga az, ami „betöltéskor” fut.</li>
+<li>Elég tehát egy sor, figyelő nélkül: a span szövege legyen a <code>workshop.seats</code>.</li>
+<li>Vigyázz a nevekre is: a <code>seats</code> itt a span, a szám a <code>workshop.seats</code>. Ha a span-ba a <code>seats</code>-et írod, ezt kapod: <code>[object HTMLSpanElement]</code>.</li>
+</ol>`,
+    learn: `<p>Ami a figyelőn <b>kívül</b> áll, az egyszer, azonnal lefut, amikor a script betöltődik. Ami egy figyelőn <b>belül</b> áll, az csak akkor, amikor az esemény bekövetkezik.</p><pre>const scoreText = document.getElementById("score");
+scoreText.textContent = game.score;   // azonnal, egyszer
+
+plusBtn.addEventListener("click", function () {
+  // csak kattintáskor
+});</pre><p>Az <code>addEventListener</code>-ben az esemény neve <code>"click"</code>, <code>"change"</code>, <code>"load"</code>, <b>„on” nélkül</b>. Az <code>"onload"</code> nem létező esemény.</p>`,
+    start: `const seats = document.getElementById("seats");
+
+seats.addEventListener("load", function () {
+  seats.textContent = workshop.seats;
+});`,
+    hint: `Nem kell figyelő. Töröld az <code>addEventListener</code> sort és a záró <code>});</code>-t, és csak a belső sor maradjon.`,
+    solution: `const seats = document.getElementById("seats");
+
+seats.textContent = workshop.seats;`,
+    why: `A figyelő kikerült: a <code>seats.textContent = workshop.seats;</code> azonnal lefut, amikor a script betöltődik.`,
+    async check(f, code) {
+      const p = errLine(f);
+      if (f.text("#seats") !== "3") p.push(`Betöltés után a <code>#seats</code> <code>${esc(f.text("#seats"))}</code>, nem <code>3</code>.`);
+      else {
+        const g = await checkFrame(code, { data: OTHER_SRC });
+        if (g.text("#seats") !== "5") p.push("Ha a <code>workshop.seats</code> 5 lenne, nálad akkor is más jelenne meg: a számot a <code>workshop</code>-ból vedd, ne írd be.");
+        dropFrame(g);
+      }
+      return p;
+    },
+  },
+  {
+    id: "select",
+    title: "7. A lista és a címkéje",
+    tag: "D · Szűrés (index.html)",
+    count: "14 tesztben nem volt teljes (hiányzó vagy be nem kötött label, rossz value, üres select)",
+    focus: "filter",
+    edit: "html",
+    paper: `In <code>index.html</code>, in the <i>Szűrés típus szerint</i> section, above the empty list, add a <code>&lt;select&gt;</code> with the id <code>type-select</code> and a label <i>Típus:</i> connected to it.<table class="exp"><tr><th>Option text</th><th>Value</th></tr><tr><td>Összes</td><td><code>all</code></td></tr><tr><td>Sport</td><td>the <code>type</code> value of the sport programmes</td></tr><tr><td>Zene</td><td>the <code>type</code> value of the music programmes</td></tr><tr><td>Játék</td><td>the <code>type</code> value of the game programmes</td></tr></table><i>Done when:</i> choosing <i>Zene</i> shows exactly <i>Karaoke</i> and <i>Tanárzenekar</i>, and clicking the word <i>Típus:</i> puts the focus on the select.`,
+    now: `A <i>Zene</i> és a <i>Játék</i> választásakor üres a lista. A <i>Típus:</i> szóra kattintva nem a lista kap fókuszt.`,
+    bridge: `<ol>
+<li>A címke: <code>&lt;label for="select"&gt;</code>. A <code>for</code> azt az elemet keresi, amelyiknek az <b>id</b>-je <code>select</code>. Ilyen nincs: a lista id-je <code>type-select</code>. Ezért a címke nincs bekötve, és a rá kattintás nem a listára visz.</li>
+<li>A szűrő JS-e (ez adott, jó) ezt hasonlítja össze: <code>programs[i].type === typeSelect.value</code>. Az <code>option</code> <code>value</code>-ja és a programok <code>type</code>-ja <b>betűre</b> egyezzen.</li>
+<li>Vesd össze a kettőt:<table class="exp"><tr><th>option value</th><th>van ilyen type az adatban?</th></tr><tr><td><code>sport</code></td><td>igen: Focikupa, Kosárdobó verseny</td></tr><tr><td><code>music</code></td><td><b>nincs</b>: az adatban <code>"zene"</code> áll</td></tr><tr><td><code>jatek</code></td><td><b>nincs</b>: az adatban <code>"játék"</code> áll, ékezettel</td></tr></table></li>
+<li>Ahol nincs egyezés, a feltétel minden programnál hamis, ezért üres a lista.</li>
+<li>Két javítás kell: a <code>for</code> egyezzen a lista id-jével, a két rossz <code>value</code> pedig legyen pontosan az, ami az adatban áll.</li>
+</ol>`,
+    learn: `<p>Egy <code>&lt;label&gt;</code> akkor van <b>bekötve</b>, ha a <code>for</code>-ja ugyanaz, mint a mező <code>id</code>-je. Ilyenkor a címkére kattintva a mező kap fókuszt, és a felolvasóprogram is tudja, mi a mező neve.</p><p>Az <code>option</code>-nél a <b>szöveg</b> az, amit a felhasználó lát (<i>Zene</i>), a <b>value</b> az, amit a JS megkap (<code>select.value</code>). A value-t másold ki az adatból, ne találd ki.</p><pre>&lt;label for="size-select"&gt;Méret:&lt;/label&gt;
+&lt;select id="size-select"&gt;
+  &lt;option value="S"&gt;Kicsi&lt;/option&gt;
+  &lt;option value="XL"&gt;Nagyon nagy&lt;/option&gt;
+&lt;/select&gt;</pre>`,
+    start: `<h2>Szűrés típus szerint</h2>
+<label for="select">Típus:</label>
+<select id="type-select">
+  <option value="all">Összes</option>
+  <option value="sport">Sport</option>
+  <option value="music">Zene</option>
+  <option value="jatek">Játék</option>
+</select>
+<ul id="results"></ul>`,
+    hint: `A <code>for</code> értéke legyen ugyanaz, mint a <code>&lt;select&gt;</code> <code>id</code>-je. A value-kat másold ki a <code>script.js</code> adataiból: <code>type: "zene"</code>, <code>type: "játék"</code>.`,
+    solution: FILTER_OK,
+    why: `<code>for="select"</code> helyett <code>for="type-select"</code>, és a két value az adatból: <code>music</code> helyett <code>zene</code>, <code>jatek</code> helyett <code>játék</code>.`,
+    async check(f) {
+      const p = errLine(f);
+      const s = f.doc.getElementById("type-select");
+      if (!s || s.tagName !== "SELECT") return p.concat(["Nincs <code>&lt;select id=\"type-select\"&gt;</code>."]);
+      const vals = [...s.options].map(o => o.value);
+      if (!same(vals, ["all", "sport", "zene", "játék"])) p.push(`Az opciók value-i most: ${listOf(vals)}. Elvárt, ebben a sorrendben: <code>all</code>, <code>sport</code>, <code>zene</code>, <code>játék</code>.`);
+      const texts = [...s.options].map(o => o.textContent.trim());
+      if (!same(texts, ["Összes", "Sport", "Zene", "Játék"])) p.push(`Az opciók szövege most: ${listOf(texts)}. Elvárt: <code>Összes</code>, <code>Sport</code>, <code>Zene</code>, <code>Játék</code>.`);
+      if (!s.labels || !s.labels.length) p.push("A <code>&lt;select&gt;</code>-nek nincs bekötött címkéje: a <code>label</code> <code>for</code>-ja egyezzen a select <code>id</code>-jével.");
+      else if (s.labels[0].textContent.trim() !== "Típus:") p.push(`A címke szövege <code>${esc(s.labels[0].textContent.trim())}</code>, nem <code>Típus:</code>.`);
+      if (!f.el("#results")) p.push("Eltűnt a <code>&lt;ul id=\"results\"&gt;</code>.");
+      if (!p.length) {
+        f.choose("zene");
+        if (!same(f.items(), ["Karaoke", "Tanárzenekar"])) p.push(`<i>Zene</i> választásakor a lista: ${listOf(f.items())}.`);
+        f.choose("játék");
+        if (!same(f.items(), ["Társasjáték-sarok", "Kahoot-bajnokság"])) p.push(`<i>Játék</i> választásakor a lista: ${listOf(f.items())}.`);
+      }
+      return p;
+    },
+  },
+  {
+    id: "filter",
+    title: "8. Szűrés: ürítés, ===, Összes",
+    tag: "D · Szűrés (script.js)",
+    count: "6 tesztben írtak rá JS-t, 3-ban működött",
+    focus: "filter",
+    paper: `In <code>script.js</code>: when the select changes, the list <code>&lt;ul id="results"&gt;</code> shows one <code>&lt;li&gt;</code> with the title of each programme of the chosen type. <i>Összes</i> shows all of them.<br><i>Hint:</i> empty the list first, or the old results stay.<br><i>Done when:</i> choosing <i>Zene</i> shows exactly <i>Karaoke</i> and <i>Tanárzenekar</i>, then choosing <i>Sport</i> shows exactly <i>Focikupa</i> and <i>Kosárdobó verseny</i> (nothing from before).`,
+    now: `<i>Zene</i> választásakor mind a 6 program megjelenik. A következő választásnál újabb 6 kerül alájuk.`,
+    bridge: `<ol>
+<li>A figyelő jó: <code>change</code> a selecten, a ciklus végigmegy a 6 programon, és minden találatnál egy <code>&lt;li&gt;</code> kerül a listába.</li>
+<li>Az <code>if</code>-ben ez áll: <code>programs[i].type = typeSelect.value</code>. Ez <b>egy</b> egyenlőségjel: <b>értékadás</b>, nem összehasonlítás. Beírja a <code>"zene"</code>-t minden program <code>type</code>-jába, és az eredménye maga a <code>"zene"</code> szöveg, ami igaznak számít. Ezért minden program „talál”, és az adat is elromlik.<table class="exp"><tr><th>Kifejezés</th><th>Mit csinál</th><th>Értéke</th></tr><tr><td><code>a = "zene"</code></td><td>beírja a-ba</td><td><code>"zene"</code> (igaznak számít)</td></tr><tr><td><code>a === "zene"</code></td><td>összehasonlít</td><td><code>true</code> vagy <code>false</code></td></tr></table></li>
+<li>A lista sosincs kiürítve: a második választás az első eredményei <b>alá</b> teszi az újakat.</li>
+<li>Az <i>Összes</i> value-ja <code>all</code>. Egy programnak sincs <code>all</code> típusa, ezért erre külön feltétel kell: ha a választás <code>all</code>, <b>vagy</b> a típus egyezik.</li>
+<li>Három javítás: a ciklus elé egy ürítő sor, az <code>if</code>-be <code>===</code>, és az <code>all</code> esete <code>||</code>-vel.</li>
+</ol>`,
+    learn: `<p><code>=</code> beír, <code>===</code> összehasonlít. Egy <code>if</code> zárójelében szinte mindig <code>===</code> kell.</p><p>Egy lista újratöltése: előbb <b>kiürítem</b> (<code>list.innerHTML = ""</code>), aztán <b>feltöltöm</b>.</p><p>Két feltétel közül elég az egyiknek teljesülnie: <code>||</code> („vagy”).</p><pre>sizeSelect.addEventListener("change", function () {
+  shoeList.innerHTML = "";
+  for (let i = 0; i &lt; shoes.length; i++) {
+    if (sizeSelect.value === "any" || shoes[i].size === sizeSelect.value) {
+      // létrehozom és beteszem a li-t
+    }
+  }
+});</pre>`,
+    start: `const typeSelect = document.getElementById("type-select");
+const results = document.getElementById("results");
+
+typeSelect.addEventListener("change", function () {
+  for (let i = 0; i < programs.length; i++) {
+    if (programs[i].type = typeSelect.value) {
+      const li = document.createElement("li");
+      li.textContent = programs[i].title;
+      results.appendChild(li);
+    }
+  }
+});`,
+    hint: `A <code>for</code> elé: <code>results.innerHTML = "";</code>. Az <code>if</code>-be: <code>typeSelect.value === "all" || programs[i].type === typeSelect.value</code>.`,
+    solution: D_JS,
+    why: `Új sor: <code>results.innerHTML = "";</code> a ciklus előtt. Az <code>if</code>-ben <code>=</code> helyett <code>===</code>, és <code>typeSelect.value === "all" ||</code> az <i>Összes</i>-hez.`,
+    async check(f, code) {
+      const p = errLine(f);
+      const steps = [["zene", ["Karaoke", "Tanárzenekar"]], ["sport", ["Focikupa", "Kosárdobó verseny"]], ["all", PROGRAMS.map(x => x.title)], ["játék", ["Társasjáték-sarok", "Kahoot-bajnokság"]]];
+      const name = { zene: "Zene", sport: "Sport", all: "Összes", "játék": "Játék" };
+      for (const [v, want] of steps) {
+        f.choose(v);
+        if (!same(f.items(), want)) { p.push(`<i>${name[v]}</i> választásakor a lista: ${listOf(f.items())}. Elvárt: ${listOf(want)}.`); break; }
+      }
+      const types = f.val("programs.map(x => x.type).join(',')");
+      if (types !== PROGRAMS.map(x => x.type).join(",")) p.push("A szűrés átírta az adatot: a programok <code>type</code>-ja megváltozott. Az <code>if</code>-ben összehasonlítás kell, nem értékadás.");
+      if (!p.length) {
+        const g = await checkFrame(code, { data: OTHER_SRC });
+        g.choose("zene");
+        if (!same(g.items(), ["Gitárest"])) p.push("Egy másik, kétprogramos tömbbel nem működne: a címeket a <code>programs</code>-ból vedd, ne írd be őket.");
+        dropFrame(g);
+      }
+      return p;
+    },
+  },
+  {
+    id: "hearts",
+    extra: true,
+    title: "★ Szívek: egy figyelő a szülőn",
+    tag: "Bónusz · Kedvencek",
+    count: "2 tesztben szívenként volt egy figyelő, 14-ben nem volt bónusz",
+    focus: "programs",
+    paper: `Give every card from Feature B a heart button: <code>&lt;button class="heart"&gt;♡&lt;/button&gt;</code>. Clicking a heart toggles the class <code>fav</code> on that heart and changes it to <code>♥</code>. Clicking it again changes it back to <code>♡</code>. The other hearts don't change.<br>Do it with <b>one</b> click listener on <code>&lt;div id="cards"&gt;</code>, not one per heart.`,
+    now: `A szívek megjelennek, de rájuk kattintva semmi nem történik.`,
+    bridge: `<ol>
+<li>A kód a <code>querySelectorAll(".heart")</code>-tal kezdi: összegyűjti az oldalon lévő szíveket. Ebben a pillanatban még <b>egy szív sincs</b>: azokat a lenti ciklus hozza létre. Ezért a <code>hearts</code> egy üres lista.</li>
+<li>A <code>for...of</code> az üres listán nulla kört megy: egyetlen figyelő sem jön létre.</li>
+<li>Ha a ciklus után tennéd, működne, de 6 figyelő lenne, és a szív jele akkor sem cserélődne. A feladat <b>egy</b> figyelőt kér a <code>#cards</code>-on.</li>
+<li>Egy kattintás a szívre a szülőjén, a kártyán és a <code>#cards</code>-on is „átmegy” (buborékol). A <code>#cards</code> figyelője ezért minden szívkattintást megkap, és az <code>event.target</code> megmondja, pontosan mire kattintottak.</li>
+<li>Ha az <code>event.target</code> egy <code>heart</code> osztályú gomb: kapcsold a <code>fav</code>-ot, és a <code>fav</code> szerint írd be a <code>♥</code>-t vagy a <code>♡</code>-t.</li>
+</ol>`,
+    learn: `<p><b>Esemény-delegálás:</b> sok, később létrejövő elem helyett a közös szülőjükre teszel egy figyelőt. Az <code>event.target</code> az az elem, amire ténylegesen kattintottak.</p><pre>list.addEventListener("click", function (event) {
+  if (event.target.classList.contains("done-btn")) {
+    event.target.classList.toggle("done");
+  }
+});</pre><p>A <code>classList.toggle("x")</code> ha nincs rajta, rárakja, ha rajta van, leveszi. A <code>classList.contains("x")</code> megmondja, rajta van-e.</p>`,
+    start: `const cards = document.getElementById("cards");
+const hearts = document.querySelectorAll(".heart");
+
+for (const heart of hearts) {
+  heart.addEventListener("click", function () {
+    heart.classList.toggle("fav");
+  });
+}
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  card.innerHTML = "<h3>" + programs[i].title + "</h3>" +
+    "<p>" + programs[i].place + ", " + programs[i].time + "</p>" +
+    '<button class="heart">♡</button>';
+  cards.appendChild(card);
+}`,
+    hint: `Töröld a <code>hearts</code> sort és az első ciklust. A kártyák után: <code>cards.addEventListener("click", function (event) { ... })</code>, benne <code>if (event.target.classList.contains("heart"))</code>.`,
+    solution: `const cards = document.getElementById("cards");
+
+for (let i = 0; i < programs.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  card.innerHTML = "<h3>" + programs[i].title + "</h3>" +
+    "<p>" + programs[i].place + ", " + programs[i].time + "</p>" +
+    '<button class="heart">♡</button>';
+  cards.appendChild(card);
+}
+
+cards.addEventListener("click", function (event) {
+  if (event.target.classList.contains("heart")) {
+    event.target.classList.toggle("fav");
+    if (event.target.classList.contains("fav")) {
+      event.target.textContent = "♥";
+    } else {
+      event.target.textContent = "♡";
+    }
+  }
+});`,
+    why: `Az üres listára tett figyelők helyett egy figyelő van a <code>#cards</code>-on, a kártyák után. Az <code>event.target</code> a kattintott szív: azon kapcsol a <code>fav</code>, és a jel is cserélődik.`,
+    async check(f, code) {
+      const p = errLine(f);
+      const hs = [...f.doc.querySelectorAll("#cards .heart")];
+      if (hs.length !== 6) return p.concat([`${hs.length} szív van a kártyákon, 6 kellene.`]);
+      const st = () => hs.slice(0, 3).map(h => h.textContent.trim() + (h.classList.contains("fav") ? " (fav)" : "")).join(" | ");
+      hs[1].click();
+      if (hs[1].textContent.trim() !== "♥" || !hs[1].classList.contains("fav") || hs[0].textContent.trim() !== "♡" || hs[0].classList.contains("fav")) p.push(`A 2. szívre kattintva az első három szív: <code>${esc(st())}</code>. Elvárt: <code>♡ | ♥ (fav) | ♡</code>.`);
+      else {
+        hs[1].click();
+        if (hs[1].textContent.trim() !== "♡" || hs[1].classList.contains("fav")) p.push(`Másodszor kattintva a 2. szív: <code>${esc(st().split(" | ")[1])}</code>. Elvárt: <code>♡</code>, <code>fav</code> nélkül.`);
+      }
+      const n = (code.match(/addEventListener/g) || []).length;
+      if (/querySelectorAll\(\s*["']\.heart/.test(code) || /getElementsByClassName\(\s*["']heart/.test(code)) p.push("Ne a szíveket gyűjtsd össze, hogy egyenként kapjanak figyelőt: egy figyelő kell, a <code>#cards</code>-on.");
+      else if (n !== 1) p.push(`A kódban ${n} <code>addEventListener</code> van: egy legyen, a <code>#cards</code>-on.`);
+      else if (!/\.target/.test(code)) p.push("Az egy figyelőben az <code>event.target</code> mondja meg, melyik szívre kattintottak.");
+      return p;
+    },
+  },
+];
+
+// ---------- State (per browser, optional) ----------
+
+const KEY = "test04-javitas-v1";
+let state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (saved && typeof saved === "object") state = Object.assign(state, saved);
+} catch (e) { /* storage unavailable: start fresh */ }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+// ---------- UI ----------
+
+const $steps = document.getElementById("steps");
+const $task = document.getElementById("task");
+const $progress = document.getElementById("progress");
+const $finished = document.getElementById("finished");
+
+function renderSteps() {
+  $steps.innerHTML = "";
+  TASKS.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    if (i === state.current) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (t.extra) b.classList.add("extra");
+    b.addEventListener("click", () => { state.current = i; save(); renderAll(); });
+    $steps.appendChild(b);
+  });
+  const required = TASKS.filter(t => !t.extra);
+  const n = required.filter(t => state.done[t.id]).length;
+  const shown = required.filter(t => state.done[t.id] && state.revealed[t.id]).length;
+  const extras = TASKS.filter(t => t.extra && state.done[t.id]).length;
+  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (extras ? ` + ${extras} extra ★` : "");
+  $finished.innerHTML = n === required.length
+    ? `<div class="finished">Mind a ${required.length} feladat kész. Ha van időd, jöhet a ★ extra feladat.</div>`
+    : "";
+}
+
+function editorHtml(label) {
+  return `
+        <p class="label">${label}</p>
+        <textarea class="code" id="code" spellcheck="false" wrap="off"></textarea>
+        <div class="buttons">
+          <button class="primary" id="check">Ellenőrzés</button>
+          <button id="reset">Visszaállítás</button>
+          <span class="kbd">vagy Ctrl+Enter</span>
+        </div>
+        <div id="result"></div>
+        <div id="hint"></div>
+        <div id="solution"></div>`;
+}
+
+function renderTask() {
+  const t = TASKS[state.current];
+  const code = state.code[t.id] ?? t.start;
+  const html = t.edit === "html";
+  $task.innerHTML = `
+    <div class="task-head">
+      <div class="tag">${esc(t.tag)}</div>
+      <h2>${esc(t.title)}</h2>
+    </div>
+    <div class="goal">
+      <span class="count">Előfordult: ${t.count}</span>
+      <h3>A feladatban ez állt</h3>
+      <div class="paper">${t.paper}</div>
+      <h3>Mi történik most</h3>
+      <p class="now">${t.now}</p>
+      <h3>Lépésről lépésre: mit csinál most a kód</h3>
+      <div class="bridge">${t.bridge}</div>
+      <h3>Amit tudni kell</h3>
+      <div class="learn">${t.learn}</div>
+    </div>
+    <div class="grid">
+      <div>
+        <p class="label">${html ? "script.js (adott, ezt nem kell átírni): az adat és a szűrő" : "script.js eleje (adott, ezt nem kell átírni)"}</p>
+        <pre class="snippet">${esc(html ? DATA_SRC + "\n\n// ...\n\n" + D_JS : DATA_SRC)}</pre>
+        ${editorHtml(html ? "index.html, a „Szűrés típus szerint” rész: ezt javítsd" : "script.js, a te részed: ezt javítsd")}
+      </div>
+      <div>
+        <p class="label">Az oldal (kattinthatsz rajta)</p>
+        <div id="out" class="frame-host"></div>
+        <div id="console" class="console small"></div>
+      </div>
+    </div>`;
+  const $code = document.getElementById("code");
+  $code.value = code;
+  const fit = () => { $code.style.height = "auto"; $code.style.height = Math.max(300, $code.scrollHeight + 4) + "px"; };
+  fit();
+  let timer;
+  $code.addEventListener("input", fit);
+  $code.addEventListener("input", () => {
+    state.code[t.id] = $code.value; save();
+    clearTimeout(timer); timer = setTimeout(() => runOutput(t), 400);
+  });
+  $code.addEventListener("keydown", e => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const s = $code.selectionStart, en = $code.selectionEnd;
+      $code.value = $code.value.slice(0, s) + "  " + $code.value.slice(en);
+      $code.selectionStart = $code.selectionEnd = s + 2;
+      $code.dispatchEvent(new Event("input"));
+    }
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doCheck(t); }
+  });
+  document.getElementById("check").addEventListener("click", () => doCheck(t));
+  document.getElementById("reset").addEventListener("click", () => {
+    delete state.code[t.id];
+    save();
+    renderTask();
+  });
+  runOutput(t);
+  if (state.revealed[t.id]) showSolution(t);
+}
+
+function optsFor(t, code) {
+  return t.edit === "html" ? { js: D_JS, opts: { filterHtml: code } } : { js: code, opts: {} };
+}
+
+// Live page: a fresh iframe for the current code, scrolled to the task's section. Its Console lines arrive by postMessage.
+let liveId = 0;
+const consoleLines = [];
+function renderConsole() {
+  const $c = document.getElementById("console");
+  if (!$c) return;
+  $c.innerHTML = '<span class="dim">Console</span>\n' + (consoleLines.length
+    ? consoleLines.map(x => x.k === "err" ? `<span class="err">${esc(x.m)}</span>` : x.k === "alert" ? `<span class="alert">alert: ${esc(x.m)}</span>` : esc(x.m)).join("\n")
+    : '<span class="dim">(üres, nincs hiba)</span>');
+}
+window.addEventListener("message", e => {
+  if (!e.data || e.data.w4 !== liveId) return;
+  consoleLines.push({ k: e.data.k, m: e.data.m });
+  renderConsole();
+});
+async function runOutput(t) {
+  const out = document.getElementById("out");
+  if (!out) return;
+  const code = document.getElementById("code").value;
+  const { js, opts } = optsFor(t, code);
+  out.innerHTML = "";
+  consoleLines.length = 0;
+  renderConsole();
+  const pending = makeFrame(out, js, opts);
+  liveId = frameSeq;
+  const f = await pending;
+  const sec = f.doc.getElementById(t.focus);
+  if (sec) f.win.scrollTo(0, Math.max(0, sec.offsetTop - 8));
+}
+
+async function runCheck(t, code) {
+  const { js, opts } = optsFor(t, code);
+  const f = await checkFrame(js, opts);
+  let problems;
+  try { problems = await t.check(f, js); }
+  catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message) + ". Lehet, hogy hiányzik vagy elromlott egy elem, amit a feladat nem kért átírni."]; }
+  dropFrame(f);
+  return problems;
+}
+
+async function doCheck(t) {
+  const code = document.getElementById("code").value;
+  const $r = document.getElementById("result");
+  const $h = document.getElementById("hint");
+  $r.innerHTML = `<div class="result">Ellenőrzés...</div>`;
+  const problems = await runCheck(t, code);
+  if (TASKS[state.current] !== t) return;
+  if (problems.length === 0) {
+    state.done[t.id] = true;
+    save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.current && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button class="next" id="next">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("next").addEventListener("click", () => {
+      state.current = nextIdx; save(); renderAll();
+    });
+    renderSteps();
+  } else {
+    $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    state.fails[t.id] = (state.fails[t.id] || 0) + 1;
+    save();
+    $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+    if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+      $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
+      document.getElementById("stuck").addEventListener("click", () => {
+        if (!confirm("Biztos? Előbb olvasd el még egyszer a „Lépésről lépésre” részt és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+        document.getElementById("stuck").remove();
+        state.revealed[t.id] = true;
+        save();
+        showSolution(t);
+        renderSteps();
+      });
+    }
+  }
+}
+
+// After this many failed checks the student may open the solution.
+const STUCK_AFTER = 2;
+
+// The solution, with the lines that differ from the broken start marked.
+function showSolution(t) {
+  const before = t.start.split("\n").map(l => l.trim());
+  const lines = t.solution.split("\n").map(l =>
+    `<div${l.trim() && !before.includes(l.trim()) ? ' class="new"' : ""}>${esc(l) || " "}</div>`).join("");
+  const $s = document.getElementById("solution");
+  $s.innerHTML = `<div class="solution">
+    <h4>Megoldás</h4>
+    <p>${t.why}</p>
+    <pre>${lines}</pre>
+    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és próbáld ki az oldalon.</p>
+    <button id="load">Betöltöm a szerkesztőbe</button>
+  </div>`;
+  document.getElementById("load").addEventListener("click", () => {
+    const $code = document.getElementById("code");
+    $code.value = t.solution;
+    state.code[t.id] = t.solution; save();
+    runOutput(t);
+    doCheck(t);
+  });
+}
+
+function renderAll() { renderSteps(); renderTask(); }
+
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Biztosan visszaállítod az összes feladatot?")) return;
+  state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
+  save();
+  renderAll();
+});
+
+// For the automated check of this page: run a task's check on any code.
+window.__w4 = { TASKS, runCheck };
+
+if (!(state.current >= 0 && state.current < TASKS.length)) state.current = 0;
+renderAll();
+</script>
+</body>
+</html>

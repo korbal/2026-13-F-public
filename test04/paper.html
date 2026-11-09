@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Test 04 – Diáknap 2026</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">body{font-family:Arial,sans-serif;max-width:820px;margin:24px auto;padding:0 16px;line-height:1.5;color:#222}
+code{background:#eee;padding:1px 4px;border-radius:3px}
+table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #bbb;padding:4px 10px;text-align:left}
+h2{border-top:2px solid #3b2a8f;padding-top:12px;margin-top:28px}hr{display:none}
+</style>
+</head>
+<body>
+<h1 id="test-04-diáknap-2026-a-page-that-reacts">Test 04 – Diáknap 2026:
+a page that reacts</h1>
+<p>You make the student day page work with JavaScript: buttons that
+change text, cards built from data, a sign-up button and a filter.</p>
+<h2 id="conditions">Conditions</h2>
+<ul>
+<li>Only the offline W3Schools site is allowed. No AI, no internet, no
+phone.</li>
+<li>Time: 45 minutes.</li>
+<li>Graded.</li>
+</ul>
+<h2 id="read-this-first">Read this first</h2>
+<ul>
+<li>You get a finished page: <code>index.html</code>,
+<code>style.css</code>, and <code>script.js</code> with the data in it.
+Open <code>index.html</code> in the browser. It loads your
+<code>script.js</code>.</li>
+<li>You write almost everything in <code>script.js</code>, below the
+line <code>// Write your code below this line.</code> Feature B also
+needs one rule in <code>style.css</code>, and Feature D needs a few
+lines in <code>index.html</code>.</li>
+<li>Read <code>index.html</code> to find the ids you need. Read the data
+at the top of <code>script.js</code> to see what a programme looks like.
+Do not change the data.</li>
+<li>Every feature is scored on its own. If you get stuck on one, move to
+the next.</li>
+<li><strong>A wrong id breaks everything after it.</strong>
+<code>document.getElementById(&quot;wrong-id&quot;)</code> gives
+<code>null</code>, and <code>null.addEventListener(...)</code> is a red
+error in the Console (F12). The lines after it do not run, so the later
+features stop working too. Keep the Console open, and fix or comment out
+the broken part before moving on.</li>
+<li>Partial work scores. Commented-out code does not score.</li>
+<li>Save before the time is up. Files saved after the end of the test
+score 0.</li>
+</ul>
+<h2 id="scoring-40-points">Scoring (40 points)</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A · Napszak buttons</td>
+<td>8</td>
+</tr>
+<tr>
+<td>B · Programme cards</td>
+<td>12</td>
+</tr>
+<tr>
+<td>C · Sign-up button</td>
+<td>10</td>
+</tr>
+<tr>
+<td>D · Filter by type</td>
+<td>10</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>40</strong></td>
+</tr>
+<tr>
+<td>BONUS · Favourite hearts</td>
+<td>+4, not required</td>
+</tr>
+</tbody>
+</table>
+<p>The bonus can only add points. It can never lower your grade, so do
+the four features first.</p>
+<h2 id="setup">Setup</h2>
+<ol type="1">
+<li>Create the folder <code>test04_vezeteknev_keresztnev</code> in your
+<code>Webdev</code> folder (lowercase, no accents, <code>_</code> for
+spaces).</li>
+<li>Copy <code>index.html</code>, <code>style.css</code> and
+<code>script.js</code> from
+<code>K:\Diákoknak\13F1\Frontend-Backend\2026\Test04</code> into
+it.</li>
+<li>In VS Code: <em>File → Open Folder</em>, and open your test
+folder.</li>
+</ol>
+<hr />
+<h2 id="feature-a-napszak-buttons-8-pts">FEATURE A — Napszak buttons (8
+pts)</h2>
+<p>The page has three buttons (<em>Reggel</em>, <em>Délben</em>,
+<em>Este</em>) and a paragraph below them that says <em>Válassz
+napszakot!</em></p>
+<p>When a button is clicked, the paragraph shows that button’s text:</p>
+<table>
+<thead>
+<tr>
+<th>Button clicked</th>
+<th>The paragraph shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reggel</td>
+<td><code>Reggel 9-kor indul a Focikupa a tornateremben.</code></td>
+</tr>
+<tr>
+<td>Délben</td>
+<td><code>Délben kosárdobó verseny az udvaron.</code></td>
+</tr>
+<tr>
+<td>Este</td>
+<td><code>Este 6-kor diákdisco az aulában.</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Done when:</strong> each button changes the paragraph to its
+own text, and clicking them in any order always shows the text of the
+last one clicked.</p>
+<h2 id="feature-b-programme-cards-12-pts">FEATURE B — Programme cards
+(12 pts)</h2>
+<p>Use a loop to add one card to <code>&lt;div id=&quot;cards&quot;&gt;</code> for
+every programme in <code>programs</code>:</p>
+<ul>
+<li>The card is an <code>&lt;article&gt;</code> with the class
+<code>card</code>.</li>
+<li>Inside it: an <code>&lt;h3&gt;</code> with the programme’s title,
+and a <code>&lt;p&gt;</code> with its place and time, like
+<code>Tornaterem, 9:00</code>.</li>
+<li>The loop must still work if programmes are added to or removed from
+the array.</li>
+</ul>
+<p>Then, in <code>style.css</code>, put the cards next to each other:
+use flexbox, with a <code>16px</code> gap, and let the cards wrap into a
+new row when they don’t fit.</p>
+<ul>
+<li><em>Hint:</em> <code>programs</code> is an array of objects.
+<code>programs[0]</code> is one programme, and
+<code>programs[0].title</code> is its title. <code>programs.title</code>
+does not exist.</li>
+<li><em>Hint:</em> flexbox goes on the element that
+<strong>holds</strong> the cards, not on the cards.</li>
+</ul>
+<p><strong>Done when:</strong> 6 cards show, the first one is
+<em>Focikupa / Tornaterem, 9:00</em>, and they sit in two rows: 4 cards
+in the first row and 2 in the second.</p>
+<h2 id="feature-c-sign-up-button-10-pts">FEATURE C — Sign-up button (10
+pts)</h2>
+<p>The <em>Robotépítő műhely</em> section shows <em>Szabad helyek:
+?</em> and a <em>Jelentkezem</em> button. The number of free seats is in
+the <code>workshop</code> object in <code>script.js</code>.</p>
+<ol type="1">
+<li>When the page loads, the <code>?</code> is replaced with the number
+of free seats from <code>workshop</code>. Do not type the number.</li>
+<li>Every click on <em>Jelentkezem</em> takes one seat: decrease the
+seats <strong>in the <code>workshop</code> object</strong>, then show
+the new number on the page.</li>
+<li>When no seats are left, the button text changes to
+<code>Betelt</code>, the button is disabled, and it gets the class
+<code>full</code>.</li>
+</ol>
+<ul>
+<li><em>Hint:</em> change the object itself
+(<code>workshop.seats</code>). A new variable or a typed number does not
+count.</li>
+</ul>
+<p><strong>Done when:</strong> the page starts with <em>Szabad helyek:
+3</em>. After 3 clicks it shows <em>0</em>, the button says
+<em>Betelt</em> and is grey, and clicking it again changes nothing (the
+number never goes below 0).</p>
+<h2 id="feature-d-filter-by-type-10-pts">FEATURE D — Filter by type (10
+pts)</h2>
+<ol type="1">
+<li><p>In <code>index.html</code>, in the <em>Szűrés típus szerint</em>
+section, above the empty list, add a <code>&lt;select&gt;</code> with
+the id <code>type-select</code> and a label <em>Típus:</em> connected to
+it. The options:</p>
+<table>
+<thead>
+<tr>
+<th>Option text</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Összes</td>
+<td><code>all</code></td>
+</tr>
+<tr>
+<td>Sport</td>
+<td>the <code>type</code> value of the sport programmes</td>
+</tr>
+<tr>
+<td>Zene</td>
+<td>the <code>type</code> value of the music programmes</td>
+</tr>
+<tr>
+<td>Játék</td>
+<td>the <code>type</code> value of the game programmes</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>In <code>script.js</code>: when the select changes, the list
+<code>&lt;ul id=&quot;results&quot;&gt;</code> shows one <code>&lt;li&gt;</code>
+with the title of each programme of the chosen type. <em>Összes</em>
+shows all of them.</p></li>
+</ol>
+<ul>
+<li><em>Hint:</em> a label is connected when its <code>for</code>
+matches the select’s <code>id</code>.</li>
+<li><em>Hint:</em> the option values must match the <code>type</code>
+values in the data exactly. Copy them from the data.</li>
+<li><em>Hint:</em> empty the list first, or the old results stay.</li>
+</ul>
+<p><strong>Done when:</strong> choosing <em>Zene</em> shows exactly
+<em>Karaoke</em> and <em>Tanárzenekar</em>, then choosing <em>Sport</em>
+shows exactly <em>Focikupa</em> and <em>Kosárdobó verseny</em> (nothing
+from before), and clicking the word <em>Típus:</em> puts the focus on
+the select.</p>
+<h2 id="bonus-favourite-hearts-4-pts-not-required">BONUS — Favourite
+hearts (+4 pts, not required)</h2>
+<p>Give every card from Feature B a heart button:
+<code>&lt;button class=&quot;heart&quot;&gt;♡&lt;/button&gt;</code>.</p>
+<p>Clicking a heart toggles the class <code>fav</code> on that heart and
+changes it to <code>♥</code>. Clicking it again changes it back to
+<code>♡</code>. The other hearts don’t change.</p>
+<p>Do it with <strong>one</strong> click listener on
+<code>&lt;div id=&quot;cards&quot;&gt;</code>, not one per heart.</p>
+<p><strong>Done when:</strong> you can switch any heart on and off on
+its own, and your code has exactly one <code>addEventListener</code> for
+the hearts.</p>
+<hr />
+<h2 id="submission">Submission</h2>
+<p>Your folder <code>test04_vezeteknev_keresztnev</code> contains
+<code>index.html</code>, <code>style.css</code> and
+<code>script.js</code>. Check that all three are saved.</p>
+</body>
+</html>
