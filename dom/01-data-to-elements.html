@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data to Elements</title>
+<style>
+  :root { --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:#f6f7f9; }
+  .mono { font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; }
+  .app { max-width:1240px; margin:0 auto; padding:16px; }
+  header { display:flex; align-items:center; gap:12px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:12px; }
+  .brand h1 { font-size:20px; margin:0; }
+  .brand .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+  .brand a { color:var(--muted); }
+  .dots { display:flex; gap:6px; align-items:center; flex:1; min-width:120px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#dfe3e8; cursor:pointer; }
+  .dot.done { background:var(--accent); }
+  .dot.cur { outline:2px solid var(--accent); outline-offset:2px; }
+  .hbtns { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { border:1px solid #d3d7dd; background:#fff; color:var(--ink); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:16px; margin-top:16px; }
+  .lcol, .rcol { display:flex; flex-direction:column; gap:16px; min-width:0; }
+  @media (max-width:1020px){ .grid { grid-template-columns:minmax(0,1fr); } .rcol { order:-1; } }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); min-width:0; }
+  .box-title { font-weight:700; font-size:14px; margin-bottom:8px; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .sub { font-size:12px; color:var(--muted); font-weight:400; }
+
+  /* data box */
+  .data { font-size:13px; display:flex; flex-direction:column; gap:4px; max-height:230px; overflow:auto; }
+  .drow { display:flex; gap:10px; align-items:baseline; padding:3px 6px; border-radius:6px; background:#f8f9fb; }
+  .drow .ix { color:var(--accent); font-weight:700; flex:none; min-width:58px; }
+  .drow .k { color:#6b7280; }
+  .drow .s { color:#0f7b3f; }
+  .drow .n { color:#b45309; }
+  .drow .b { color:#7c3aed; }
+
+  /* preview + structure */
+  .preview-frame { width:100%; height:330px; border:1px solid var(--line); border-radius:8px; background:#fff; display:block; }
+  .note { font-size:11px; color:var(--muted); margin-top:8px; }
+  .tree { font-size:13px; line-height:1.6; max-height:240px; overflow:auto; background:#f8f9fb; border-radius:8px; padding:8px 10px; white-space:pre; }
+  .tree .tg { color:var(--accent); }
+  .tree .cl { color:#b45309; }
+  .tree .tx { color:var(--ink); font-weight:600; }
+  .empty { color:#9aa0a6; font-size:13px; font-style:italic; }
+
+  /* lesson */
+  .lesson-top { display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+  .lesson-title { font-size:17px; font-weight:800; margin:0; flex:1; }
+  .goal { font-size:14px; line-height:1.55; background:#f6f8fa; border-radius:10px; padding:10px 12px; }
+  .goal pre { background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; overflow-x:auto; margin:8px 0 0; }
+  .goal .mono, .fin .mono, .hintbox .mono, .primer-body .mono { background:#eef1f5; border-radius:4px; padding:0 4px; font-size:.92em; }
+  .turn { margin-top:10px; padding-top:10px; border-top:1px dashed #d3d7dd; }
+  .after { margin-top:10px; padding:10px 12px; border-radius:10px; background:#eef6ff; border:1px solid #cfe0fb; font-size:14px; line-height:1.55; }
+  .state { margin-top:10px; font-size:13px; line-height:1.5; }
+  .state .ok { color:var(--ok); font-weight:700; }
+  .state .wait { color:var(--warn); }
+  .hintbox { background:#fff8e6; border:1px solid #f5e2b0; border-radius:8px; padding:8px 10px; font-size:13px; margin-top:10px; }
+  .steps { list-style:none; padding-left:4px; margin:10px 0 0; display:flex; flex-direction:column; gap:6px; }
+  .steps li { font-size:13px; color:#9aa0a6; display:flex; gap:8px; align-items:center; }
+  .steps li.done { color:var(--ok); }
+  .steps .boxx { width:14px; height:14px; border:1px solid #d3d7dd; border-radius:4px; flex:none; display:inline-flex; align-items:center; justify-content:center; font-size:10px; }
+  .steps li.done .boxx { background:var(--ok); border-color:var(--ok); color:#fff; }
+  .buttons { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .fin { font-size:14px; line-height:1.6; }
+  .fin ul.loop { list-style:none; padding:10px 12px; margin:8px 0 12px; background:#f6f8fa; border-radius:10px; display:flex; flex-direction:column; gap:5px; }
+  .fin ul.loop li { display:flex; gap:10px; align-items:baseline; font-size:13px; flex-wrap:wrap; }
+  .fin ul.loop li .mono { color:var(--accent); font-weight:700; background:none; min-width:200px; }
+  .fin ul.loop li em { font-style:normal; color:var(--muted); }
+
+  /* editor + console */
+  .ed { background:#15181f; color:#d4d4d4; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .ed .bar { display:flex; gap:8px; align-items:center; color:#8b93a1; font-size:12px; flex-wrap:wrap; }
+  .ed .bar .file { flex:1; }
+  .ed .bar .btn { background:#232833; border-color:#323a48; color:#e5e7eb; padding:5px 10px; font-size:12px; }
+  .ed .bar .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ed textarea { width:100%; min-height:260px; background:#0f1217; color:#e5e7eb; border:1px solid #262d38; border-radius:8px; padding:10px 12px; font:13.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; resize:vertical; tab-size:2; caret-color:#fff; }
+  .ed textarea:focus { outline:1px solid var(--accent); }
+  .console { background:#0f1217; border:1px solid #262d38; border-radius:8px; padding:8px 10px; font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; min-height:60px; max-height:200px; overflow:auto; }
+  .console .ln { white-space:pre-wrap; word-break:break-word; }
+  .console .ln.err { color:#ff8a80; }
+  .console .ln.explain { color:#ffd479; font-family:system-ui,sans-serif; font-size:13px; margin:2px 0 4px; }
+  .console .ln.dim { color:#6b7280; }
+
+  /* primer */
+  .primer-card { max-width:780px; margin:24px auto; }
+  .primer-kicker { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .primer-title { font-size:24px; margin:6px 0 14px; }
+  .primer-art { background:#fbfcfd; border:1px solid var(--line); border-radius:10px; padding:10px; overflow-x:auto; }
+  .primer-art svg { width:100%; min-width:560px; height:auto; display:block; }
+  .primer-scrollhint { display:none; font-size:11px; color:var(--muted); margin-top:6px; }
+  @media (max-width:620px){ .primer-scrollhint { display:block; } }
+  .primer-body { font-size:15px; line-height:1.65; margin:14px 0 0; }
+  .primer-say { font-size:13px; color:var(--muted); border-top:1px dashed var(--line); margin-top:14px; padding-top:8px; }
+  .primer-nav { display:flex; gap:8px; align-items:center; margin-top:18px; flex-wrap:wrap; }
+  .pdots { display:flex; gap:6px; flex:1; }
+  .pdot { width:9px; height:9px; border-radius:50%; background:#dfe3e8; cursor:pointer; }
+  .pdot.cur { background:var(--accent); }
+
+  /* modals */
+  .modal-back { position:fixed; inset:0; background:rgba(15,18,24,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
+  .modal-back.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:18px; width:min(680px,94vw); max-height:90vh; overflow:auto; }
+  .modal h3 { margin:0 0 10px; }
+  .modal p { font-size:13px; color:var(--muted); margin:6px 0 12px; }
+  .modal textarea { width:100%; min-height:150px; font:13px ui-monospace,monospace; border:1px solid #d3d7dd; border-radius:8px; padding:8px; resize:vertical; }
+  #altframe { position:absolute; left:-9999px; top:0; width:400px; height:300px; border:0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Data to Elements</h1>
+      <div class="sub">turn a list into a page · <a href="../">home</a></div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="hbtns">
+      <button class="btn" id="btn-why">Why?</button>
+      <button class="btn" id="btn-code">Copy progress</button>
+      <button class="btn" id="btn-paste">Paste code</button>
+      <button class="btn" id="btn-reset">&#8635; Reset</button>
+    </div>
+  </header>
+
+  <div id="primer" style="display:none;"></div>
+
+  <div class="grid" id="main-grid">
+    <div class="lcol">
+      <div class="card">
+        <div class="box-title">The data <span class="mono sub" id="data-name"></span></div>
+        <div class="data mono" id="data"></div>
+        <div class="note">Already in your script. You never type these values in: you take them from the list.</div>
+      </div>
+      <div class="card">
+        <div class="box-title">Live page <span class="sub">(index.html, with your script run on it)</span></div>
+        <iframe class="preview-frame" id="preview" sandbox="allow-scripts" title="The page your script builds"></iframe>
+      </div>
+      <div class="card">
+        <div class="box-title">What your script put in the box <span class="mono sub" id="tree-name"></span></div>
+        <div class="tree mono" id="tree"></div>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="card">
+        <div class="lesson-top">
+          <h2 class="lesson-title" id="lesson-title"></h2>
+          <span class="mono sub" id="lesson-num"></span>
+        </div>
+        <div id="lesson-body"></div>
+        <div class="state" id="lesson-state"></div>
+        <div class="hintbox" id="lesson-hint" style="display:none;"></div>
+        <div class="buttons" id="lesson-buttons"></div>
+      </div>
+
+      <div class="ed">
+        <div class="bar">
+          <span class="file mono">script.js</span>
+          <span>Ctrl+Enter runs it</span>
+          <button class="btn" id="btn-startcode">Start code again</button>
+          <button class="btn primary" id="btn-run">&#9654; Run</button>
+        </div>
+        <textarea id="code" spellcheck="false" wrap="off" aria-label="script.js"></textarea>
+        <div class="console" id="console" aria-label="Console"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<iframe id="altframe" sandbox="allow-scripts" title="Second run with other data" aria-hidden="true" tabindex="-1"></iframe>
+
+<div class="modal-back" id="modal-code">
+  <div class="modal">
+    <h3>Progress code</h3>
+    <p>Copy this code to carry on at another machine. There, press "Paste code", paste it in, and restore.</p>
+    <textarea id="code-text"></textarea>
+    <div class="buttons">
+      <button class="btn" id="code-copy">Copy code</button>
+      <button class="btn" id="code-close">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modal-back" id="modal-paste">
+  <div class="modal">
+    <h3>Restore progress</h3>
+    <p>Paste a code you saved earlier. <b>Careful:</b> it replaces your progress here.</p>
+    <textarea id="paste-text" placeholder="pasted code..."></textarea>
+    <div class="buttons">
+      <button class="btn primary" id="paste-load">Restore</button>
+      <button class="btn" id="paste-close">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ====================================================================
+   Data. Every check runs the student's code twice: on the list they see,
+   and on a different list of the same shape, so typed-in values fail.
+   ==================================================================== */
+
+var CATS = [
+  { name: "Mirci", age: 7, friendly: true },
+  { name: "Bundás", age: 2, friendly: false },
+  { name: "Pixel", age: 4, friendly: true },
+  { name: "Null", age: 11, friendly: false },
+  { name: "Szotyi", age: 1, friendly: true }
+];
+var ALT_CATS = [
+  { name: "Tigris", age: 3, friendly: false },
+  { name: "Morzsa", age: 9, friendly: true },
+  { name: "Bug", age: 5, friendly: true },
+  { name: "Cirmi", age: 6, friendly: false },
+  { name: "Vacak", age: 12, friendly: true },
+  { name: "Lego", age: 2, friendly: false },
+  { name: "Foci", age: 8, friendly: true }
+];
+var EXCUSES = [
+  { text: "My laptop was updating. It still is.", used: true },
+  { text: "I did it, I just didn't save it.", used: true },
+  { text: "It worked on my machine.", used: false },
+  { text: "The Wi-Fi ate my homework.", used: false },
+  { text: "Git deleted it.", used: true },
+  { text: "I thought the deadline was a suggestion.", used: false }
+];
+var ALT_EXCUSES = [
+  { text: "My cat walked on the keyboard.", used: false },
+  { text: "VS Code updated itself.", used: true },
+  { text: "I was debugging the debugger.", used: false }
+];
+
+var PAGES = {
+  cats: {
+    name: "cats", box: "cats", data: CATS, alt: ALT_CATS,
+    body: '<main>\n  <h1>Cats of 13F</h1>\n  <div id="cats"></div>\n</main>',
+    css: 'body{font-family:Arial,sans-serif;background:#f5f3ee;margin:0;padding:16px;color:#1f2328}' +
+         'h1{margin:0 0 12px;font-size:24px}' +
+         '#cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}' +
+         '#cats:empty{display:block;border:2px dashed #c9cfd6;border-radius:10px;padding:18px;text-align:center}' +
+         '#cats:empty::before{content:"#cats is empty";color:#9aa0a6;font-style:italic}' +
+         '#cats>h2{margin:0;font-size:18px}' +
+         '.card{background:#fff;border:2px solid #e3e6ea;border-radius:10px;padding:8px 12px}' +
+         '.card h2{margin:0 0 4px;font-size:17px}.card p{margin:0;color:#6b7280;font-size:14px}' +
+         '.card.grumpy{border-color:#dc2626;background:#fef2f2}' +
+         '.card.grumpy::after{content:"grumpy";display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#fff;background:#dc2626;border-radius:8px;padding:1px 7px}'
+  },
+  excuses: {
+    name: "excuses", box: "excuses", data: EXCUSES, alt: ALT_EXCUSES,
+    body: '<main>\n  <h1>Excuses we have heard</h1>\n  <ul id="excuses"></ul>\n</main>',
+    css: 'body{font-family:Arial,sans-serif;background:#f5f3ee;margin:0;padding:16px;color:#1f2328}' +
+         'h1{margin:0 0 12px;font-size:24px}' +
+         '#excuses{background:#fff;border-radius:10px;padding:10px 10px 10px 34px;margin:0}' +
+         '#excuses:empty{border:2px dashed #c9cfd6;padding:18px;text-align:center;background:none}' +
+         '#excuses:empty::before{content:"#excuses is empty";color:#9aa0a6;font-style:italic}' +
+         '#excuses li{padding:4px 0}' +
+         '#excuses li.used{text-decoration:line-through;color:#9aa0a6}'
+  }
+};
+
+/* ====================================================================
+   Running student code: a sandboxed iframe (scripts on, no same-origin),
+   console.log and errors posted back, then the box serialised.
+   ==================================================================== */
+
+var runSeq = 0, waiting = {};
+window.addEventListener("message", function(e){
+  var d = e.data;
+  if (!d || typeof d !== "object" || !d.__dte || !waiting[d.__dte]) return;
+  var w = waiting[d.__dte];
+  if (d.type === "log") w.logs.push(d.text);
+  if (d.type === "error") w.errors.push(d.err);
+  if (d.type === "done") { w.tree = d.tree; w.created = d.created; finishRun(d.__dte); }
+});
+function finishRun(id){
+  var w = waiting[id];
+  if (!w) return;
+  delete waiting[id];
+  clearTimeout(w.timer);
+  w.resolve({ logs: w.logs, errors: w.errors, tree: w.tree, created: w.created || [], timeout: !!w.timedOut });
+}
+
+// for (...) { and while (...) { get a counter, so an endless loop throws instead of freezing the tab. Same line, so line numbers hold.
+function guard(code){
+  return code
+    .replace(/\bfor\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; })
+    .replace(/\bwhile\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; });
+}
+
+function buildDoc(page, data, code, id){
+  var pre =
+    '<!doctype html><html><head><meta charset="utf-8"><style>' + page.css + '</style></head><body>\n' + page.body + '\n' +
+    '<script>\n' +
+    '(function(){\n' +
+    'var ID=' + id + ';\n' +
+    'function send(o){ o.__dte=ID; parent.postMessage(o,"*"); }\n' +
+    'function fmt(v,d){ d=d||0;\n' +
+    '  if (typeof v==="string") return d? JSON.stringify(v) : v;\n' +
+    '  if (v instanceof Element){ var h=v.outerHTML; return h.length>160? h.slice(0,157)+"...": h; }\n' +
+    '  if (Array.isArray(v)) return d>1? "[...]" : "[" + v.map(function(x){return fmt(x,d+1);}).join(", ") + "]";\n' +
+    '  if (v && typeof v==="object") return d>1? "{...}" : "{" + Object.keys(v).map(function(k){return k+": "+fmt(v[k],d+1);}).join(", ") + "}";\n' +
+    '  return String(v); }\n' +
+    'console.log=console.info=console.warn=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'window.__made=[];\n' +
+    'var ce=document.createElement.bind(document);\n' +
+    'document.createElement=function(t){ var el=ce(t); window.__made.push(el); return el; };\n' +
+    'window.addEventListener("error",function(e){ var m=e.error&&e.error.message||e.message||""; send({type:"error",err:{msg:String(m).replace(/^Uncaught /,""),name:e.error&&e.error.name||"",line:e.lineno||0}}); e.preventDefault(); });\n' +
+    'window.__loops=0;\n' +
+    '})();\n' +
+    'const ' + page.name + ' = ' + JSON.stringify(data) + ';\n' +
+    '<\/script>\n<script>\n';
+  var offset = pre.split("\n").length - 1;
+  var post =
+    '\n<\/script>\n<script>\n' +
+    '(function(){\n' +
+    'function ser(el,d){ var o={tag:el.tagName.toLowerCase(),id:el.id||"",cls:[].slice.call(el.classList),' +
+    'text:[].filter.call(el.childNodes,function(n){return n.nodeType===3;}).map(function(n){return n.textContent;}).join("").trim(),' +
+    'all:el.textContent.trim(),kids:[]};' +
+    ' if(d<4) o.kids=[].map.call(el.children,function(c){return ser(c,d+1);}); return o; }\n' +
+    'var box=document.getElementById(' + JSON.stringify(page.box) + ');\n' +
+    'parent.postMessage({__dte:' + id + ',type:"done",tree: box? ser(box,0) : null,' +
+    'created: window.__made.map(function(e){return {tag:e.tagName.toLowerCase(),text:e.textContent.trim(),cls:[].slice.call(e.classList),onPage:document.body.contains(e)};})},"*");\n' +
+    '})();\n<\/script>\n</body></html>';
+  return { html: pre + guard(code) + post, offset: offset };
+}
+
+function runIn(frame, page, data, code){
+  var id = ++runSeq;
+  var doc = buildDoc(page, data, code, id);
+  return new Promise(function(resolve){
+    waiting[id] = { logs: [], errors: [], resolve: resolve, offset: doc.offset,
+      timer: setTimeout(function(){ if (waiting[id]) { waiting[id].timedOut = true; finishRun(id); } }, 2500) };
+    // Clear first: Chrome does not always repaint a srcdoc iframe that is simply overwritten.
+    frame.removeAttribute("srcdoc");
+    frame.srcdoc = doc.html;
+  }).then(function(r){
+    r.errors.forEach(function(e){ e.line = e.line ? e.line - doc.offset : 0; });
+    return r;
+  });
+}
+
+/* ====================================================================
+   Plain-English error messages
+   ==================================================================== */
+
+function explain(err){
+  var m = err.msg || "", x;
+  if (/__ENDLESS__/.test(m)) return "Your loop never stops. Check the end of the for line: i++ and i < something.length.";
+  if ((x = /^(\w+) is not defined/.exec(m))) {
+    if (x[1] === "cat") return "There is no cat, only cats: the whole list. One cat is cats[0], or cats[i] in a loop.";
+    if (x[1] === "i") return "i only exists inside the loop's { }. Is this line outside the loop?";
+    if (x[1] === "card" || x[1] === "title" || x[1] === "age" || x[1] === "item" || x[1] === "li") return x[1] + " only exists inside the { } where it was made. Is this line outside the loop?";
+    return "Nothing called " + x[1] + " exists here. A typo? Capital letters matter: getElementById, createElement, textContent.";
+  }
+  if ((x = /Cannot read properties of null \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of null \(setting '(\w+)'\)/.exec(m)))
+    return "You used ." + x[1] + " on null: something you looked for was not found. Usually getElementById: the id must match the HTML exactly, without #.";
+  if ((x = /Cannot read properties of undefined \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of undefined \(setting '(\w+)'\)/.exec(m)))
+    return "You used ." + x[1] + " on something that does not exist. Reading past the end of the list? The loop must stop at i < list.length, not <=. Or a typo before the dot.";
+  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + " is not a function. Check the spelling: getElementById, createElement, appendChild, classList.add.";
+  if (/parameter 1 is not of type 'Node'/.test(m)) return "appendChild wants an element made with createElement, not text or a value from the list.";
+  if (/has already been declared/.test(m)) return "That name is already taken. The list is given to you: do not declare it again, and give each const its own name.";
+  if (/Assignment to constant/.test(m)) return "You gave a const a new value. Make a new const instead, or use let.";
+  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return "JavaScript could not read the code at all, so nothing ran. Look for a missing ) } or quote near that line.";
+  if (/is not a valid tag name|InvalidCharacterError/.test(m)) return "createElement wants a bare tag name: \"h2\", not \"<h2>\".";
+  return "";
+}
+
+/* ====================================================================
+   Checks
+   ==================================================================== */
+
+function tg(t){ return '<span class="mono">&lt;' + t + '&gt;</span>'; }
+function code(s){ return '<span class="mono">' + esc(s) + '</span>'; }
+function desc(n){ return '<span class="mono">&lt;' + n.tag + (n.cls.length ? ' class="' + esc(n.cls.join(" ")) + '"' : "") + '&gt;</span>'; }
+
+// spec(item) -> { tag, cls: [...], text } or { tag, cls, parts: [[tag, text], ...] }. Returns the first problem, or "".
+function listProblem(tree, items, spec, boxName, label){
+  if (!tree) return "The " + code("#" + boxName) + " box is gone from the page.";
+  var kids = tree.kids, want = items.map(spec);
+  if (!kids.length) return "The " + code("#" + boxName) + " box is still empty.";
+  if (kids.length !== want.length) {
+    var s = "The box has " + kids.length + " element" + (kids.length === 1 ? "" : "s") + ", it should have " + want.length + ".";
+    if (kids.length === 1 && want.length > 1) s += " Only one? Is the appendChild inside the loop?";
+    if (kids.length > want.length && kids.length % want.length === 0) s += " Did the code run twice, or is something put in twice?";
+    return s;
+  }
+  for (var i = 0; i < want.length; i++) {
+    var el = kids[i], w = want[i], where = "Element " + (i + 1) + " (" + esc(label(items[i])) + ")";
+    if (el.tag !== w.tag) return where + " is " + desc(el) + ", it should be " + tg(w.tag) + ".";
+    for (var c = 0; c < w.cls.length; c++) if (el.cls.indexOf(w.cls[c]) < 0) return where + " is missing the class " + code(w.cls[c]) + ".";
+    for (c = 0; c < el.cls.length; c++) if (w.cls.indexOf(el.cls[c]) < 0) return where + " has the class " + code(el.cls[c]) + ", and should not.";
+    if (w.text !== undefined) {
+      if (el.all !== w.text) return where + ": its text is " + (el.all ? code(el.all) : "empty") + ", it should be " + code(w.text) + ".";
+      continue;
+    }
+    if (el.kids.length !== w.parts.length) return where + ": the card has " + el.kids.length + " part" + (el.kids.length === 1 ? "" : "s") + " inside (" + (el.kids.map(desc).join(", ") || "nothing") + "), it needs " + w.parts.map(function(p){ return tg(p[0]); }).join(" and ") + ".";
+    for (var j = 0; j < w.parts.length; j++) {
+      var p = el.kids[j];
+      if (p.tag !== w.parts[j][0]) return where + ": part " + (j + 1) + " of the card is " + desc(p) + ", it should be " + tg(w.parts[j][0]) + ".";
+      if (p.all !== w.parts[j][1]) return where + ": the " + tg(p.tag) + " says " + (p.all ? code(p.all) : "nothing") + ", it should say " + code(w.parts[j][1]) + "." + (!p.all && j === 0 ? " An empty name usually means cats.name instead of cats[i].name." : "");
+    }
+  }
+  return "";
+}
+var CARD = function(c){ return { tag: "article", cls: ["card"], parts: [["h2", c.name], ["p", c.age + " years old"]] }; };
+var CARD_GRUMPY = function(c){ return { tag: "article", cls: c.friendly ? ["card"] : ["card", "grumpy"], parts: [["h2", c.name], ["p", c.age + " years old"]] }; };
+var catName = function(c){ return c.name; };
+var NOT_TYPED = "It works for this list only. The check also ran your code on a different list of cats, and there it was wrong. Take every value from the list instead of typing it in.";
+
+// r = run on the visible data, a = run on the other list. Return "" when done, or what is still wrong.
+function cardsCheck(spec, needAll){
+  return function(r, a){
+    var items = needAll ? CATS : [CATS[0]], altItems = needAll ? ALT_CATS : [ALT_CATS[0]];
+    var p = listProblem(r.tree, items, spec, "cats", catName);
+    if (p) return p;
+    if (listProblem(a.tree, altItems, spec, "cats", catName)) return NOT_TYPED + (needAll ? " That list has " + ALT_CATS.length + " cats: does your loop go to cats.length?" : "");
+    return "";
+  };
+}
+
+/* ====================================================================
+   The primer: why, before any code. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + '>' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx || 8) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + label + '">' + inner + '</svg>'; }
+function miniCard(x, y, name, sub, grumpy){ return R(x, y, 150, 46, { fill: grumpy ? "#fef2f2" : "#fff", stroke: grumpy ? "#dc2626" : "#d3d7dd", sw: 1.5 }) + T(x + 12, y + 20, name, { bold: true, size: 13 }) + T(x + 12, y + 36, sub, { fill: MUT, size: 11 }); }
+
+var ART = {
+  feed: function(){
+    var s = R(8, 20, 270, 190, { fill: "#15181f", stroke: "#15181f" });
+    var rows = ['[', '  { name: "Mirci", age: 7 },', '  { name: "Bundás", age: 2 },', '  { name: "Pixel", age: 4 },', '  ...', ']'];
+    rows.forEach(function(r, i){ s += T(24, 50 + i * 26, r.replace(/</g, "&lt;"), { mono: true, size: 12.5, fill: i === 0 || i === 5 ? "#9aa0a6" : "#e5e7eb" }); });
+    s += T(143, 14, "what the server sends", { fill: MUT, anchor: "middle", size: 11 });
+    s += ARROW(290, 115, 370, 115, A) + T(330, 104, "a loop", { anchor: "middle", size: 11, fill: A, bold: true });
+    s += R(392, 8, 180, 222, { rx: 18, stroke: "#9aa0a6", sw: 2 });
+    s += T(482, 32, "Cats of 13F", { bold: true, anchor: "middle", size: 13 });
+    s += miniCard(407, 44, "Mirci", "7 years old") + miniCard(407, 98, "Bundás", "2 years old") + miniCard(407, 152, "Pixel", "4 years old");
+    s += T(482, 216, "what you see", { fill: MUT, anchor: "middle", size: 11 });
+    return svg(240, "A list of data on the left becomes a column of cards on a phone screen on the right", s);
+  },
+  list: function(){
+    var s = "", names = ["Mirci", "Bundás", "Pixel", "Null", "Szotyi"], ages = [7, 2, 4, 11, 1];
+    s += R(8, 30, 624, 96, { fill: "#f6f8fa", stroke: "#cfd6df", dash: true });
+    s += T(16, 22, "cats", { mono: true, bold: true, fill: A, size: 13 }) + T(54, 22, "the whole list", { fill: MUT, size: 11 });
+    names.forEach(function(n, i){
+      var x = 20 + i * 122;
+      s += R(x, 44, 110, 70, { stroke: i === 0 ? A : "#d3d7dd", sw: i === 0 ? 2 : 1 });
+      s += T(x + 8, 60, "cats[" + i + "]", { mono: true, size: 11, fill: A, bold: true });
+      s += T(x + 8, 80, 'name: "' + n + '"', { mono: true, size: 10.5 });
+      s += T(x + 8, 98, "age: " + ages[i], { mono: true, size: 10.5 });
+    });
+    s += ARROW(75, 120, 75, 160, A);
+    s += T(20, 178, "cats[0]", { mono: true, bold: true, fill: A, size: 13 }) + T(84, 178, "one cat, the first one. Counting starts at 0.", { size: 12 });
+    s += T(20, 202, "cats[0].name", { mono: true, bold: true, fill: A, size: 13 }) + T(124, 202, '"Mirci": one value, from one cat', { size: 12 });
+    s += T(20, 226, "cats.name", { mono: true, bold: true, fill: "#b91c1c", size: 13 }) + T(100, 226, "nothing. The list has no name, each cat does.", { size: 12, fill: "#b91c1c" });
+    s += T(20, 250, "cats.length", { mono: true, bold: true, fill: A, size: 13 }) + T(112, 250, "5: how many there are", { size: 12 });
+    return svg(262, "An array of five cats drawn as five boxes numbered from zero, and what cats[0], cats[0].name, cats.name and cats.length give", s);
+  },
+  boxes: function(){
+    var s = R(8, 8, 624, 230, { fill: "#fafafa", stroke: "#cfd6df" }) + T(20, 28, "&lt;body&gt;", { mono: true, fill: MUT });
+    s += R(28, 40, 584, 186, { stroke: "#cfd6df" }) + T(40, 60, "&lt;main&gt;", { mono: true, fill: MUT });
+    s += R(48, 72, 544, 38, { fill: "#f6f8fa" }) + T(60, 96, "&lt;h1&gt;", { mono: true, fill: MUT }) + T(110, 96, "Cats of 13F", { bold: true, size: 14 });
+    s += R(48, 122, 544, 90, { fill: "#fff", stroke: A, sw: 2, dash: true }) + T(60, 142, '&lt;div id="cats"&gt;', { mono: true, fill: A, bold: true });
+    s += T(320, 178, "empty. Your script fills this one.", { anchor: "middle", fill: MUT, size: 13 });
+    return svg(246, "The page as nested boxes: body, inside it main, inside it a heading and an empty div with the id cats", s);
+  },
+  recipe: function(){
+    var s = "", xs = [8, 220, 432];
+    var heads = ["1. Make it", "2. Fill it", "3. Put it in"];
+    var codes = ['createElement("h2")', 'textContent = cats[0].name', 'box.appendChild(title)'];
+    xs.forEach(function(x, i){
+      s += R(x, 8, 200, 196, { fill: "#fbfcfd" });
+      s += T(x + 100, 30, heads[i], { bold: true, anchor: "middle", size: 14 });
+      s += T(x + 100, 190, codes[i], { mono: true, anchor: "middle", size: 10.5, fill: A });
+      if (i < 2) s += ARROW(x + 203, 106, x + 217, 106);
+    });
+    s += R(58, 84, 100, 40, { stroke: "#9aa0a6", dash: true }) + T(108, 109, "&lt;h2&gt;&lt;/h2&gt;", { mono: true, anchor: "middle", fill: MUT });
+    s += T(108, 146, "exists, but not on the page", { anchor: "middle", size: 10.5, fill: MUT });
+    s += R(260, 84, 120, 40, { stroke: "#9aa0a6", dash: true }) + T(320, 109, "&lt;h2&gt;Mirci&lt;/h2&gt;", { mono: true, anchor: "middle", size: 11 });
+    s += T(320, 146, "still not on the page", { anchor: "middle", size: 10.5, fill: MUT });
+    s += R(448, 52, 168, 108, { stroke: A, sw: 2 }) + T(458, 70, '#cats', { mono: true, fill: A, bold: true, size: 11 });
+    s += R(472, 84, 120, 40, { stroke: "#d3d7dd" }) + T(532, 109, "&lt;h2&gt;Mirci&lt;/h2&gt;", { mono: true, anchor: "middle", size: 11 });
+    s += T(532, 146, "now you see it", { anchor: "middle", size: 10.5, fill: "#2e9e5b", bold: true });
+    s += T(320, 228, "Forget step 3 and there is no error. Just nothing on the page.", { anchor: "middle", fill: "#b91c1c", size: 12, bold: true });
+    return svg(240, "Three steps: make an empty h2, fill it with a name, put it in the cats box, where it finally shows up", s);
+  },
+  card: function(){
+    var s = R(8, 8, 300, 200, { stroke: A, sw: 2 }) + T(20, 28, '#cats', { mono: true, fill: A, bold: true });
+    s += R(32, 42, 252, 140, { stroke: "#d3d7dd", sw: 1.5 }) + T(44, 62, '&lt;article class="card"&gt;', { mono: true, size: 11.5, fill: "#b45309" });
+    s += R(52, 74, 212, 40, { fill: "#f6f8fa" }) + T(64, 99, "&lt;h2&gt;", { mono: true, fill: MUT, size: 11 }) + T(104, 99, "Mirci", { bold: true });
+    s += R(52, 124, 212, 40, { fill: "#f6f8fa" }) + T(64, 149, "&lt;p&gt;", { mono: true, fill: MUT, size: 11 }) + T(96, 149, "7 years old", {});
+    var steps = ["make the card", "make the h2, fill it", "make the p, fill it", "h2 and p into the card", "the card into the box"];
+    steps.forEach(function(t, i){ s += '<circle cx="352" cy="' + (36 + i * 36) + '" r="11" fill="' + A + '"/>' + T(352, 40 + i * 36, String(i + 1), { anchor: "middle", fill: "#fff", bold: true, size: 11 }) + T(372, 40 + i * 36, t, { size: 13 }); });
+    return svg(216, "A card is an article box holding an h2 and a p, and the card goes into the cats box, in five steps", s);
+  },
+  loop: function(){
+    var s = "", names = ["Mirci", "Bundás", "Pixel", "Null", "Szotyi"];
+    s += T(320, 20, "for (let i = 0; i &lt; cats.length; i++) {", { mono: true, anchor: "middle", fill: A, bold: true, size: 13 });
+    names.forEach(function(n, i){
+      var x = 14 + i * 124;
+      s += R(x, 36, 108, 34, { fill: "#f6f8fa" }) + T(x + 54, 58, "cats[" + i + "]", { mono: true, anchor: "middle", size: 12 });
+      s += ARROW(x + 54, 74, x + 54, 108, A);
+      s += T(x + 64, 94, "i = " + i, { mono: true, size: 10, fill: MUT });
+      s += R(x, 112, 108, 46, { stroke: "#d3d7dd", sw: 1.5 }) + T(x + 10, 132, n, { bold: true, size: 12.5 }) + T(x + 10, 148, "card", { size: 10.5, fill: MUT });
+    });
+    s += T(320, 186, "}", { mono: true, anchor: "middle", fill: A, bold: true, size: 13 });
+    s += T(320, 212, "The code for one card, with cats[0] changed to cats[i]. Five cats or five hundred: same code.", { anchor: "middle", fill: MUT, size: 12 });
+    return svg(224, "The for loop goes through cats[0] to cats[4] and makes one card for each", s);
+  },
+  words: function(){
+    var rows = [["find the box", 'document.getElementById("cats")'], ["make a new element", 'document.createElement("article")'], ["write in it", "el.textContent = cats[i].name"], ["give it a class", 'el.classList.add("card")'], ["put it in", "box.appendChild(el)"], ["for every item", "for (let i = 0; i < cats.length; i++)"]];
+    var s = T(236, 16, "What you would call it", { bold: true, fill: MUT, anchor: "end" }) + T(286, 16, "What JavaScript calls it", { bold: true, fill: A });
+    rows.forEach(function(r, i){
+      var y = 32 + i * 32;
+      s += T(236, y + 16, r[0], { anchor: "end", size: 13 });
+      s += ARROW(246, y + 12, 274, y + 12, "#c9cfd6");
+      s += T(286, y + 16, r[1].replace(/</g, "&lt;"), { mono: true, bold: true, fill: A, size: 12.5 });
+      if (i < rows.length - 1) s += '<line x1="8" y1="' + (y + 29) + '" x2="632" y2="' + (y + 29) + '" stroke="#f1f3f5"/>';
+    });
+    return svg(232, "Everyday words matched to the JavaScript for each: find, make, write, class, put in, loop", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Every list you scroll is built from data", art: "feed",
+    body: "Instagram, Spotify, the e-napló: nobody types those cards in by hand. The server sends a <b>list</b>, and a few lines of JavaScript turn every item into something on the page.<br><br>That is today. On the exam, the frontend task is 15 points, and most of it is exactly this.",
+    say: "Ask: how many cards on your Instagram feed did a person write in HTML? None. Then the exam point: this loop is the spine of the frontend task." },
+  { title: "The data: a list of things", art: "list",
+    body: "The list is an array. Each item is an object: one cat, with a name and an age.<br><br>To get one value, you go in two steps: first <b>which cat</b>, then <b>what about it</b>. <span class=\"mono\">cats.name</span> skips the first step, and gives you nothing at all. That one cost half the class points on the last test.",
+    say: "Read the four lines at the bottom aloud. Ask before revealing: what does cats.name give? (undefined.) This was the programs.place mistake from the Test 04 redo." },
+  { title: "The page: boxes inside boxes", art: "boxes",
+    body: "Every element on a page is a box, and boxes sit inside other boxes. The HTML gives you an <b>empty box</b> with an id. Your script's whole job is to fill it.",
+    say: "Point at the dashed box: this is the only thing the HTML gives us. Everything else comes from the data." },
+  { title: "Make it, fill it, put it in", art: "recipe",
+    body: "Three steps for every element. <b>Make</b> an empty one. <b>Fill</b> it from the data. <b>Put it in</b> a box that is already on the page.<br><br>Step 3 is the one people forget, and it is nasty, because nothing goes red. The element exists, JavaScript is happy, and the page shows nothing.",
+    say: "Make them say the three words. Lesson 2 lets them hit the missing step 3 on purpose." },
+  { title: "A card is boxes in a box", art: "card",
+    body: "A card is the same three steps, a few times. Make the card, make its parts, put the parts in the card, put the card in the box.<br><br>Nothing new. Just more of it.",
+    say: "Ask: in what order could we put things in? Any order works, as long as nothing is forgotten." },
+  { title: "All of them: the loop", art: "loop",
+    body: "You write the code for <b>one</b> card. Then you put it in a loop and change <span class=\"mono\">cats[0]</span> to <span class=\"mono\">cats[i]</span>. The loop runs it once per cat.<br><br>The list will not always have five cats. The code does not care.",
+    say: "Ask: what is i on the third round? (2.) Why i < cats.length and not <=? (cats[5] does not exist.)" },
+  { title: "The words you are about to type", art: "words",
+    body: "You do not have to learn this slide. You will type every line of it in the next half hour, and after that it sticks.<br><br>On the right side of the screen there is a live page. Every time you press Run, you see what your script built.",
+    say: "Then: everyone presses Let's go. Walk round. The ones who finish early do the last lesson without hints." }
+];
+
+/* ====================================================================
+   Lessons
+   ==================================================================== */
+
+var START_CARD =
+  'const box = document.getElementById("cats");\n\n' +
+  'const card = document.createElement("article");\n' +
+  'card.classList.add("card");\n\n' +
+  'const title = document.createElement("h2");\n' +
+  'title.textContent = cats[0].name;\n\n' +
+  'const age = document.createElement("p");\n' +
+  'age.textContent = cats[0].age + " years old";\n\n' +
+  'card.appendChild(title);\n' +
+  'card.appendChild(age);\n' +
+  'box.appendChild(card);\n';
+
+var LOOP_SOLUTION =
+  'const box = document.getElementById("cats");\n\n' +
+  'for (let i = 0; i < cats.length; i++) {\n' +
+  '  const card = document.createElement("article");\n' +
+  '  card.classList.add("card");\n\n' +
+  '  const title = document.createElement("h2");\n' +
+  '  title.textContent = cats[i].name;\n\n' +
+  '  const age = document.createElement("p");\n' +
+  '  age.textContent = cats[i].age + " years old";\n\n' +
+  '  card.appendChild(title);\n' +
+  '  card.appendChild(age);\n' +
+  '  box.appendChild(card);\n' +
+  '}\n';
+
+var LESSONS = [
+  { title: "Look at the data", page: "cats",
+    goal: "This is the list you will turn into a page. It is already in your script, as <span class=\"mono\">cats</span>, and you can see it in the Data box.<br><br>Press <b>Run</b> first. Then print two things to the Console: <b>how many cats</b> there are, and <b>the third cat's name</b>. Take both from <span class=\"mono\">cats</span>.",
+    start: "// cats is already here. Press Run to see it.\nconsole.log(cats);\n",
+    hints: ["How many: <span class=\"mono\">cats.length</span>", "Counting starts at 0. The first cat is <span class=\"mono\">cats[0]</span>, so the third one is...", "<span class=\"mono\">console.log(cats[2].name);</span>"],
+    check: function(r, a){
+      var has = function(run, v){ return run.logs.some(function(l){ return (" " + l + " ").indexOf(" " + v + " ") >= 0 || l === String(v); }); };
+      var nameOk = has(r, CATS[2].name), lenOk = has(r, CATS.length);
+      if (!nameOk) {
+        if (has(r, CATS[3].name)) return CATS[3].name + " is the fourth cat. Counting starts at 0: the first is cats[0].";
+        if (r.logs.some(function(l){ return l === "undefined"; })) return "Something printed undefined. cats.name? The list has no name, one cat does: cats[2].name.";
+        return "The third cat's name is not in the Console yet.";
+      }
+      if (!lenOk) return "The name is there. Now the number of cats.";
+      if (!has(a, ALT_CATS[2].name) || !has(a, ALT_CATS.length)) return NOT_TYPED;
+      return "";
+    },
+    after: "Two steps to every value: which cat, then what about it. You will do that in every lesson from here." },
+
+  { title: "Make one", page: "cats",
+    goal: "One cat first. Make a new <span class=\"mono\">&lt;h2&gt;</span>, write the <b>first</b> cat's name in it, and print it to the Console.<br><br>Then look at the live page.",
+    start: 'const title = document.createElement("h2");\n// write the first cat\'s name into title here\n\nconsole.log(title);\n',
+    hints: ["What an element says is its <span class=\"mono\">textContent</span>: <span class=\"mono\">title.textContent = ...</span>", "The first cat is <span class=\"mono\">cats[0]</span>, its name <span class=\"mono\">cats[0].name</span>.", "<span class=\"mono\">title.textContent = cats[0].name;</span>"],
+    check: function(r, a){
+      var made = function(run, n){ return run.created.some(function(e){ return e.tag === "h2" && e.text === n; }); };
+      if (!r.created.some(function(e){ return e.tag === "h2"; })) return "No <span class=\"mono\">&lt;h2&gt;</span> was made.";
+      if (!made(r, CATS[0].name)) return "There is an <span class=\"mono\">&lt;h2&gt;</span>, but it does not say " + code(CATS[0].name) + ".";
+      if (!made(a, ALT_CATS[0].name)) return NOT_TYPED;
+      return "";
+    },
+    after: "<b>Look at the live page.</b> Still empty. The Console shows your <span class=\"mono\">&lt;h2&gt;</span>, so it exists. But it only exists in JavaScript: you made it and filled it, and never <b>put it in</b>. No error, just nothing. That is the next lesson." },
+
+  { title: "Put it in the box", page: "cats",
+    goal: "The page has an empty box for the cats: <span class=\"mono\">&lt;div id=\"cats\"&gt;</span>. Find it, and put your <span class=\"mono\">h2</span> in it.",
+    start: 'const title = document.createElement("h2");\ntitle.textContent = cats[0].name;\n\n// find the box, then put title in it\n',
+    hints: ["Find it: <span class=\"mono\">const box = document.getElementById(\"cats\");</span> No # here.", "Put it in: <span class=\"mono\">box.appendChild(title);</span>", "Watch the live page and the box below it."],
+    check: function(r, a){
+      var p = listProblem(r.tree, [CATS[0]], function(c){ return { tag: "h2", cls: [], text: c.name }; }, "cats", catName);
+      if (p) return p;
+      if (listProblem(a.tree, [ALT_CATS[0]], function(c){ return { tag: "h2", cls: [], text: c.name }; }, "cats", catName)) return NOT_TYPED;
+      return "";
+    },
+    after: "Make it, fill it, put it in. That is the whole recipe. Everything from here is the same three steps, more times." },
+
+  { title: "One card", page: "cats",
+    goal: "A name alone is not a card. Build this for the first cat, and put it in the box:<pre class=\"mono\">&lt;article class=\"card\"&gt;\n  &lt;h2&gt;Mirci&lt;/h2&gt;\n  &lt;p&gt;7 years old&lt;/p&gt;\n&lt;/article&gt;</pre>",
+    start: 'const box = document.getElementById("cats");\n\nconst card = document.createElement("article");\ncard.classList.add("card");\n\nconst title = document.createElement("h2");\ntitle.textContent = cats[0].name;\n\n// make the <p> with the age: "7 years old"\n\n// put the parts in the card, and the card in the box\n',
+    hints: ["Make it: <span class=\"mono\">const age = document.createElement(\"p\");</span>", "Fill it: <span class=\"mono\">age.textContent = cats[0].age + \" years old\";</span>", "Put in: <span class=\"mono\">card.appendChild(title);</span> <span class=\"mono\">card.appendChild(age);</span> <span class=\"mono\">box.appendChild(card);</span>"],
+    check: cardsCheck(CARD, false),
+    after: "Look at the box below the page: the card, with two boxes inside it. Now there are four more cats waiting." },
+
+  { title: "All of them", page: "cats",
+    goal: "One card works. The list has five cats, and next week it could have fifty. Make a card for <b>every</b> cat, in order.<br><br>Copying the code five times will not pass: the check also runs your code on a different list.",
+    start: START_CARD,
+    hints: ["Put the card code inside <span class=\"mono\">for (let i = 0; i &lt; cats.length; i++) { ... }</span>", "Inside the loop, every <span class=\"mono\">cats[0]</span> becomes <span class=\"mono\">cats[i]</span>.", "Find the box once, before the loop. The card is made and put in inside the loop."],
+    check: cardsCheck(CARD, true),
+    after: "Five cards from one card's worth of code. Change the list and the page changes with it." },
+
+  { title: "The grumpy ones", page: "cats",
+    goal: "Not every cat is friendly. A cat with <span class=\"mono\">friendly: false</span> gets a second class on its card: <span class=\"mono\">grumpy</span>. The page already knows what grumpy looks like.",
+    start: LOOP_SOLUTION,
+    hints: ["Inside the loop: <span class=\"mono\">if (cats[i].friendly === false) { ... }</span>", "<span class=\"mono\">card.classList.add(\"grumpy\");</span>", "The friendly ones keep only <span class=\"mono\">card</span>."],
+    check: cardsCheck(CARD_GRUMPY, true),
+    after: "The data decides what the page looks like. You never wrote which cat is grumpy." },
+
+  { title: "A teammate's code", page: "cats",
+    goal: "Your teammate wrote this and says it is finished. Run it and look at the page.<br><br>Make the page show every cat properly: name, age, grumpy ones marked.",
+    start:
+      'const box = document.getElementById("cats");\n\n' +
+      'for (let i = 0; i < cats.length; i++) {\n' +
+      '  const card = document.createElement("article");\n' +
+      '  card.classList.add("card");\n\n' +
+      '  const title = document.createElement("h2");\n' +
+      '  title.textContent = cats.name;\n\n' +
+      '  const age = document.createElement("p");\n' +
+      '  age.textContent = cats[i].age + " years old";\n\n' +
+      '  card.appendChild(title);\n' +
+      '  card.appendChild(age);\n' +
+      '  if (cats[i].friendly === false) {\n' +
+      '    card.classList.add("grumpy");\n' +
+      '  }\n' +
+      '}\n' +
+      'box.appendChild(card);\n',
+    hints: ["Read the red line in the Console first. It says which line, and below it what that means.", "<span class=\"mono\">card</span> only exists inside the loop's { }. The line that puts it in the box has to be in there too.", "Cards with no name: <span class=\"mono\">cats</span> is the whole list. The list has no name, each cat does."],
+    check: cardsCheck(CARD_GRUMPY, true),
+    after: "Two classic bugs: one shouts, one is silent. The silent one is the reason to always look at the page, not just the Console." },
+
+  { title: "Your turn, no hints", page: "excuses", noHints: true,
+    goal: "New page, new data, same recipe. <span class=\"mono\">excuses</span> is a list of excuses (see the Data box). The page has an empty <span class=\"mono\">&lt;ul id=\"excuses\"&gt;</span>.<br><br>Put one <span class=\"mono\">&lt;li&gt;</span> in it for every excuse, with the excuse's text.",
+    goal2: "<b>One more thing.</b> Your teacher has heard some of these before. Excuses with <span class=\"mono\">used: true</span> get the class <span class=\"mono\">used</span>, and the page crosses them out.",
+    start: "// excuses is already here. The box is <ul id=\"excuses\">.\n",
+    steps: ["#excuses found, and something in it", "An <li> with the first excuse", "An <li> for every excuse, in order", "The used ones crossed out", "Works on any list (checked on other excuses)"],
+    flags: function(r, a){
+      var label = function(e){ return e.text.slice(0, 24) + "..."; };
+      var LI = function(e){ return { tag: "li", cls: [], text: e.text }; };
+      var LI_USED = function(e){ return { tag: "li", cls: e.used ? ["used"] : [], text: e.text }; };
+      var t = r.tree, k = t ? t.kids : [];
+      var f1 = !!t && k.length > 0;
+      var f2 = f1 && k[0].tag === "li" && k[0].all === EXCUSES[0].text;
+      var plain = function(tree, list){ return tree && tree.kids.length === list.length && tree.kids.every(function(n, i){ return n.tag === "li" && n.all === list[i].text; }); };
+      var f3 = plain(t, EXCUSES);
+      var f4 = f3 && !listProblem(t, EXCUSES, LI_USED, "excuses", label);
+      var f5 = f4 && !listProblem(a.tree, ALT_EXCUSES, LI_USED, "excuses", label);
+      var flags = [f1, f2, f3, f4, f5];
+      var msg = "";
+      if (!f1) msg = t ? "The box is still empty." : "The " + code("#excuses") + " box is gone.";
+      else if (!f3) msg = listProblem(t, EXCUSES, LI, "excuses", label);
+      else if (!f4) msg = listProblem(t, EXCUSES, LI_USED, "excuses", label);
+      else if (!f5) msg = "Right for this list. On a different list of excuses it was wrong: is anything typed in?";
+      return { flags: flags, msg: msg, reveal: f3 };
+    } }
+];
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "data-to-elements-v1";
+var N = LESSONS.length;
+function fresh(){ return { lessonIndex: 0, done: [], code: {}, primerDone: false, reveal: false }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined) s[k] = f[k];
+  s.lessonIndex = Math.max(0, Math.min(N, Number(s.lessonIndex) || 0));
+  if (!Array.isArray(s.done)) s.done = [];
+  if (typeof s.code !== "object" || !s.code) s.code = {};
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var hintIdx = -1, primerIdx = 0, primerOpen = false, showSay = false, last = null;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function L(){ return S.lessonIndex < N ? LESSONS[S.lessonIndex] : null; }
+function codeOf(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+
+/* ====================================================================
+   Rendering
+   ==================================================================== */
+
+function renderDots(){
+  var d = $("dots"); d.innerHTML = "";
+  for (var i = 0; i < N; i++) {
+    var el = document.createElement("span");
+    el.className = "dot" + (S.done[i] ? " done" : "") + (S.lessonIndex === i ? " cur" : "");
+    el.title = "Lesson " + (i + 1) + ": " + LESSONS[i].title;
+    el.dataset.i = i;
+    d.appendChild(el);
+  }
+}
+$("dots").onclick = function(e){ var d = e.target.closest(".dot"); if (d) gotoLesson(Number(d.dataset.i)); };
+
+function valHtml(v){
+  if (typeof v === "string") return '<span class="s">"' + esc(v) + '"</span>';
+  if (typeof v === "number") return '<span class="n">' + v + '</span>';
+  if (typeof v === "boolean") return '<span class="b">' + v + '</span>';
+  return esc(String(v));
+}
+function renderData(page){
+  $("data-name").textContent = page.name + "  (" + page.data.length + " items)";
+  $("data").innerHTML = page.data.map(function(o, i){
+    return '<div class="drow"><span class="ix">' + page.name + "[" + i + ']</span><span>{ ' +
+      Object.keys(o).map(function(k){ return '<span class="k">' + k + ':</span> ' + valHtml(o[k]); }).join(", ") + ' }</span></div>';
+  }).join("");
+}
+
+function treeHtml(n, depth){
+  var pad = new Array(depth + 1).join("  ");
+  var open = '<span class="tg">&lt;' + n.tag + '</span>' + (n.id ? ' id="' + esc(n.id) + '"' : "") + (n.cls.length ? ' <span class="cl">class="' + esc(n.cls.join(" ")) + '"</span>' : "") + '<span class="tg">&gt;</span>';
+  var close = '<span class="tg">&lt;/' + n.tag + '&gt;</span>';
+  if (!n.kids.length) return pad + open + (n.text ? '<span class="tx">' + esc(n.text) + '</span>' : "") + close;
+  return pad + open + "\n" + n.kids.map(function(k){ return treeHtml(k, depth + 1); }).join("\n") + "\n" + pad + close;
+}
+function renderTree(page, r){
+  $("tree-name").textContent = "#" + page.box;
+  var el = $("tree");
+  if (!r) { el.innerHTML = '<span class="empty">Press Run.</span>'; return; }
+  if (!r.tree) { el.innerHTML = '<span class="empty">The #' + esc(page.box) + ' box is gone.</span>'; return; }
+  el.innerHTML = r.tree.kids.length ? treeHtml(r.tree, 0) : treeHtml(r.tree, 0) + '\n<span class="empty">empty: nothing has been put in yet</span>';
+}
+
+function renderConsole(r){
+  var c = $("console");
+  if (!r) { c.innerHTML = '<div class="ln dim">Console: press Run (or Ctrl+Enter).</div>'; return; }
+  var h = r.logs.map(function(l){ return '<div class="ln">' + esc(l) + '</div>'; }).join("");
+  r.errors.forEach(function(e){
+    var msg = /__ENDLESS__/.test(e.msg) ? "The loop ran 20000 times and was stopped." : e.msg;
+    h += '<div class="ln err">&#10006; ' + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "  (line " + e.line + ")" : "") + '</div>';
+    var x = explain(e);
+    if (x) h += '<div class="ln explain">' + esc(x) + '</div>';
+  });
+  if (r.timeout) h += '<div class="ln err">&#10006; Your code did not finish. An endless loop?</div>';
+  c.innerHTML = h || '<div class="ln dim">(nothing printed)</div>';
+  c.scrollTop = c.scrollHeight;
+}
+
+function renderLesson(){
+  var les = L(), body = $("lesson-body"), st = $("lesson-state"), hint = $("lesson-hint"), btns = $("lesson-buttons");
+  if (!les) { renderFinish(); return; }
+  $("lesson-title").textContent = les.title;
+  $("lesson-num").textContent = "Lesson " + (S.lessonIndex + 1) + " / " + N;
+  var res = last ? evaluate(les, last.r, last.a) : null;
+  var done = !!(res && res.done);
+  if (done && !S.done[S.lessonIndex]) { S.done[S.lessonIndex] = true; save(); renderDots(); }
+  var h = '<div class="goal">' + les.goal;
+  if (les.goal2 && (S.reveal || (res && res.reveal))) { if (res && res.reveal) { S.reveal = true; save(); } h += '<div class="turn">' + les.goal2 + '</div>'; }
+  h += '</div>';
+  if (les.steps) {
+    var fl = res ? res.flags : [];
+    h += '<ul class="steps">' + les.steps.map(function(s, i){ return '<li class="' + (fl[i] ? "done" : "") + '"><span class="boxx">' + (fl[i] ? "&#10003;" : "") + '</span>' + esc(s) + '</li>'; }).join("") + '</ul>';
+  }
+  if (done && les.after) h += '<div class="after">' + les.after + '</div>';
+  body.innerHTML = h;
+  if (!last) st.innerHTML = '<span class="wait">&#9711; Press Run when you are ready.</span>';
+  else if (done) st.innerHTML = '<span class="ok">&#10003; Done. That is right.</span>';
+  else st.innerHTML = '<span class="wait">&#9711; Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is an error in the Console." : ""));
+  if (!les.noHints && hintIdx >= 0) { hint.style.display = ""; hint.innerHTML = "<b>Hint " + (hintIdx + 1) + "/" + les.hints.length + ":</b> " + les.hints[hintIdx]; }
+  else hint.style.display = "none";
+  btns.innerHTML = "";
+  var back = document.createElement("button"); back.className = "btn"; back.textContent = "← Back"; back.disabled = S.lessonIndex === 0;
+  back.onclick = function(){ gotoLesson(S.lessonIndex - 1); }; btns.appendChild(back);
+  if (!les.noHints) {
+    var tip = document.createElement("button"); tip.className = "btn"; tip.textContent = hintIdx < 0 ? "Hint" : "Next hint";
+    tip.onclick = function(){ hintIdx = (hintIdx + 1) % les.hints.length; renderLesson(); }; btns.appendChild(tip);
+  }
+  if (done || S.done[S.lessonIndex]) {
+    var nx = document.createElement("button"); nx.className = "btn primary"; nx.textContent = S.lessonIndex === N - 1 ? "Finish" : "Next lesson →";
+    nx.onclick = function(){ gotoLesson(S.lessonIndex + 1); }; btns.appendChild(nx);
+  }
+}
+
+var RED_LEFT = "The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.";
+function evaluate(les, r, a){
+  var endless = r.timeout || r.errors.some(function(e){ return /__ENDLESS__/.test(e.msg); });
+  if (les.flags) {
+    var f = les.flags(r, a), fl = f.flags.slice(), msg = endless ? "Your loop never stops." : f.msg;
+    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT; }
+    return { done: fl.every(Boolean), flags: fl, msg: msg, reveal: f.reveal };
+  }
+  if (endless) return { done: false, msg: "Your loop never stops." };
+  var m = les.check(r, a);
+  if (!m && r.errors.length) m = RED_LEFT;
+  return { done: !m, msg: m };
+}
+
+function renderFinish(){
+  $("lesson-title").textContent = "Done";
+  $("lesson-num").textContent = "";
+  $("lesson-state").innerHTML = "";
+  $("lesson-hint").style.display = "none";
+  $("lesson-body").innerHTML = '<div class="fin"><p><b>You turned a list into a page, twice, and fixed someone else\'s code on the way.</b> This is the recipe, and it does not change:</p>' +
+    '<ul class="loop">' +
+    '<li><span class="mono">getElementById("...")</span><em>find the box, once, before the loop</em></li>' +
+    '<li><span class="mono">for (let i = 0; i &lt; list.length; i++)</span><em>for every item, and inside always list[i]</em></li>' +
+    '<li><span class="mono">createElement("...")</span><em>make it</em></li>' +
+    '<li><span class="mono">textContent, classList.add</span><em>fill it from the data</em></li>' +
+    '<li><span class="mono">appendChild(...)</span><em>put it in, inside the loop</em></li>' +
+    '</ul>' +
+    '<p>Next, the list stops living in your script and comes from a server. That is <span class="mono">fetch</span>, and everything after the data arrives is exactly what you did here.</p>' +
+    '<p>Press Reset and do it again without the hints. It should get boring. <b>Boring is the goal.</b></p></div>';
+  var btns = $("lesson-buttons"); btns.innerHTML = "";
+  var b = document.createElement("button"); b.className = "btn"; b.textContent = "← Back to the last lesson"; b.onclick = function(){ gotoLesson(N - 1); }; btns.appendChild(b);
+}
+
+function renderPrimer(){
+  var wrap = $("primer"), grid = $("main-grid");
+  if (!primerOpen) { wrap.style.display = "none"; grid.style.display = ""; return; }
+  wrap.style.display = ""; grid.style.display = "none";
+  var P = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  wrap.innerHTML = '<div class="card primer-card">' +
+    '<div class="primer-kicker">Before the code: what this is for</div>' +
+    '<h2 class="primer-title">' + esc(P.title) + '</h2>' +
+    '<div class="primer-art">' + ART[P.art]() + '</div>' +
+    '<div class="primer-scrollhint">Drag the drawing sideways to see the rest of it.</div>' +
+    '<p class="primer-body">' + P.body + '</p>' +
+    (showSay ? '<div class="primer-say"><b>Teacher:</b> ' + esc(P.say) + '</div>' : "") +
+    '<div class="primer-nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>&larr; Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go &rarr;" : "Next &rarr;") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){
+    if (!lastP) { primerIdx++; renderPrimer(); return; }
+    S.primerDone = true; primerOpen = false; save(); renderAll();
+  };
+  if ($("p-close")) $("p-close").onclick = function(){ primerOpen = false; renderAll(); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+document.addEventListener("keydown", function(e){
+  if (!primerOpen || e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowRight" && primerIdx < PRIMER.length - 1) { primerIdx++; renderPrimer(); }
+  if (e.key === "ArrowLeft" && primerIdx > 0) { primerIdx--; renderPrimer(); }
+  if (e.key === "n" || e.key === "N") { showSay = !showSay; renderPrimer(); }
+});
+
+function pageFor(){ var les = L() || LESSONS[N - 1]; return PAGES[les.page]; }
+
+function loadEditor(){
+  var i = Math.min(S.lessonIndex, N - 1);
+  $("code").value = codeOf(i);
+  $("code").disabled = S.lessonIndex >= N;
+}
+
+function renderAll(){
+  renderPrimer();
+  renderDots();
+  var page = pageFor();
+  renderData(page);
+  renderTree(page, last && last.r);
+  renderConsole(last && last.r);
+  renderLesson();
+}
+
+/* ====================================================================
+   Actions
+   ==================================================================== */
+
+var running = false;
+function run(){
+  if (running || S.lessonIndex >= N) return;
+  running = true;
+  var page = pageFor(), src = $("code").value;
+  S.code[S.lessonIndex] = src; save();
+  var idx = S.lessonIndex;
+  Promise.all([runIn($("preview"), page, page.data, src), runIn($("altframe"), page, page.alt, src)]).then(function(res){
+    running = false;
+    if (idx !== S.lessonIndex) return;
+    last = { r: res[0], a: res[1] };
+    renderAll();
+  });
+}
+
+function gotoLesson(i){
+  S.lessonIndex = Math.max(0, Math.min(N, i));
+  hintIdx = -1; last = null; S.reveal = false;
+  save(); loadEditor(); renderAll();
+  if (S.lessonIndex < N) run(); else blankPreview();
+}
+function blankPreview(){ $("preview").removeAttribute("srcdoc"); $("preview").srcdoc = buildDoc(PAGES.cats, CATS, LOOP_SOLUTION, 0).html; }
+
+$("btn-run").onclick = run;
+$("code").addEventListener("keydown", function(e){
+  var ta = e.target;
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(); return; }
+  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); var a = ta.selectionStart; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = a + 2; }
+});
+$("code").addEventListener("input", function(){ S.code[S.lessonIndex] = $("code").value; save(); });
+$("btn-startcode").onclick = function(){
+  if (S.lessonIndex >= N) return;
+  if (!confirm("Put back the start code for this lesson? What you wrote here is lost.")) return;
+  delete S.code[S.lessonIndex]; save(); loadEditor(); run();
+};
+$("btn-why").onclick = function(){ primerOpen = true; primerIdx = 0; renderAll(); };
+$("btn-reset").onclick = function(){
+  if (!confirm("Start everything again from lesson 1? Your code and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoLesson(0);
+};
+
+function openModal(id){ $(id).classList.add("open"); }
+function closeModals(){ [].forEach.call(document.querySelectorAll(".modal-back"), function(m){ m.classList.remove("open"); }); }
+$("btn-code").onclick = function(){ $("code-text").value = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); openModal("modal-code"); };
+$("code-copy").onclick = function(){ $("code-text").select(); try { document.execCommand("copy"); } catch (e) {} };
+$("code-close").onclick = closeModals;
+$("btn-paste").onclick = function(){ $("paste-text").value = ""; openModal("modal-paste"); $("paste-text").focus(); };
+$("paste-close").onclick = closeModals;
+$("paste-load").onclick = function(){
+  try { S = normalize(JSON.parse(decodeURIComponent(escape(atob($("paste-text").value.replace(/\s/g, "")))))); }
+  catch (e) { alert("That code could not be read. Copy the whole thing and try again."); return; }
+  save(); closeModals(); gotoLesson(S.lessonIndex);
+};
+[].forEach.call(document.querySelectorAll(".modal-back"), function(m){ m.addEventListener("click", function(e){ if (e.target === m) closeModals(); }); });
+
+// Test hook: lets an automated check drive the page without the UI.
+window.__DTE = { LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoLesson: gotoLesson, state: function(){ return S; } };
+
+primerOpen = !S.primerDone;
+loadEditor();
+renderAll();
+if (S.lessonIndex < N) run(); else blankPreview();
+})();
+</script>
+</body>
+</html>
