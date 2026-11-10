@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git 1 · Save points</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --mark: #ffe08a;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+    --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+  a { color: #1a5fb4; }
+  code { font-family: var(--mono); background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+  header.top { background: var(--accent); color: #fff; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  header.top h1 { font-size: 19px; margin: 0; font-weight: 600; }
+  header.top a { color: #fff; opacity: .85; font-size: 15px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .tabs button { font: inherit; font-size: 15px; background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .tabs button.on { background: #fff; color: var(--accent); font-weight: 600; }
+  main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { main, header.top { padding-left: 16px; padding-right: 16px; } }
+  [hidden] { display: none !important; }
+
+  /* ---------- 1. Learn: slides for the projector ---------- */
+  .slidebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+  .slidebar button { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .slidebar .count { margin-left: auto; color: var(--muted); font-size: 15px; }
+  .slide { font-size: 22px; line-height: 1.45; }
+  .slide h2 { font-size: 38px; margin: 0 0 6px; line-height: 1.2; }
+  .slide .lead { font-size: 25px; margin: 0 0 20px; color: var(--muted); }
+  .slide p { margin: 0 0 14px; }
+  .slide ul, .slide ol { margin: 0 0 14px; padding-left: 30px; }
+  .slide li { margin: 0 0 6px; }
+  .slide pre.show { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); white-space: pre; overflow-x: auto; margin: 0 0 14px; }
+  .slide pre.show.dark { background: #0c0c14; color: #e8e8ec; border-color: #0c0c14; }
+  .slide pre.show .y { color: #ffd479; }
+  .slide .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .slide .pair > div { min-width: 0; }
+  @media (max-width: 900px) { .slide .pair { grid-template-columns: 1fr; } }
+  .slide .pair h3 { font-size: 22px; margin: 0 0 6px; }
+  .slide table { border-collapse: collapse; margin: 0 0 14px; font-size: 21px; }
+  .slide th, .slide td { border: 1px solid var(--line); padding: 6px 14px; text-align: left; vertical-align: top; background: var(--panel); }
+  .slide th { background: var(--bg); }
+  .slide .rule { margin-top: 18px; background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; font-size: 24px; }
+  .slide .say { margin-top: 18px; color: var(--muted); font-size: 17px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  @media (max-width: 600px) {
+    .slide { font-size: 18px; }
+    .slide h2 { font-size: 28px; }
+    .slide .lead { font-size: 19px; }
+    .slide pre.show, .slide table { font-size: 15px; }
+    .slide .rule { font-size: 18px; }
+  }
+
+  /* ---------- 2. Your turn + 3. For real ---------- */
+  nav.steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  nav.steps button { border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  .goal { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal p { margin: 0 0 6px; }
+  .goal ol { margin: 0; padding-left: 22px; }
+  .goal li { margin: 0 0 4px; }
+  .goal .back { float: right; font-size: 14px; margin-left: 12px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button { font: inherit; border-radius: 6px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .result button { font: inherit; margin-left: 8px; border-radius: 6px; padding: 4px 12px; border: 1px solid var(--ok); background: #fff; color: var(--ok); cursor: pointer; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 12px; font: 14px/1.5 var(--mono); overflow-x: auto; }
+  .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; margin: 0 0 12px; }
+  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 14px 16px; font-weight: 600; margin-bottom: 16px; }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .tabpane-intro { color: var(--muted); margin: 0 0 16px; }
+  .answer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .answer input { font: 16px var(--mono); padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; min-width: 220px; }
+  .paste textarea { width: 100%; min-height: 120px; font: 14px/1.45 var(--mono); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #0c0c14; color: #e8e8ec; }
+  .paste .verdict { margin: 6px 0 0; font-size: 15px; }
+  .paste .verdict.ok { color: var(--ok); font-weight: 600; }
+  .paste .verdict.bad { color: var(--bad); }
+
+  /* ---------- The simulator ---------- */
+  .sim { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 12px; margin: 8px 0 14px; }
+  .sim.withprev { grid-template-columns: 230px minmax(0, 1.25fr) minmax(0, 1fr); }
+  @media (max-width: 1050px) { .sim.withprev { grid-template-columns: 230px minmax(0, 1fr); } .sim.withprev .preview { grid-column: 1 / -1; } }
+  @media (max-width: 760px) { .sim, .sim.withprev { grid-template-columns: minmax(0, 1fr); } }
+  .sim > div { min-width: 0; }
+  .ftitle { font: 12px/1.4 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 6px; }
+  .files { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; }
+  .files ul { list-style: none; margin: 0 0 8px; padding: 0; }
+  .files li { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px; cursor: pointer; font-family: var(--mono); font-size: 14px; }
+  .files li:hover, .files li.open { background: var(--bg); }
+  .files .badge { margin-left: auto; font: 11px/1.6 system-ui, sans-serif; border-radius: 999px; padding: 0 7px; white-space: nowrap; }
+  .b-new { background: #e6f4ea; color: #1a7f37; }
+  .b-mod { background: #fff4d6; color: #8a5a00; }
+  .b-staged { background: #e3ecfb; color: #1a5fb4; }
+  .b-ign { background: #eee; color: #777; }
+  .files button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .files textarea { width: 100%; min-height: 130px; font: 13px/1.45 var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+  .files .editing { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+  .term { background: #0c0c14; color: #e8e8ec; border-radius: 8px; padding: 10px 14px; font: 15px/1.45 var(--mono); height: 340px; overflow-y: auto; cursor: text; }
+  .slide .term { font-size: 17px; height: 380px; }
+  .term .line { white-space: pre-wrap; word-break: break-word; }
+  .term .cmd { color: #8ce99a; }
+  .term .prompt { color: #78aeed; }
+  .term .red { color: #ff8a80; }
+  .term .green { color: #8ce99a; }
+  .term .yellow { color: #ffd479; }
+  .term .dim { color: #8b8fa3; }
+  .term .inrow { display: flex; gap: 8px; }
+  .term input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: inherit; padding: 0; }
+  .preview iframe { width: 100%; height: 340px; border: 1px solid var(--line); border-radius: 8px; background: #fff; display: block; }
+  .slide .preview iframe { height: 380px; }
+  .steprow { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+  .steprow button { font: inherit; font-size: 17px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; cursor: pointer; font-family: var(--mono); }
+  .steprow button.restart { background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-family: inherit; }
+  .places { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 18px; }
+  .places .box { background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; text-align: center; min-width: 200px; }
+  .places .box small { display: block; color: var(--muted); font-size: 16px; }
+  .places .arrow { font: 19px/1.3 var(--mono); color: var(--accent); text-align: center; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Git 1 · Save points</h1>
+  <a href="../">Home</a>
+  <div class="tabs" id="tabs">
+    <button data-tab="learn">1. Learn</button>
+    <button data-tab="try">2. Your turn</button>
+    <button data-tab="live">3. For real</button>
+  </div>
+</header>
+
+<main>
+  <section id="tab-learn">
+    <div class="slidebar">
+      <button id="prev">← Back</button>
+      <button id="next">Next →</button>
+      <button id="notes">Notes (N)</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slide" id="slide"></div>
+  </section>
+
+  <section id="tab-try" hidden>
+    <p class="tabpane-intro">A practice terminal. It answers like real Git, and you cannot break anything here. Your project's files are on the left: click one to edit it and to see what Git thinks of it. Type commands in the terminal and press Enter (↑ brings back the last one). When you are done, press <b>Check</b>.</p>
+    <nav class="steps" id="steps"></nav>
+    <div id="fin-try"></div>
+    <div id="task"></div>
+  </section>
+
+  <section id="tab-live" hidden>
+    <p class="tabpane-intro">Now on your own machine, with real Git. Do the steps in the VS Code terminal, then paste what the commands print. The page checks it.</p>
+    <div class="goal">
+      <h3>The steps</h3>
+      <ol>
+        <li>In your <code>Webdev</code> folder, make a folder called <code>git-lesson</code> and open it in VS Code (<b>File → Open Folder</b>).</li>
+        <li>Open a terminal: <b>Terminal → New Terminal</b>. Check that the prompt ends in <code>git-lesson</code>.</li>
+        <li><code>git init</code>. If Git asks who you are, or you have never done it on this machine: <code>git config --global user.name "Your Name"</code> and <code>git config --global user.email "you@example.com"</code>.</li>
+        <li>Make an <code>index.html</code> (anything in it) and save it in a commit.</li>
+        <li>Make a <code>style.css</code>, link it from <code>index.html</code>, and commit.</li>
+        <li>Change something in <code>style.css</code> and commit. Every message says what changed.</li>
+        <li>Make a <code>notes.txt</code> (your own notes, not part of the project) and a <code>.gitignore</code> with <code>notes.txt</code> in it. Commit the <code>.gitignore</code>.</li>
+        <li>Break the page on purpose: in <code>style.css</code> give the <code>body</code> <code>font-size: 6em;</code>. Look at it in the browser. Commit it anyway.</li>
+        <li>Load the last good save: find that commit in <code>git log --oneline</code> and run <code>git revert --no-edit &lt;hash&gt;</code>. Check the browser again.</li>
+      </ol>
+    </div>
+    <div id="pastes"></div>
+    <div id="fin-live"></div>
+  </section>
+</main>
+<footer class="bottom"><button id="resetAll">Reset parts 2 and 3</button></footer>
+
+<script>
+"use strict";
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ======================================================================
+// The Git simulator. State is plain data (saved per task in localStorage):
+// { repo, config: {name, email}, files: {path: text}, index: {path: text},
+//   commits: [{hash, msg, body, name, email, date, tree}], out: [[cls, text]], hist: [] }
+// Command output matches real Git, because that is what they meet next.
+// ======================================================================
+
+const DIR = "C:\\Users\\student\\Webdev\\git-lesson";
+const DIR_SLASH = "C:/Users/student/Webdev/git-lesson";
+
+function hex(n) { let s = ""; for (let i = 0; i < n; i++) s += "0123456789abcdef"[Math.floor(Math.random() * 16)]; return s; }
+function gitDate(d) {
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+  const p = n => String(n).padStart(2, "0");
+  return `${day} ${mon} ${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} ${d.getFullYear()} +0100`;
+}
+function newSim(o) {
+  return Object.assign({ repo: false, config: {}, files: {}, index: {}, commits: [], out: [], hist: [] }, JSON.parse(JSON.stringify(o || {})));
+}
+// A sim with a history: steps = [{ files: {...}, msg }] committed in order.
+function withHistory(base, steps) {
+  const s = newSim(Object.assign({ repo: true, config: { name: "Kiss Anna", email: "kiss.anna@example.com" } }, base));
+  let t = Date.now() - steps.length * 3600e3;
+  for (const st of steps) {
+    Object.assign(s.files, st.files);
+    for (const p of Object.keys(st.files)) s.index[p] = s.files[p];
+    s.commits.push({ hash: hex(40), msg: st.msg, name: s.config.name, email: s.config.email, date: gitDate(new Date(t += 3600e3)), tree: Object.assign({}, s.index) });
+  }
+  return s;
+}
+const head = s => s.commits.length ? s.commits[s.commits.length - 1].tree : {};
+
+function ignored(s, path) {
+  const gi = s.files[".gitignore"];
+  if (gi === undefined) return false;
+  const segs = path.split("/");
+  for (let pat of gi.split(/\r?\n/)) {
+    pat = pat.trim();
+    if (!pat || pat.startsWith("#")) continue;
+    pat = pat.replace(/^\//, "");
+    const dirOnly = pat.endsWith("/");
+    if (dirOnly) pat = pat.slice(0, -1);
+    const re = new RegExp("^" + pat.split("*").map(x => x.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join("[^/]*") + "$");
+    if (pat.includes("/")) { if (re.test(path) || path.startsWith(pat + "/")) return true; }
+    else if ((dirOnly ? segs.slice(0, -1) : segs).some(x => re.test(x))) return true;
+  }
+  return false;
+}
+
+function statusOf(s) {
+  const h = head(s), staged = [], unstaged = [], untracked = new Set();
+  for (const p of new Set([...Object.keys(s.index), ...Object.keys(h)]).values()) {
+    if (s.index[p] === h[p]) continue;
+    staged.push([h[p] === undefined ? "new file" : s.index[p] === undefined ? "deleted" : "modified", p]);
+  }
+  for (const p of Object.keys(s.index)) if (s.files[p] !== undefined && s.files[p] !== s.index[p]) unstaged.push(["modified", p]);
+  for (const p of Object.keys(s.files)) if (!(p in s.index) && !ignored(s, p)) untracked.add(p.includes("/") ? p.split("/")[0] + "/" : p);
+  return { staged: staged.sort((a, b) => a[1].localeCompare(b[1])), unstaged, untracked: [...untracked].sort() };
+}
+// The badge next to each file in the file list.
+function fileBadge(s, p) {
+  if (!s.repo) return "";
+  if (ignored(s, p) && !(p in s.index)) return ["b-ign", "ignored"];
+  if (!(p in s.index)) return ["b-new", "new"];
+  if (s.files[p] !== s.index[p]) return ["b-mod", "modified"];
+  if (s.index[p] !== head(s)[p]) return ["b-staged", "staged"];
+  return "";
+}
+
+// " 1 file changed, 1 insertion(+), 1 deletion(-)" plus create/delete mode lines, like real Git.
+function lines(t) { return t === undefined ? [] : t.split("\n").filter(x => x !== ""); }
+function diffStat(oldT, newT) {
+  const paths = [...new Set([...Object.keys(oldT), ...Object.keys(newT)])].filter(p => oldT[p] !== newT[p]).sort();
+  let ins = 0, del = 0;
+  const modes = [];
+  for (const p of paths) {
+    const cnt = new Map();
+    for (const x of lines(oldT[p])) cnt.set(x, (cnt.get(x) || 0) + 1);
+    for (const x of lines(newT[p])) { if (cnt.get(x) > 0) cnt.set(x, cnt.get(x) - 1); else ins++; }
+    for (const v of cnt.values()) del += v;
+    if (oldT[p] === undefined) modes.push(` create mode 100644 ${p}`);
+    if (newT[p] === undefined) modes.push(` delete mode 100644 ${p}`);
+  }
+  let out = ` ${paths.length} file${paths.length === 1 ? "" : "s"} changed`;
+  if (ins) out += `, ${ins} insertion${ins === 1 ? "" : "s"}(+)`;
+  if (del) out += `, ${del} deletion${del === 1 ? "" : "s"}(-)`;
+  if (!ins && !del) out += ", 0 insertions(+), 0 deletions(-)";
+  return [out, ...modes].join("\n");
+}
+
+function tokens(line) {
+  const out = []; let cur = null, q = null;
+  for (const ch of line) {
+    if (q) { if (ch === q) q = null; else cur += ch; continue; }
+    if (ch === '"' || ch === "'") { q = ch; cur = cur ?? ""; continue; }
+    if (/\s/.test(ch)) { if (cur !== null) { out.push(cur); cur = null; } continue; }
+    cur = (cur ?? "") + ch;
+  }
+  if (cur !== null) out.push(cur);
+  return out;
+}
+
+// HEAD, HEAD~2, or a hash prefix of 4+ characters. Returns the index in s.commits, or -1.
+function resolveRev(s, rev) {
+  if (!rev) return -1;
+  const m = /^HEAD(?:~(\d+))?$/i.exec(rev);
+  if (m) { const i = s.commits.length - 1 - Number(m[1] || 0); return i >= 0 ? i : -1; }
+  if (!/^[0-9a-f]{4,40}$/i.test(rev)) return -1;
+  const hits = s.commits.map((c, i) => [c, i]).filter(([c]) => c.hash.startsWith(rev.toLowerCase()));
+  return hits.length === 1 ? hits[0][1] : -1;
+}
+
+function makeCommit(s, msg, body) {
+  const before = head(s), root = !s.commits.length;
+  const c = { hash: hex(40), msg, body: body || "", name: s.config.name, email: s.config.email, date: gitDate(new Date()), tree: Object.assign({}, s.index) };
+  s.commits.push(c);
+  return [`[main${root ? " (root-commit)" : ""} ${c.hash.slice(0, 7)}] ${msg}`, diffStat(before, c.tree)];
+}
+
+// Run one command line. Returns lines: [[cls, text], ...], or null to clear the screen.
+function exec(s, line) {
+  const t = tokens(line.trim());
+  const o = [];
+  const say = (text, cls = "") => o.push([cls, text]);
+  if (!t.length) return o;
+  const [cmd, sub, ...rest] = t;
+  if (cmd === "clear" || cmd === "cls") { s.out = []; return null; }
+  if (cmd === "ls" || cmd === "dir") {
+    const top = [...new Set(Object.keys(s.files).map(p => p.includes("/") ? p.split("/")[0] + "/" : p))].sort();
+    say(top.join("\n") || "(empty folder)"); return o;
+  }
+  if (cmd === "cat" || cmd === "type") {
+    if (sub in s.files) say(s.files[sub]); else say(`cat: ${sub || ""}: No such file or directory`, "red");
+    return o;
+  }
+  if (cmd === "help") {
+    say("This practice terminal knows: git init, git config, git status, git add, git commit -m \"…\", git log, git log --oneline, git revert <hash>, ls, cat <file>, clear", "dim"); return o;
+  }
+  if (cmd !== "git") { say(`(This practice terminal only runs git commands, ls, cat and clear. "${cmd}" may work in a real terminal.)`, "dim"); return o; }
+  if (!sub) { say("usage: git [--version] [--help] <command> [<args>]", "dim"); return o; }
+
+  if (sub === "init") {
+    say(s.repo ? `Reinitialized existing Git repository in ${DIR_SLASH}/.git/` : `Initialized empty Git repository in ${DIR_SLASH}/.git/`);
+    s.repo = true; return o;
+  }
+  if (sub === "config") {
+    const args = rest.filter(a => a !== "--global");
+    if (args[0] === "--list" || args[0] === "-l") {
+      if (s.config.name) say("user.name=" + s.config.name);
+      if (s.config.email) say("user.email=" + s.config.email);
+      return o;
+    }
+    const key = args[0], val = args[1];
+    if (key !== "user.name" && key !== "user.email") { say(key ? "(In this practice terminal you can only set user.name and user.email.)" : "usage: git config [<options>]", "dim"); return o; }
+    const k = key === "user.name" ? "name" : "email";
+    if (val === undefined) { if (s.config[k]) say(s.config[k]); return o; }
+    s.config[k] = val; return o;
+  }
+  if (!s.repo) { say("fatal: not a git repository (or any of the parent directories): .git", "red"); return o; }
+
+  if (sub === "status") {
+    const st = statusOf(s);
+    say("On branch main");
+    if (!s.commits.length) say("\nNo commits yet");
+    if (st.staged.length) {
+      say("\nChanges to be committed:\n  (use \"git restore --staged <file>...\" to unstage)");
+      for (const [k, p] of st.staged) say(`\t${(k + ":").padEnd(12)}${p}`, "green");
+    }
+    if (st.unstaged.length) {
+      say("\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)");
+      for (const [k, p] of st.unstaged) say(`\t${(k + ":").padEnd(12)}${p}`, "red");
+    }
+    if (st.untracked.length) {
+      say("\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)");
+      for (const p of st.untracked) say("\t" + p, "red");
+    }
+    if (!st.staged.length) {
+      if (st.unstaged.length) say("\nno changes added to commit (use \"git add\" and/or \"git commit -a\")");
+      else if (st.untracked.length) say("\nnothing added to commit but untracked files present (use \"git add\" to track)");
+      else if (!s.commits.length) say("\nnothing to commit (create/copy files and use \"git add\" to track)");
+      else say("nothing to commit, working tree clean");
+    }
+    return o;
+  }
+  if (sub === "add") {
+    if (!rest.length) { say("Nothing specified, nothing added.\nhint: Maybe you wanted to say 'git add .'?", "yellow"); return o; }
+    for (const a of rest) {
+      if (a === "." || a === "-A" || a === "--all") {
+        for (const p of Object.keys(s.files)) if (!ignored(s, p) || p in s.index) s.index[p] = s.files[p];
+        for (const p of Object.keys(s.index)) if (!(p in s.files)) delete s.index[p];
+        continue;
+      }
+      const base = a.replace(/\/$/, "");
+      const hits = Object.keys(s.files).filter(p => p === base || p.startsWith(base + "/"));
+      if (!hits.length) { say(`fatal: pathspec '${a}' did not match any files`, "red"); return o; }
+      const ok = hits.filter(p => !ignored(s, p) || p in s.index);
+      if (!ok.length) { say(`The following paths are ignored by one of your .gitignore files:\n${a}\nhint: Use -f if you really want to add them.`, "yellow"); continue; }
+      for (const p of ok) s.index[p] = s.files[p];
+    }
+    return o;
+  }
+  const noIdentity = () => say("Author identity unknown\n\n*** Please tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'student@LAB-PC.(none)')", "red");
+  if (sub === "commit") {
+    const mi = rest.indexOf("-m");
+    if (mi < 0 || rest[mi + 1] === undefined) { say("In this practice terminal, always give the message after -m: git commit -m \"What I changed\"\n(Real Git would open a text editor here.)", "yellow"); return o; }
+    const msg = rest[mi + 1];
+    if (!s.config.name || !s.config.email) { noIdentity(); return o; }
+    const st = statusOf(s);
+    if (!st.staged.length) {
+      say("On branch main");
+      if (st.unstaged.length) { say("Changes not staged for commit:"); for (const [k, p] of st.unstaged) say(`\t${(k + ":").padEnd(12)}${p}`, "red"); }
+      if (st.untracked.length) { say("Untracked files:"); for (const p of st.untracked) say("\t" + p, "red"); }
+      say(st.unstaged.length ? "\nno changes added to commit (use \"git add\" and/or \"git commit -a\")" : st.untracked.length ? "\nnothing added to commit but untracked files present (use \"git add\" to track)" : "nothing to commit, working tree clean");
+      return o;
+    }
+    for (const x of makeCommit(s, msg)) say(x);
+    return o;
+  }
+  if (sub === "log") {
+    if (!s.commits.length) { say("fatal: your current branch 'main' does not have any commits yet", "red"); return o; }
+    const list = s.commits.slice().reverse();
+    if (rest.includes("--oneline")) {
+      list.forEach((c, i) => say(`<y>${c.hash.slice(0, 7)}</y>${i === 0 ? " (HEAD -> main)" : ""} ${c.msg}`, "rich"));
+    } else {
+      list.forEach((c, i) => {
+        say(`<y>commit ${c.hash}${i === 0 ? " (HEAD -> main)" : ""}</y>`, "rich");
+        say(`Author: ${c.name} <${c.email}>\nDate:   ${c.date}\n\n    ${c.msg}${c.body ? "\n\n    " + c.body : ""}\n`);
+      });
+    }
+    return o;
+  }
+  if (sub === "revert") {
+    const revs = rest.filter(a => !a.startsWith("-"));
+    if (!revs.length) { say("usage: git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] <commit>...", "dim"); return o; }
+    const i = resolveRev(s, revs[0]);
+    if (i < 0) { say(`fatal: bad revision '${revs[0]}'`, "red"); return o; }
+    if (!s.config.name || !s.config.email) { noIdentity(); return o; }
+    const st = statusOf(s);
+    if (st.staged.length || st.unstaged.length) { say("error: your local changes would be overwritten by revert.\nhint: commit your changes or stash them to proceed.\nfatal: revert failed", "red"); return o; }
+    const c = s.commits[i], parent = i > 0 ? s.commits[i - 1].tree : {}, h = head(s);
+    const changed = [...new Set([...Object.keys(parent), ...Object.keys(c.tree)])].filter(p => parent[p] !== c.tree[p]);
+    if (changed.some(p => h[p] !== c.tree[p])) {
+      say(`error: could not revert ${c.hash.slice(0, 7)}... ${c.msg}\n(A later commit changed the same file again. That is a conflict. Conflicts come in a later lesson: in this practice terminal nothing was changed.)`, "red");
+      return o;
+    }
+    for (const p of changed) {
+      if (parent[p] === undefined) { delete s.files[p]; delete s.index[p]; }
+      else { s.files[p] = parent[p]; s.index[p] = parent[p]; }
+    }
+    for (const x of makeCommit(s, `Revert "${c.msg}"`, `This reverts commit ${c.hash}.`)) say(x);
+    return o;
+  }
+  say(`git: '${sub}' is not a git command. See 'git --help'.`, "red");
+  return o;
+}
+
+// index.html with style.css inlined, as the browser would show it.
+function pageHtml(s) {
+  const html = s.files["index.html"];
+  if (html === undefined) return `<p style="font:16px sans-serif;color:#777;padding:12px">(no index.html)</p>`;
+  const css = s.files["style.css"] || "";
+  return html.replace(/<link[^>]*href=["']style\.css["'][^>]*>/i, () => `<style>${css.replace(/<\//g, "<\\/")}</style>`);
+}
+
+// Mount a simulator: files on the left, terminal in the middle, optional page preview on the right.
+function mountSim(host, s, onChange, opts) {
+  const preview = !!(opts && opts.preview);
+  host.innerHTML = `<div class="sim${preview ? " withprev" : ""}">
+    <div class="files"><p class="ftitle">Project files</p><ul></ul><button class="newfile">+ New file</button><div class="editor"></div></div>
+    <div><div class="term"><div class="lines"></div><div class="inrow"><span class="prompt">PS ${esc(DIR)}&gt;</span><input spellcheck="false" autocomplete="off" aria-label="Command"></div></div></div>
+    ${preview ? `<div class="preview"><p class="ftitle">The page in the browser</p><iframe sandbox title="Page preview"></iframe></div>` : ""}
+  </div>`;
+  const $ul = host.querySelector(".files ul"), $ed = host.querySelector(".editor");
+  const $term = host.querySelector(".term"), $lines = host.querySelector(".lines"), $in = host.querySelector("input");
+  const $frame = host.querySelector("iframe");
+  let openFile = null, hpos = s.hist.length, lastPage = null;
+  function lineHtml([cls, text]) {
+    if (cls === "cmd") return `<div class="line"><span class="prompt">PS ${esc(DIR)}&gt;</span> <span class="cmd">${esc(text)}</span></div>`;
+    if (cls === "rich") return `<div class="line">${esc(text).replace(/&lt;y&gt;/g, '<span class="yellow">').replace(/&lt;\/y&gt;/g, "</span>")}</div>`;
+    return `<div class="line ${cls}">${esc(text)}</div>`;
+  }
+  function drawPreview() {
+    if (!$frame) return;
+    const page = pageHtml(s);
+    if (page === lastPage) return;
+    lastPage = page;
+    // Clear first: Chrome does not repaint a srcdoc iframe that is simply overwritten.
+    $frame.srcdoc = "";
+    $frame.srcdoc = page;
+  }
+  function drawFiles() {
+    const paths = Object.keys(s.files).sort();
+    $ul.innerHTML = paths.map(p => { const b = fileBadge(s, p); return `<li data-p="${esc(p)}" class="${p === openFile ? "open" : ""}">${esc(p)}${b ? `<span class="badge ${b[0]}">${b[1]}</span>` : ""}</li>`; }).join("") || `<li class="dim">(empty)</li>`;
+    $ul.querySelectorAll("li[data-p]").forEach(li => li.addEventListener("click", () => { openFile = li.dataset.p; drawFiles(); drawEditor(); }));
+  }
+  function drawEditor() {
+    if (openFile === null || !(openFile in s.files)) { $ed.innerHTML = ""; return; }
+    $ed.innerHTML = `<p class="editing">Editing <b>${esc(openFile)}</b> (saved as you type)</p><textarea spellcheck="false"></textarea>`;
+    const ta = $ed.querySelector("textarea");
+    ta.value = s.files[openFile];
+    ta.addEventListener("input", () => { s.files[openFile] = ta.value; drawFiles(); drawPreview(); onChange(); });
+  }
+  function drawTerm() { $lines.innerHTML = s.out.map(lineHtml).join(""); $term.scrollTop = $term.scrollHeight; }
+  function run(line) {
+    s.hist.push(line); hpos = s.hist.length;
+    s.out.push(["cmd", line]);
+    const res = exec(s, line);
+    if (res) s.out.push(...res);
+    if (s.out.length > 400) s.out = s.out.slice(-400);
+    drawTerm(); drawFiles(); drawEditor(); drawPreview(); onChange();
+  }
+  host.querySelector(".newfile").addEventListener("click", () => {
+    const n = prompt("Name of the new file (e.g. .gitignore):");
+    if (!n || !n.trim()) return;
+    const name = n.trim().replace(/\\/g, "/");
+    if (!(name in s.files)) s.files[name] = "";
+    openFile = name; drawFiles(); drawEditor(); onChange();
+  });
+  $term.addEventListener("click", () => { if (!window.getSelection().toString()) $in.focus(); });
+  $in.addEventListener("keydown", e => {
+    if (e.key === "Enter") { const v = $in.value; $in.value = ""; if (v.trim()) run(v); else { s.out.push(["cmd", ""]); drawTerm(); } }
+    if (e.key === "ArrowUp") { e.preventDefault(); if (hpos > 0) { hpos--; $in.value = s.hist[hpos]; } }
+    if (e.key === "ArrowDown") { e.preventDefault(); if (hpos < s.hist.length) { hpos++; $in.value = s.hist[hpos] ?? ""; } }
+  });
+  drawFiles(); drawTerm(); drawPreview();
+  return {
+    run,
+    setFile(p, text) { s.files[p] = text; openFile = p; drawFiles(); drawEditor(); drawPreview(); onChange(); },
+  };
+}
+
+// ======================================================================
+// The project: a class page about cats
+// ======================================================================
+
+const HTML0 = `<!doctype html>
+<html lang="en">
+<head>
+  <title>Cats of 13F</title>
+</head>
+<body>
+  <h1>Cats of 13F</h1>
+</body>
+</html>
+`;
+const HTML1 = `<!doctype html>
+<html lang="en">
+<head>
+  <title>Cats of 13F</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Cats of 13F</h1>
+    <p>Every cat this class has met, rated by attitude.</p>
+    <div class="card"><h2>Mirci</h2><p>Sleeps on keyboards. Mostly on Enter.</p></div>
+    <div class="card"><h2>Bundás</h2><p>Has never once come when called.</p></div>
+  </main>
+</body>
+</html>
+`;
+const HTML_FOOT = HTML1.replace("  </main>\n", "  </main>\n  <footer>13F1 · 2026/27</footer>\n");
+const CSS1 = `body {
+  font-family: Arial, sans-serif;
+  background: #f5f3ee;
+}
+main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 4px 16px;
+  margin-bottom: 12px;
+}
+`;
+const CSS_GREEN = CSS1.replace("#f5f3ee", "#dff3e4");
+const CSS_PHONE = CSS1 + `@media (max-width: 600px) {
+  .card { padding: 4px 8px; }
+}
+`;
+const CSS_BROKEN = CSS1.replace("max-width: 900px;", "max-width: 90px;");
+const FRESH = { files: { "index.html": HTML1, "style.css": CSS1 } };
+const ANNA = { name: "Kiss Anna", email: "kiss.anna@example.com" };
+const ME = { name: "Student Dora", email: "dora@example.com" };
+
+const HISTORY4 = [
+  { files: { "index.html": HTML0 }, msg: "Page skeleton" },
+  { files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Colours and fonts" },
+  { files: { "script.js": "// builds a card for each cat\n" }, msg: "Cards for the cats" },
+  { files: { "style.css": CSS_PHONE }, msg: "Phone layout" },
+];
+// The page worked, then one innocent-looking commit wrecked it, then work carried on.
+const HISTORY_BROKEN = [
+  { files: { "index.html": HTML0 }, msg: "Page skeleton" },
+  { files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Cat cards" },
+  { files: { "style.css": CSS_BROKEN }, msg: "Tweak page width" },
+  { files: { "index.html": HTML_FOOT }, msg: "Footer with the class name" },
+];
+const hashOf = (s, msg) => s.commits.find(c => c.msg === msg).hash.slice(0, 7);
+
+// ======================================================================
+// 1. LEARN
+// A slide may carry a simulator: sim = () => state, steps = [command | { file, text, label } | { label, cmd: s => command }]
+// ======================================================================
+
+const SLIDES = [
+  {
+    title: "Think of it as a save point",
+    lead: "Before the boss, you save. The boss kills you. You load the save and try again.",
+    html: `<p>Writing code is the same job. You try things, and a lot of them break. <b>Git is the save system for your project folder.</b></p>
+<div class="pair">
+  <div><h3>Without Git</h3><pre class="show">index.html
+index-old.html
+index-final.html
+index-final-2.html
+index-REAL-final.html
+index-REAL-final-USE-THIS.html</pre></div>
+  <div><h3>With Git</h3><pre class="show dark"><span class="y">e41b9a2</span> Phone layout
+<span class="y">7c03d5f</span> Cards for the cats
+<span class="y">b5e2a10</span> Colours and fonts
+<span class="y">0f9d3c1</span> Page skeleton</pre></div>
+</div>
+<div class="rule">One <code>index.html</code>, every version kept, each with a line saying what changed. In Git a save point is called a <b>commit</b>.</div>`,
+    say: "Ask: who has a folder like the left one? Then read the right side: one file, and Git remembers every saved version. By the end of the lesson they make the right side themselves, and load an old save when the page breaks.",
+  },
+  {
+    title: "Why this year",
+    lead: "Two reasons that are not optional.",
+    html: `<ul>
+  <li><b>The vizsgaremek is a team project.</b> Two or three of you on one codebase. Zip files on Messenger do not survive that.</li>
+  <li><b>It goes to the exam board through GitHub</b>, at least 14 days before the exam. No repo, no exam.</li>
+</ul>
+<table>
+  <tr><th>git</th><td>a program on your machine. It keeps your save points. No internet, no account. <b>Today.</b></td></tr>
+  <tr><th>GitHub</th><td>a website that holds the shared copy, so your team can reach your saves. <b>Next lesson.</b></td></tr>
+</table>`,
+    say: "Say the 14-day GitHub deadline out loud: sharing the vizsgaremek on GitHub is a condition for sitting the exam. Today is only the laptop part; GitHub is next.",
+  },
+  {
+    title: "Start a save file: git init",
+    lead: "Git watches one folder. First you tell it which one.",
+    html: `<p>In VS Code: <b>Terminal → New Terminal</b>. The prompt shows the folder you are in. It has to be the project folder.</p>`,
+    sim: () => newSim(FRESH),
+    steps: ["git status", "git init", "git status"],
+    html2: `<div class="rule"><code>git init</code> makes a hidden <code>.git</code> folder. Your save points live in there. A folder with Git in it is a <b>repository</b>, or <b>repo</b>. Once per project.</div>`,
+    say: "Press the buttons. The first git status is a red error: this folder is not a repo yet. After git init, status works and lists two untracked files: Git can see them but is not keeping them yet. The file list on the left says 'new'.",
+  },
+  {
+    title: "Sign your saves: git config",
+    lead: "Every commit records who made it. You set that once per machine.",
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.index = { "index.html": HTML1, "style.css": CSS1 }; return s; },
+    steps: ['git commit -m "Page skeleton"', 'git config --global user.name "Kiss Anna"', 'git config --global user.email "kiss.anna@example.com"', 'git commit -m "Page skeleton"'],
+    html2: `<div class="rule">See <code>Author identity unknown</code>? Run these two lines with your own name and email. <code>--global</code> means: every project on this machine.</div>`,
+    say: "First the error. On the lab machines this can come back any day, if the machine forgets the setting. Read the fix out of the error message: Git tells you exactly what to type.",
+  },
+  {
+    title: "Pick what goes in the save: git add",
+    lead: "A change does not go into a save on its own. You choose what goes in.",
+    html: `<div class="places">
+  <div class="box"><b>Your files</b><small>what you edit in VS Code</small></div>
+  <div class="arrow">git add →</div>
+  <div class="box"><b>Staging</b><small>what goes into the next save</small></div>
+  <div class="arrow">git commit →</div>
+  <div class="box"><b>Save slots</b><small>the commits, in the repo</small></div>
+</div>`,
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = Object.assign({}, ANNA); return s; },
+    steps: ["git status", "git add index.html", "git status"],
+    say: "After git add, index.html turns green (Changes to be committed) and style.css stays red (Untracked). Ask: if I commit now, what is in the save? Only index.html.",
+  },
+  {
+    title: "Read git status",
+    lead: "The command you will run most. Before you do anything, check where you are.",
+    html: `<table>
+  <tr><th>It says</th><th>It means</th></tr>
+  <tr><td><code>Untracked files</code> (red)</td><td>a new file Git is not keeping yet</td></tr>
+  <tr><td><code>Changes not staged for commit</code> (red)</td><td>you changed it, but did not add it</td></tr>
+  <tr><td><code>Changes to be committed</code> (green)</td><td>added: it goes into the next save</td></tr>
+  <tr><td><code>nothing to commit, working tree clean</code></td><td>everything is saved</td></tr>
+</table>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML0, "style.css": CSS1 }, msg: "Page skeleton" }]); s.files["index.html"] = HTML1; s.index["index.html"] = HTML1; s.files["style.css"] = CSS_GREEN; s.files["notes.txt"] = "tomorrow: cards\n"; return s; },
+    steps: ["git status"],
+    say: "One git status with all three parts. Walk the output with the table: index.html green (added), style.css red modified (changed, not added), notes.txt red untracked. Ask: what would a commit save right now? Only index.html.",
+  },
+  {
+    title: "Make the save: git commit",
+    lead: "git add, then git commit -m \"message\". The message says what changed.",
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = Object.assign({}, ANNA); return s; },
+    steps: ["git add .", 'git commit -m "Page skeleton"', "git status"],
+    html2: `<table>
+  <tr><th>Good message</th><th>Useless message</th></tr>
+  <tr><td><code>Cards for the cats</code></td><td><code>asd</code></td></tr>
+  <tr><td><code>Menu stacks on phones</code></td><td><code>fix</code></td></tr>
+  <tr><td><code>Wrong id in script.js fixed</code></td><td><code>.</code></td></tr>
+</table>`,
+    say: "git add . adds everything in the folder (the dot means this folder). After the commit: working tree clean. On messages: in two weeks your teammate searches the log for the save where something broke. 'asd' will not help them.",
+  },
+  {
+    title: "The loop",
+    lead: "Edit, status, add, commit. Then again.",
+    sim: () => withHistory({}, [{ files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Page skeleton" }]),
+    preview: true,
+    steps: [{ file: "style.css", text: CSS_GREEN, label: "📝 edit style.css" }, "git status", "git add style.css", 'git commit -m "Green background"', "git status"],
+    html2: `<div class="rule">One commit = one thing that is finished. Save often: several commits an hour is normal. <code>git add style.css</code> adds one file; <code>git add .</code> adds everything.</div>`,
+    say: "The first button edits style.css as if you typed it in VS Code: watch the preview on the right turn green. Then status says modified. You can also type into the editor on the left live and run git status again.",
+  },
+  {
+    title: "Your save slots: git log",
+    lead: "Every commit stays: who, when, what.",
+    sim: () => withHistory({}, HISTORY4),
+    steps: ["git log --oneline", "git log"],
+    html2: `<div class="rule">The seven characters at the start are the commit's id, its <b>hash</b>. You use it to point at a save. Newest is on top. <code>HEAD -&gt; main</code> marks where you are now.</div>`,
+    say: "--oneline is the short version, the one we use most. Ask: which save brought in script.js? (Cards for the cats.) Then show the long git log: name and time are there too.",
+  },
+  {
+    title: "Never in the save: .gitignore",
+    lead: "Some files have no place in the history.",
+    html: `<p>Your own notes, passwords, and later the <code>node_modules</code> folder (thousands of files that anyone can download again).</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Page skeleton" }]); s.files["node_modules/express/index.js"] = "module.exports = {};\n"; s.files["node_modules/express/package.json"] = "{}\n"; s.files["notes.txt"] = "ask about the deadline\n"; return s; },
+    steps: ["git status", { file: ".gitignore", text: "node_modules/\nnotes.txt\n", label: "📝 create .gitignore" }, "git status", "git add .", 'git commit -m "Ignore notes and node_modules"'],
+    html2: `<div class="rule"><code>.gitignore</code> is a plain text file in the project folder. One file or folder per line: Git acts as if they were not there. Make it in VS Code (New File), not in the terminal.</div>`,
+    say: "The first status lists node_modules/ and notes.txt. After .gitignore they are gone from status, and git add . skips them. Make them create the file in VS Code: PowerShell's echo > writes an encoding Git cannot read.",
+  },
+  {
+    title: "Load the last good save: git revert",
+    lead: "The page worked yesterday. Look at it now.",
+    sim: () => withHistory({}, HISTORY_BROKEN),
+    preview: true,
+    steps: ["git log --oneline", { label: "git revert <hash of the bad one>", cmd: s => "git revert " + hashOf(s, "Tweak page width") }, "git log --oneline"],
+    html2: `<div class="rule"><code>git revert &lt;hash&gt;</code> makes a <b>new</b> save that undoes the old one. Nothing is deleted, and the saves after it are kept. On a real machine add <code>--no-edit</code>, or Git opens an editor for the message.</div>`,
+    say: "Before pressing anything: look at the preview, the page is a thin strip. Ask: which save did it? Read the log aloud. The culprit has an innocent name, Tweak page width, and it is not the newest one: the footer came after it. Revert it and watch the preview recover, and the footer stays. Ask: is Tweak page width still in the log? Yes. History is never rewritten.",
+  },
+  {
+    title: "Summary",
+    lead: "Once at the start, then the same loop every time.",
+    html: `<table>
+  <tr><th>When</th><th>Command</th></tr>
+  <tr><td>once per machine</td><td><code>git config --global user.name "…"</code><br><code>git config --global user.email "…"</code></td></tr>
+  <tr><td>once per project</td><td><code>git init</code>, and a <code>.gitignore</code></td></tr>
+  <tr><td>every time</td><td>edit → <code>git status</code> → <code>git add …</code> → <code>git commit -m "…"</code></td></tr>
+  <tr><td>to look back</td><td><code>git log --oneline</code></td></tr>
+  <tr><td>when a save broke it</td><td><code>git revert &lt;hash&gt;</code></td></tr>
+</table>
+<div class="rule">Lost? <code>git status</code>. Now it is your turn: tab <b>2. Your turn</b> at the top.</div>`,
+    say: "'Lost? git status' is the mantra. Then everyone to tab 2.",
+  },
+];
+
+let current = 0, showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, Number(sessionStorage.getItem("git01sp-slide")) || 0)); } catch (e) { /* ignore */ }
+
+function renderSlide() {
+  const sl = SLIDES[current];
+  const $s = document.getElementById("slide");
+  $s.innerHTML = `<h2>${esc(sl.title)}</h2>
+    <p class="lead">${esc(sl.lead)}</p>
+    ${sl.html || ""}
+    ${sl.sim ? `<div class="steprow" id="steprow"></div><div id="simhost"></div>` : ""}
+    ${sl.html2 || ""}
+    <div class="say" ${showNotes ? "" : "hidden"}><b>Notes:</b> ${esc(sl.say)}</div>`;
+  if (sl.sim) {
+    let state = sl.sim(), next = 0, api;
+    const mount = () => { api = mountSim(document.getElementById("simhost"), state, () => {}, { preview: sl.preview }); };
+    const $row = document.getElementById("steprow");
+    const draw = () => {
+      const st = sl.steps[next];
+      $row.innerHTML = (st !== undefined ? `<button id="stepbtn">▶ ${esc(typeof st === "string" ? st : st.label)}</button>` : "") + `<button class="restart" id="restart">↺ Start over</button>`;
+      const b = document.getElementById("stepbtn");
+      if (b) b.addEventListener("click", () => {
+        const x = sl.steps[next++];
+        if (typeof x === "string") api.run(x); else if (x.cmd) api.run(x.cmd(state)); else api.setFile(x.file, x.text);
+        draw();
+      });
+      document.getElementById("restart").addEventListener("click", () => { state = sl.sim(); next = 0; mount(); draw(); });
+    };
+    mount();
+    draw();
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("git01sp-slide", current); } catch (e) { /* ignore */ }
+}
+function goSlide(d) { current = Math.min(SLIDES.length - 1, Math.max(0, current + d)); renderSlide(); window.scrollTo(0, 0); }
+document.getElementById("prev").addEventListener("click", () => goSlide(-1));
+document.getElementById("next").addEventListener("click", () => goSlide(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; renderSlide(); });
+document.addEventListener("keydown", e => {
+  if (activeTab !== "learn") return;
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") goSlide(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") goSlide(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; renderSlide(); }
+});
+
+// ======================================================================
+// 2. YOUR TURN: tasks in the simulator. check(s, answer) -> problems
+// ======================================================================
+
+const WEAK = /^(asd+f?|a+|x+|\.+|test|commit|fix|fixes|fixed|update|updates|changes?|stuff|wip|save|done|ok|valami|javitas|javítás)$/i;
+const badMsg = m => m.trim().length < 4 || WEAK.test(m.trim());
+const clean = s => { const st = statusOf(s); return !st.staged.length && !st.unstaged.length && !st.untracked.length; };
+
+const TASKS = [
+  {
+    id: "init", slide: 3, title: "1. Start a save file",
+    paper: `<p>This folder is not a repo yet. Make it one, and set your name and email (a made-up address is fine, as long as it has an <code>@</code>).</p>`,
+    sim: () => newSim(FRESH),
+    check(s) {
+      const p = [];
+      if (!s.repo) p.push("The folder is not a repo yet: <code>git init</code>.");
+      if (!s.config.name) p.push("Your name is not set: <code>git config --global user.name \"…\"</code>.");
+      if (!s.config.email || !s.config.email.includes("@")) p.push("No (valid) email set: <code>git config --global user.email \"…\"</code>.");
+      return p;
+    },
+    hint: `Three commands: <code>git init</code>, then the two <code>git config --global …</code> lines. Slides 3 and 4.`,
+    solution: `git init
+git config --global user.name "Student Dora"
+git config --global user.email "dora@example.com"`,
+  },
+  {
+    id: "first", slide: 7, title: "2. First save",
+    paper: `<p>The repo is ready and your name is set. Save <b>both</b> files in one commit, with a message that says what it is. At the end, <code>git status</code> says <code>working tree clean</code>.</p>`,
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = Object.assign({}, ME); return s; },
+    check(s) {
+      if (!s.commits.length) return ["No commit yet. First <code>git add</code>, then <code>git commit -m \"…\"</code>."];
+      const c = s.commits[0];
+      const p = [];
+      if (!("index.html" in c.tree) || !("style.css" in c.tree)) p.push("Both files belong in the first commit. It has: " + Object.keys(c.tree).map(x => `<code>${esc(x)}</code>`).join(", ") + ". Press Reset and add both before you commit.");
+      if (badMsg(c.msg)) p.push(`The message (<code>${esc(c.msg)}</code>) does not say what happened. Reset and write one like on slide 7.`);
+      if (!clean(s)) p.push("<code>git status</code> is not clean yet.");
+      return p;
+    },
+    hint: `<code>git add .</code> (or both file names), then <code>git commit -m "Page skeleton"</code>. Check with <code>git status</code>.`,
+    solution: `git add .
+git commit -m "Page skeleton"
+git status`,
+  },
+  {
+    id: "only", slide: 8, title: "3. Only the CSS",
+    paper: `<p>You changed both files, but <code>index.html</code> is not finished. Save <b>only <code>style.css</code></b>, with a proper message. <code>index.html</code> stays modified, not committed.</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML0, "style.css": CSS1 }, msg: "Page skeleton" }]); s.config = Object.assign({}, ME); s.files["style.css"] = CSS_GREEN; s.files["index.html"] = HTML1; return s; },
+    check(s) {
+      if (s.commits.length < 2) return ["No new commit yet."];
+      const c = s.commits[s.commits.length - 1], prev = s.commits[s.commits.length - 2].tree;
+      const changed = Object.keys(Object.assign({}, prev, c.tree)).filter(p => prev[p] !== c.tree[p]);
+      const p = [];
+      if (!changed.includes("style.css")) p.push("The last commit does not have the <code>style.css</code> change.");
+      if (changed.includes("index.html")) p.push("<code>index.html</code> went into the commit too. Press Reset and add only <code>style.css</code>: <code>git add style.css</code>.");
+      if (badMsg(c.msg)) p.push(`The message (<code>${esc(c.msg)}</code>) does not say what changed.`);
+      return p;
+    },
+    hint: `<code>git add style.css</code> (not <code>git add .</code>), then <code>git commit -m "…"</code>. In <code>git status</code>, index.html stays red.`,
+    solution: `git status
+git add style.css
+git commit -m "Green background"
+git status`,
+  },
+  {
+    id: "log", slide: 9, title: "4. Read the save slots",
+    paper: `<p>This repo already has some commits. Look at the history and type the <b>hash</b> (the first 7 characters) of the commit that brought in <code>script.js</code>.</p>`,
+    sim: () => withHistory({}, HISTORY4),
+    answer: true,
+    check(s, ans) {
+      const c = s.commits.find(x => "script.js" in x.tree);
+      const a = (ans || "").trim().toLowerCase();
+      if (a.length < 7) return ["Type the first 7 characters of the hash into the box."];
+      if (!c.hash.startsWith(a)) return [`<code>${esc(a)}</code> is not that commit's hash. Which message is about the cards (script.js)?`];
+      return [];
+    },
+    hint: `<code>git log --oneline</code>. You want the commit about the cards; the first 7 characters are the hash.`,
+    solution: `git log --oneline
+(the 7 characters at the start of the "Cards for the cats" line)`,
+  },
+  {
+    id: "ignore", slide: 10, title: "5. .gitignore",
+    paper: `<p>A <code>node_modules</code> folder and an <code>app.js</code> turned up in the project. Make a <code>.gitignore</code> (left: <b>+ New file</b>) that leaves out <code>node_modules</code>, then commit <code>app.js</code> and <code>.gitignore</code>. At the end, <code>git status</code> is clean.</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Page skeleton" }]); s.config = Object.assign({}, ME); s.files["node_modules/express/index.js"] = "module.exports = {};\n"; s.files["node_modules/express/package.json"] = "{}\n"; s.files["app.js"] = "console.log(\"server\");\n"; return s; },
+    check(s) {
+      const t = head(s), p = [];
+      if (Object.keys(t).some(x => x.startsWith("node_modules/"))) p.push("<code>node_modules</code> went into a commit. Press Reset: <code>.gitignore</code> first, then add.");
+      if (!(".gitignore" in t)) p.push("<code>.gitignore</code> is not in the last commit.");
+      if (!("app.js" in t)) p.push("<code>app.js</code> is not in the last commit.");
+      if (!p.length && !clean(s)) p.push("<code>git status</code> is not clean yet: what is left?");
+      return p;
+    },
+    hint: `Left: <b>+ New file</b>, name it <code>.gitignore</code>, one line in it: <code>node_modules/</code>. Then <code>git status</code> (node_modules is gone), <code>git add .</code>, <code>git commit -m "…"</code>.`,
+    solution: `(+ New file: .gitignore, containing: node_modules/)
+git status
+git add .
+git commit -m "Ignore node_modules, add app.js"
+git status`,
+  },
+  {
+    id: "revert", slide: 11, title: "6. Something broke",
+    paper: `<p>The page looked fine yesterday. Look at it now. One of the saves broke it. Find which one, and undo it <b>without losing the work that came after it</b>.</p>`,
+    sim: () => { const s = withHistory({}, [
+      { files: { "index.html": HTML0 }, msg: "Page skeleton" },
+      { files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Cat cards" },
+      { files: { "style.css": CSS_BROKEN }, msg: "Make cards a bit narrower" },
+      { files: { "index.html": HTML_FOOT }, msg: "Footer with the class name" },
+      { files: { "script.js": "// later: load the cats from the API\n" }, msg: "Empty script.js for later" },
+    ]); s.config = Object.assign({}, ME); return s; },
+    preview: true,
+    check(s) {
+      const bad = s.commits.find(c => c.msg === "Make cards a bit narrower");
+      const t = head(s), p = [];
+      const reverted = s.commits.some(c => c.body === `This reverts commit ${bad.hash}.`);
+      if ((t["style.css"] || "").includes("max-width: 90px;")) p.push("The page is still broken. Which commit changed <code>style.css</code>? The message will not say \"broke the page\".");
+      if (!reverted) p.push("No commit undoes the bad save. Find its hash in <code>git log --oneline</code> and use <code>git revert &lt;hash&gt;</code>.");
+      if (!(t["index.html"] || "").includes("<footer>")) p.push("The footer is gone: you undid a save that was fine. Press Reset and revert only the one that broke the page.");
+      if (!("script.js" in t)) p.push("<code>script.js</code> is gone: you undid a save that was fine. Press Reset and revert only the one that broke the page.");
+      if (!p.length && !clean(s)) p.push("<code>git status</code> is not clean yet.");
+      return p;
+    },
+    hint: `<code>git log --oneline</code>, then think: which save could change the width? Copy only the 7-character hash: <code>git revert a1b2c3d</code>.`,
+    solution: `git log --oneline
+git revert <the hash of "Make cards a bit narrower">
+git log --oneline`,
+  },
+];
+
+const KEY = "git01-save-points-v1";
+let state = { sims: {}, answers: {}, done: {}, fails: {}, revealed: {}, cur: 0, pastes: {}, tab: "learn" };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") state = Object.assign(state, s); } catch (e) { /* ignore */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const STUCK_AFTER = 2;
+
+function simFor(t) {
+  if (!state.sims[t.id]) state.sims[t.id] = t.sim();
+  return state.sims[t.id];
+}
+
+function renderSteps() {
+  const $s = document.getElementById("steps");
+  $s.innerHTML = "";
+  TASKS.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (i === state.cur) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    b.addEventListener("click", () => { state.cur = i; save(); renderTry(); });
+    $s.appendChild(b);
+  });
+  const n = TASKS.filter(t => state.done[t.id]).length;
+  document.getElementById("fin-try").innerHTML = n === TASKS.length ? `<div class="finished">All done. Now real Git on your own machine: tab 3. For real, at the top.</div>` : "";
+}
+
+function renderTry() {
+  renderSteps();
+  const t = TASKS[state.cur];
+  const s = simFor(t);
+  document.getElementById("task").innerHTML = `
+    <div class="goal">
+      <a class="back" href="#" id="backToSlide">See slide ${t.slide} again</a>
+      <h3>${esc(t.title)}</h3>
+      ${t.paper}
+    </div>
+    <div id="simhost"></div>
+    ${t.answer ? `<div class="answer"><label for="ans">The hash:</label><input id="ans" spellcheck="false" autocomplete="off" placeholder="e.g. a1b2c3d"></div>` : ""}
+    <div class="buttons">
+      <button class="primary" id="check">Check</button>
+      <button id="reset">Reset (start over)</button>
+    </div>
+    <div id="result"></div><div id="hint"></div><div id="solution"></div>`;
+  document.getElementById("backToSlide").addEventListener("click", e => { e.preventDefault(); current = t.slide - 1; setTab("learn"); });
+  mountSim(document.getElementById("simhost"), s, save, { preview: t.preview });
+  const $a = document.getElementById("ans");
+  if ($a) { $a.value = state.answers[t.id] || ""; $a.addEventListener("input", () => { state.answers[t.id] = $a.value; save(); }); }
+  document.getElementById("check").addEventListener("click", () => doCheck(t));
+  document.getElementById("reset").addEventListener("click", () => { delete state.sims[t.id]; save(); renderTry(); });
+  if (state.revealed[t.id]) showSolution(t);
+}
+
+function doCheck(t) {
+  const s = simFor(t);
+  let problems;
+  try { problems = t.check(s, state.answers[t.id]); } catch (e) { problems = ["Something went wrong while checking: " + esc(e.message)]; }
+  const $r = document.getElementById("result"), $h = document.getElementById("hint");
+  if (!problems.length) {
+    state.done[t.id] = true; save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.cur && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Done, that is right.</b>${nextIdx >= 0 ? ` <button id="nextTask">Next: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("nextTask").addEventListener("click", () => { state.cur = nextIdx; save(); renderTry(); });
+    renderSteps();
+    return;
+  }
+  $r.innerHTML = `<div class="result bad"><b>Not yet.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  state.fails[t.id] = (state.fails[t.id] || 0) + 1; save();
+  $h.innerHTML = `<div class="hint"><b>Hint:</b> ${t.hint}</div>`;
+  if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+    $h.innerHTML += `<button class="stuck" id="stuck">I'm stuck, show me the solution</button>`;
+    document.getElementById("stuck").addEventListener("click", () => {
+      if (!confirm("Sure? Look at the slide and the hint again first. If you open the solution, this task counts as done in amber.")) return;
+      document.getElementById("stuck").remove();
+      state.revealed[t.id] = true; save();
+      showSolution(t); renderSteps();
+    });
+  }
+}
+
+function showSolution(t) {
+  document.getElementById("solution").innerHTML = `<div class="solution"><h4>Solution</h4><pre>${esc(t.solution)}</pre><p>Press Reset and type the commands one by one.</p></div>`;
+}
+
+// ======================================================================
+// 3. FOR REAL: paste the output of real Git
+// ======================================================================
+
+const LOGLINE = /^[0-9a-f]{7,40}( \([^)]*\))? (.+)$/;
+const PASTES = [
+  {
+    id: "log", cmd: "git log --oneline", ask: "At least five commits with different, proper messages, and one of them is your revert.",
+    check(text) {
+      const ls = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!ls.length) return [false, ""];
+      const bad = ls.filter(l => !LOGLINE.test(l));
+      if (bad.length) return [false, `This line does not look like git log --oneline output: "${bad[0]}". Paste the whole output and nothing else.`];
+      const msgs = ls.map(l => LOGLINE.exec(l)[2]);
+      if (ls.length < 5) return [false, `${ls.length} commits; you need at least 5.`];
+      if (new Set(msgs.map(m => m.toLowerCase())).size !== msgs.length) return [false, "Two messages are the same. Every commit did something different, so every message is different."];
+      const weak = msgs.find(m => !m.startsWith("Revert ") && badMsg(m));
+      if (weak) return [false, `"${weak}" does not say what changed.`];
+      const rev = msgs.find(m => /^Revert ".+"$/.test(m));
+      if (!rev) return [false, "No revert yet: step 9. The line starts with Revert \"…\"."];
+      const target = rev.slice(8, -1);
+      if (!msgs.includes(target)) return [false, `The revert undoes "${target}", but that commit is not in the list. Paste the whole log.`];
+      return [true, `✓ ${ls.length} commits, proper messages, and a save loaded back.`];
+    },
+  },
+  {
+    id: "status", cmd: "git status", ask: "Everything is saved.",
+    check(text) {
+      if (!text.trim()) return [false, ""];
+      if (/not a git repository/.test(text)) return [false, "This folder is not a repo: wrong folder, or git init is missing."];
+      if (/Untracked files/.test(text)) return [false, "There is an untracked file. If it is notes.txt, the .gitignore is wrong (or not in the project folder). If it is something else, add it and commit."];
+      if (/Changes not staged|Changes to be committed/.test(text)) return [false, "There are unsaved changes: add, then commit."];
+      if (/revert/i.test(text) && /in progress|conflict/i.test(text)) return [false, "The revert is not finished. Ask for help."];
+      if (/nothing to commit, working tree clean/.test(text)) return [true, "✓ Clean: everything is saved."];
+      return [false, "That does not look like git status output. Paste all of it."];
+    },
+  },
+  {
+    id: "files", cmd: "git ls-files", ask: "This lists the files Git keeps. index.html, style.css and .gitignore must be there, notes.txt must not.",
+    check(text) {
+      const f = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!f.length) return [false, ""];
+      const miss = ["index.html", "style.css", ".gitignore"].filter(x => !f.includes(x));
+      if (miss.length) return [false, "Missing: " + miss.join(", ") + ". Did you commit it?"];
+      if (f.includes("notes.txt")) return [false, "notes.txt went in. Once a file is in, .gitignore no longer hides it: git rm --cached notes.txt, then commit."];
+      return [true, "✓ Git keeps exactly what it should."];
+    },
+  },
+];
+
+function renderLive() {
+  const $p = document.getElementById("pastes");
+  $p.innerHTML = PASTES.map((x, i) => `
+    <div class="goal paste">
+      <h3>${i + 1}. Run: <code>${esc(x.cmd)}</code></h3>
+      <p>${esc(x.ask)} Paste what it printed:</p>
+      <textarea id="paste-${x.id}" spellcheck="false" placeholder="Paste the output here…"></textarea>
+      <p class="verdict" id="verdict-${x.id}"></p>
+    </div>`).join("");
+  const upd = () => {
+    let n = 0;
+    for (const x of PASTES) {
+      const [ok, msg] = x.check(state.pastes[x.id] || "");
+      const v = document.getElementById("verdict-" + x.id);
+      v.className = "verdict " + (ok ? "ok" : msg ? "bad" : "");
+      v.textContent = msg;
+      if (ok) n++;
+    }
+    document.getElementById("fin-live").innerHTML = n === PASTES.length ? `<div class="finished">Done: a real repo with a real history. Next lesson it goes up to GitHub.</div>` : "";
+  };
+  for (const x of PASTES) {
+    const ta = document.getElementById("paste-" + x.id);
+    ta.value = state.pastes[x.id] || "";
+    ta.addEventListener("input", () => { state.pastes[x.id] = ta.value; save(); upd(); });
+  }
+  upd();
+}
+
+// ======================================================================
+// Tabs
+// ======================================================================
+
+let activeTab = "learn";
+function setTab(tab) {
+  activeTab = tab; state.tab = tab; save();
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
+  for (const name of ["learn", "try", "live"]) document.getElementById("tab-" + name).hidden = name !== tab;
+  if (tab === "learn") renderSlide();
+  if (tab === "try") renderTry();
+  if (tab === "live") renderLive();
+  window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => setTab(b.dataset.tab));
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Reset parts 2 and 3?")) return;
+  state = { sims: {}, answers: {}, done: {}, fails: {}, revealed: {}, cur: 0, pastes: {}, tab: activeTab };
+  save(); setTab(activeTab);
+});
+
+const fromHash = { "#learn": "learn", "#your-turn": "try", "#for-real": "live" }[location.hash];
+setTab(fromHash || state.tab || "learn");
+</script>
+</body>
+</html>
