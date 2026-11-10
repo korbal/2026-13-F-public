@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOM 1 · Adatból elemek</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --mark: #ffe08a;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+    --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+  a { color: #1a5fb4; }
+  code { font-family: var(--mono); background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+  header.top { background: var(--accent); color: #fff; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  header.top h1 { font-size: 19px; margin: 0; font-weight: 600; }
+  header.top a { color: #fff; opacity: .85; font-size: 15px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .tabs button { font: inherit; font-size: 15px; background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .tabs button.on { background: #fff; color: var(--accent); font-weight: 600; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { main, header.top { padding-left: 16px; padding-right: 16px; } }
+  [hidden] { display: none !important; }
+
+  /* ---------- 1. Magyarázat: slides for the projector ---------- */
+  .slidebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+  .slidebar button { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .slidebar .count { margin-left: auto; color: var(--muted); font-size: 15px; }
+  .slide { font-size: 22px; line-height: 1.45; }
+  .slide h2 { font-size: 38px; margin: 0 0 6px; line-height: 1.2; }
+  .slide .lead { font-size: 25px; margin: 0 0 20px; color: var(--muted); }
+  .slide p { margin: 0 0 14px; }
+  .slide ul, .slide ol { margin: 0 0 14px; padding-left: 30px; }
+  .slide li { margin: 0 0 6px; }
+  .slide pre.show { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); white-space: pre; overflow-x: auto; margin: 0 0 14px; }
+  .slide pre.show mark { background: var(--mark); border-radius: 3px; padding: 0 2px; }
+  .slide .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .slide .pair > div { min-width: 0; }
+  @media (max-width: 900px) { .slide .pair { grid-template-columns: 1fr; } }
+  .slide .pair h3 { font-size: 22px; margin: 0 0 6px; }
+  .slide table { border-collapse: collapse; margin: 0 0 14px; font-size: 21px; }
+  .slide th, .slide td { border: 1px solid var(--line); padding: 6px 14px; text-align: left; vertical-align: top; background: var(--panel); }
+  .slide th { background: var(--bg); }
+  .slide .rule { margin-top: 18px; background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; font-size: 24px; }
+  .slide .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 10px 0 22px; }
+  .slide .box { background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 220px; }
+  .slide .box small { display: block; color: var(--muted); font-size: 17px; }
+  .slide .wire { flex: 1; min-width: 200px; text-align: center; font: 19px/1.4 var(--mono); color: var(--accent); border-bottom: 3px dashed var(--accent); padding-bottom: 6px; }
+  .slide .runner textarea { width: 100%; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); resize: vertical; tab-size: 2; }
+  .slide .runner button { margin: 8px 0 0; font: inherit; font-size: 19px; font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+  .slide .runner .out { margin-top: 8px; background: #000; color: var(--code-ink); border-radius: 8px; padding: 10px 16px; font: 20px/1.45 var(--mono); white-space: pre-wrap; min-height: 48px; }
+  .out .err, .console .err { color: #ff8a80; }
+  .out .dim, .console .dim { color: #8b8fa3; }
+  .slide .say { margin-top: 18px; color: var(--muted); font-size: 17px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .slide .big-link { font-size: 26px; }
+
+  /* ---------- 2. Most te + 3. Élesben ---------- */
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  nav.steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  nav.steps button { border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  .goal { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal p { margin: 0 0 6px; }
+  .goal .back { float: right; font-size: 14px; margin-left: 12px; }
+  .goal pre { margin: 6px 0; background: #f0eee8; border-radius: 6px; padding: 8px 12px; font: 15px/1.5 var(--mono); overflow-x: auto; }
+  table.exp { border-collapse: collapse; margin: 6px 0; font-size: 15px; }
+  table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; vertical-align: top; }
+  table.exp th { background: var(--bg); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid > div { min-width: 0; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+  textarea.code { width: 100%; min-height: 200px; resize: vertical; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px; font: 15px/1.55 var(--mono); tab-size: 2; }
+  pre.given { margin: 0 0 12px; background: #f0eee8; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: 14px/1.45 var(--mono); white-space: pre; overflow: auto; max-height: 260px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button { font: inherit; border-radius: 6px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .buttons .kbd { align-self: center; font-size: 13px; color: var(--muted); }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 12px; font: 14px/1.5 var(--mono); overflow-x: auto; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  .console { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; min-height: 200px; padding: 14px; font: 15px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+  .seen { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-height: 200px; }
+  .seen .okline { color: var(--ok); font-weight: 600; margin: 0 0 8px; }
+  .seen .badline { color: var(--bad); font-weight: 600; margin: 0 0 6px; }
+  .seen code { white-space: pre-wrap; }
+  .seen .dim { color: var(--muted); margin: 0; }
+  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 14px 16px; font-weight: 600; margin-bottom: 16px; }
+  .finished button { font: inherit; margin-left: 8px; border-radius: 6px; padding: 4px 12px; border: 1px solid var(--ok); background: #fff; color: var(--ok); cursor: pointer; }
+
+  .live-status { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+  .live-status.err { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .q { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .q.ok { border-left-color: var(--ok); }
+  .q .ask { font-weight: 600; margin: 0 0 8px; }
+  .q .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .q input { flex: 1; min-width: 220px; font: 16px/1.4 var(--mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  .q .val { font: 15px/1.4 var(--mono); margin: 8px 0 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+  .q .val.ok { color: var(--ok); font-weight: 600; }
+  .q .val.err { color: var(--bad); }
+  .q details { margin-top: 6px; font-size: 15px; color: var(--muted); }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .frame { display: block; width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 8px 8px 0 0; background: #fff; }
+  .frame + .console, .frame + .out { border-radius: 0 0 8px 8px; margin-top: 0 !important; min-height: 60px; }
+  .slide .frame { height: 340px; margin-top: 8px; }
+  pre.given { max-height: 220px; }
+  .tabpane-intro { color: var(--muted); margin: 0 0 16px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>DOM 1 · Adatból elemek</h1>
+  <a href="../">Kezdőlap</a>
+  <a href="../api/">Az API</a>
+  <div class="tabs" id="tabs">
+    <button data-tab="learn">1. Magyarázat</button>
+    <button data-tab="try">2. Most te</button>
+    <button data-tab="live">3. Élesben</button>
+  </div>
+</header>
+
+<main>
+  <section id="tab-learn">
+    <div class="slidebar">
+      <button id="prev">← Előző</button>
+      <button id="next">Következő →</button>
+      <button id="notes">Jegyzet (N)</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slide" id="slide"></div>
+  </section>
+
+  <section id="tab-try" hidden>
+    <p class="tabpane-intro">Ugyanaz, mint a magyarázatban, csak most te írod. Minden feladatnál ott a link a diához, ha vissza akarsz nézni. Jobb oldalt élőben látod az oldalt és a Console-t. Nyomd meg az <b>Ellenőrzés</b> gombot: ha zöld, mehetsz tovább, ha piros, kapsz egy tippet.</p>
+    <nav class="steps" id="steps-try"></nav>
+    <div id="fin-try"></div>
+    <div id="task-try"></div>
+  </section>
+
+  <section id="tab-live" hidden>
+    <p class="tabpane-intro">Most a <b>valódi</b> adattal: ez az oldal letöltötte az osztály API-jából a macskákat és a kifogásokat, és a kódod előtt ott vannak egy <code>cats</code> és egy <code>excuses</code> nevű tömbben. (Hogy hogyan jön le, azt a fetch-leckében te írod meg.) A kódod ugyanaz, mint eddig, csak a tömbben más van.</p>
+    <div class="live-status" id="liveStatus">Letöltés…</div>
+    <nav class="steps" id="steps-live"></nav>
+    <div id="fin-live"></div>
+    <div id="task-live"></div>
+  </section>
+</main>
+<footer class="bottom"><button id="resetAll">A 2. és 3. rész visszaállítása</button></footer>
+
+<script>
+"use strict";
+
+const API = "https://korbal.github.io/2026-13-F-public/api/";
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ---------- Data ----------
+// The cats from the class API (api/cats.json), with the fields this lesson uses.
+const CATS = [
+  { id: 1, name: "Bajusz", age: 7, friendly: true, hobbies: ["billentyűzeten alvás", "monitor eltakarása"] },
+  { id: 2, name: "Null", age: 2, friendly: false, hobbies: ["poharak leverése az asztalról", "hajnali négykor futás"] },
+  { id: 3, name: "Undefined", age: 4, friendly: true, hobbies: [] },
+  { id: 4, name: "Szotyi", age: 11, friendly: true, hobbies: ["dobozban ülés", "a doboz mellett ülés", "evés"] },
+  { id: 5, name: "Rendszergazda", age: 9, friendly: false, hobbies: ["kábelek rágása", "mindenkit lenézni"] },
+  { id: 6, name: "Pötyi", age: 1, friendly: true, hobbies: ["egérkurzor üldözése", "bekapcsolt laptopra fekvés", "nyávogás hívás közben"] },
+];
+// Same shape, other values: every check reruns the code with these.
+const ALT = {
+  cats: [
+    { id: 1, name: "Morzsa", age: 3, weightKg: 4, sleepHoursPerDay: 14, friendly: false, hobbies: ["dobozban ülés"] },
+    { id: 2, name: "Cirmi", age: 5, weightKg: 5, sleepHoursPerDay: 15, friendly: true, hobbies: [] },
+    { id: 3, name: "Bug", age: 12, weightKg: 2, sleepHoursPerDay: 13, friendly: false, hobbies: ["kábelrágás", "fára mászás", "evés", "alvás"] },
+  ],
+  excuses: [
+    { id: 7, excuse: "Elfogyott a tinta.", category: "technika", believability: 4, teacherHeardIt: true },
+    { id: 8, excuse: "Rossz mappába dolgoztam.", category: "technika", believability: 7, teacherHeardIt: false },
+  ],
+};
+
+// A JS array literal, one object per line, the way a given script.js looks.
+function literal(v) {
+  if (Array.isArray(v)) return "[" + v.map(literal).join(", ") + "]";
+  if (v && typeof v === "object") return "{ " + Object.entries(v).map(([k, x]) => k + ": " + literal(x)).join(", ") + " }";
+  return JSON.stringify(v);
+}
+function dataSrc(name, arr) {
+  return "const " + name + " = [\n" + arr.map(o => "  " + literal(o)).join(",\n") + "\n];";
+}
+
+// ---------- The page the code runs in ----------
+const FRAME_CSS = `body { font: 16px/1.4 Arial, sans-serif; margin: 12px 16px; color: #222; }
+h1 { font-size: 22px; margin: 0 0 10px; }
+.cards { display: flex; flex-wrap: wrap; gap: 12px; }
+.card { border: 2px solid #333; border-radius: 8px; padding: 10px 14px; width: 160px; background: #fff; }
+.card h3 { margin: 0 0 4px; font-size: 18px; }
+.card p { margin: 0; color: #555; }
+.grumpy { border-color: #c62828; background: #fdecea; }
+ul { padding-left: 22px; } li { margin: 0 0 4px; }`;
+const BODIES = {
+  cats: `<h1>Macskák</h1>\n<div id="cats" class="cards"></div>`,
+  excuses: `<h1>Kifogások</h1>\n<ul id="excuses"></ul>`,
+};
+
+let frameSeq = 0;
+function buildDoc(body, data, code) {
+  const safe = s => String(s).replace(/<\/script/gi, "<\\/script");
+  const pre = `(function () {
+  var out = window.__out = [];
+  function str(x) { if (typeof x === "string") return x; if (x === undefined) return "undefined"; try { return JSON.stringify(x); } catch (e) { return String(x); } }
+  window.addEventListener("error", function (e) { out.push({ k: "err", m: String(e.message) }); });
+  console.log = console.info = console.warn = console.error = function () { out.push({ k: "log", m: [].map.call(arguments, str).join(" ") }); };
+})();`;
+  return `<!doctype html><html lang="hu"><head><meta charset="utf-8"><style>${FRAME_CSS}</style><script>${pre}<\/script></head><body>
+${body}
+<script>${safe(data)}<\/script>
+<script>${safe(code)}\n<\/script>
+</body></html>`;
+}
+// Load the page into an iframe; resolves after its scripts have run.
+function makeFrame(host, body, data, code) {
+  return new Promise(resolve => {
+    const fr = document.createElement("iframe");
+    fr.className = "frame";
+    fr.title = "Az oldal";
+    host.appendChild(fr);
+    fr.addEventListener("load", () => {
+      const win = fr.contentWindow;
+      resolve({
+        fr, doc: fr.contentDocument,
+        logs: () => (win.__out || []).filter(x => x.k === "log").map(x => x.m),
+        errors: () => (win.__out || []).filter(x => x.k === "err").map(x => x.m),
+      });
+    }, { once: true });
+    fr.srcdoc = buildDoc(body, data, code);
+  });
+}
+let hidden;
+function checkFrame(body, data, code) {
+  if (!hidden) {
+    hidden = document.createElement("div");
+    hidden.style.cssText = "position:absolute;left:-10000px;top:0;width:900px;height:600px;overflow:hidden";
+    document.body.appendChild(hidden);
+  }
+  return makeFrame(hidden, body, data, code);
+}
+function consoleHtml(f) {
+  const lines = (f.fr.contentWindow.__out || []).map(x => x.k === "err" ? `<span class="err">${esc(x.m)}</span>` : esc(x.m));
+  return lines.join("\n") || '<span class="dim">(üres: semmi nem jelent meg a Console-ban)</span>';
+}
+
+// ======================================================================
+// 1. MAGYARÁZAT
+// ======================================================================
+
+const FULL = `const box = document.getElementById("cats");
+
+for (let i = 0; i < cats.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  const title = document.createElement("h3");
+  title.textContent = cats[i].name;
+
+  const age = document.createElement("p");
+  age.textContent = cats[i].age + " éves";
+
+  card.appendChild(title);
+  card.appendChild(age);
+  box.appendChild(card);
+}`;
+
+const SLIDES = [
+  {
+    title: "Adatból oldal",
+    lead: "Az adat egy tömbben van. Az oldalon kártyák kellenek.",
+    html: `<p>Ez minden vizsgafeladat frontend részének a magja: adatból elemek az oldalon. A Test 04 programkártyái is pont ez voltak.</p><p>Futtasd. A lecke végére ezt te írod meg, lépésenként. Most még nem kell értened a kódot.</p>`,
+    run: FULL,
+    say: "Futtasd. Mondd ki: a vizsgán a frontend 15 pont, és ennek a gerince ez a ciklus. A Test 04-ben és a redóban is ezen csúszott el a fél osztály, ezért ma nagyon lassan, lépésenként rakjuk össze. Ne magyarázd még a kódot.",
+  },
+  {
+    title: "Az adat: tömb, benne objektumok",
+    lead: "Mielőtt bármit az oldalra teszel, tudnod kell, mit hogyan érsz el.",
+    html: `<table>
+  <tr><th>Kifejezés</th><th>Mi ez</th></tr>
+  <tr><td><code>cats</code></td><td>tömb: hat macska</td></tr>
+  <tr><td><code>cats.length</code></td><td>szám: 6</td></tr>
+  <tr><td><code>cats[0]</code></td><td>objektum: az első macska</td></tr>
+  <tr><td><code>cats[0].name</code></td><td>szöveg: <code>"Bajusz"</code></td></tr>
+  <tr><td><code>cats.name</code></td><td><code>undefined</code>: a tömbnek nincs neve, csak az elemeinek</td></tr>
+</table>`,
+    run: `console.log(cats.length);
+console.log(cats[0]);
+console.log(cats[0].name);
+console.log(cats.name);`,
+    say: "Futtatás előtt kérdezd meg mind a négy sort: mit ír ki? Az utolsó a lényeg: cats.name undefined. A redóban ilyen volt a programs.place. Szabály: a tömbből előbb kiveszel EGY elemet [i]-vel, és csak annak van neve.",
+  },
+  {
+    title: "Elem létrehozása",
+    lead: "document.createElement egy új, üres elemet csinál.",
+    html: `<p>A <code>textContent</code> beírja a szövegét. Futtasd, és nézd meg az oldalt:</p>`,
+    run: `const title = document.createElement("h3");
+title.textContent = "Bajusz";
+
+console.log(title.textContent);`,
+    html2: `<div class="rule">Létrehozva még <b>nem</b> az oldalon. Az új elem még csak a memóriában van.</div>`,
+    say: "Futtasd: a Console-ban ott a Bajusz, az oldalon semmi. Kérdezd meg: miért nincs az oldalon? Hova kellene kerülnie? Hagyd, hogy ők mondják ki, hogy 'bele kell tenni valamibe'.",
+  },
+  {
+    title: "appendChild: be a dobozba",
+    lead: "Az oldalon van egy üres doboz. Az új elemet abba tesszük bele.",
+    html: `<pre class="show">&lt;div id="cats" class="cards"&gt;&lt;/div&gt;</pre>`,
+    run: `const box = document.getElementById("cats");
+
+const title = document.createElement("h3");
+title.textContent = "Bajusz";
+
+box.appendChild(title);`,
+    html2: `<div class="rule"><b>1.</b> megkeresem a dobozt · <b>2.</b> létrehozom az elemet · <b>3.</b> kitöltöm · <b>4.</b> beleteszem</div>`,
+    say: "Futtasd: most megjelenik. Írd át élőben a 'Bajusz'-t a saját nevedre. Aztán másold le a három alsó sort még egyszer más névvel: két cím lesz. Kérdezd: kell-e kétszer megkeresni a dobozt? (Nem, egy doboz van.)",
+  },
+  {
+    title: "A szöveg az adatból jön",
+    lead: "Ne gépeld be. Vedd ki a tömbből.",
+    html: ``,
+    run: `const box = document.getElementById("cats");
+
+const title = document.createElement("h3");
+title.textContent = cats[0].name;
+
+box.appendChild(title);`,
+    html2: `<div class="rule">A <code>cats[0].name</code> ugyanaz, mint a beírt „Bajusz”, de ha holnap más macskák jönnek a szerverről, ez is más lesz.</div>`,
+    say: "Írd át élőben cats[3]-ra: Szotyi lesz. Kérdezd: mi lenne, ha cats.name-et írnék? Próbáld ki: üres a cím, mert a cats.name undefined, és a textContent az undefined-ot üres szövegnek veszi. A Console-ban kiírva viszont látszik: console.log(cats.name).",
+  },
+  {
+    title: "Egy kártya: elem az elemben",
+    lead: "A címet és a kort egy kártyába tesszük, a kártyát a dobozba.",
+    html: `<pre class="show">&lt;article class="card"&gt;
+  &lt;h3&gt;Bajusz&lt;/h3&gt;
+  &lt;p&gt;7 éves&lt;/p&gt;
+&lt;/article&gt;</pre>`,
+    run: `const box = document.getElementById("cats");
+
+const card = document.createElement("article");
+card.classList.add("card");
+
+const title = document.createElement("h3");
+title.textContent = cats[0].name;
+
+const age = document.createElement("p");
+age.textContent = cats[0].age + " éves";
+
+card.appendChild(title);
+card.appendChild(age);
+box.appendChild(card);`,
+    html2: `<div class="rule">A <code>classList.add("card")</code> adja a CSS-osztályt (ettől lesz kerete). A <code>h3</code> és a <code>p</code> a <b>kártyába</b> kerül, a kártya a <b>dobozba</b>.</div>`,
+    say: "Futtasd. Aztán élőben: töröld a classList sort (nincs keret), tedd vissza. Töröld az utolsó sort (semmi nem látszik, mert a kártya nincs a dobozban). Kérdezd: mi lesz, ha a title-t a box-ba teszem a card helyett? (A cím a kártyán kívül lesz.)",
+  },
+  {
+    title: "Mind a hat: a ciklus",
+    lead: "Ugyanaz, mint az előző dián, csak cats[0] helyett cats[i], és egy for köré.",
+    html: `<table>
+  <tr><th>Kör</th><th><code>i</code></th><th><code>cats[i].name</code></th><th>az oldalon</th></tr>
+  <tr><td>1.</td><td>0</td><td>Bajusz</td><td>1 kártya</td></tr>
+  <tr><td>2.</td><td>1</td><td>Null</td><td>2 kártya</td></tr>
+  <tr><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+  <tr><td>6.</td><td>5</td><td>Pötyi</td><td>6 kártya</td></tr>
+</table>`,
+    run: FULL,
+    html2: `<div class="rule">A doboz megkeresése a ciklus <b>előtt</b> van: egy doboz van. Minden más a cikluson <b>belül</b>: minden macskának saját kártya.</div>`,
+    say: "Tedd egymás mellé fejben az előző diával: a ciklus belseje szóról szóra ugyanaz, csak 0 helyett i. Kérdezd: miért van a getElementById a cikluson kívül? Mi lenne, ha a box.appendChild(card) a } után lenne? Próbáld ki élőben: piros hiba, card is not defined, mert a card csak a cikluson belül létezik.",
+  },
+  {
+    title: "if a ciklusban",
+    lead: "Nem minden kártya egyforma: a morcos macskák piros keretet kapnak.",
+    html: `<p>Az adatban a <code>friendly</code> mező <code>true</code> vagy <code>false</code>. A CSS-ben a <code>.grumpy</code> osztály piros.</p>`,
+    run: `const box = document.getElementById("cats");
+
+for (let i = 0; i < cats.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  if (cats[i].friendly === false) {
+    card.classList.add("grumpy");
+  }
+
+  const title = document.createElement("h3");
+  title.textContent = cats[i].name;
+  card.appendChild(title);
+  box.appendChild(card);
+}`,
+    say: "Futtatás előtt: hány piros lesz? Nézzék meg az adatban (2. dia): Null és Rendszergazda. Az if a cikluson belül van, és minden körben az aktuális macskát nézi.",
+  },
+  {
+    title: "Amit a redóban láttunk",
+    lead: "Ezek a valódi hibák. Mindegyiknek van egy jele.",
+    html: `<table>
+  <tr><th>Ezt írták</th><th>Ezt látod</th><th>Így jó</th></tr>
+  <tr><td><code>box.innerHTML = cats</code></td><td><code>[object Object],[object Object]…</code></td><td>ciklus, és elemenként <code>createElement</code></td></tr>
+  <tr><td><code>cats.name</code></td><td>üres cím a kártyán</td><td><code>cats[i].name</code></td></tr>
+  <tr><td><code>getElementById("card")</code>, de az id <code>cats</code></td><td>piros: <code>Cannot read properties of null (reading 'appendChild')</code></td><td>pontosan az index.html-ben lévő id</td></tr>
+  <tr><td><code>title = cats[i].name</code></td><td>piros: <code>Assignment to constant variable</code></td><td><code>title.textContent = cats[i].name</code></td></tr>
+  <tr><td><code>box.appendChild(card)</code> a <code>}</code> után</td><td>piros: <code>card is not defined</code></td><td>a cikluson belülre: a <code>card</code> csak a ciklusban létezik</td></tr>
+</table>`,
+    run: `const box = document.getElementById("cats");
+box.innerHTML = cats;`,
+    say: "Futtasd: [object Object]. Utána írd át élőben a getElementById-t \"card\"-ra, és mutasd a piros hibát: null = nincs ilyen id az oldalon. Nevet ne mondj, ezek a redó hibái.",
+  },
+  {
+    title: "Összefoglaló",
+    lead: "Ez a recept. Minden kártyás, listás, táblázatos feladat ez.",
+    html: `<ol>
+  <li>Megkeresem a dobozt: <code>document.getElementById("…")</code>, a ciklus <b>előtt</b>.</li>
+  <li>Ciklus: <code>for (let i = 0; i &lt; cats.length; i++)</code>, és benne mindig <code>cats[i]</code>.</li>
+  <li>Létrehozom: <code>document.createElement("…")</code>, osztály: <code>classList.add("…")</code>.</li>
+  <li>Kitöltöm az adatból: <code>textContent = cats[i].…</code></li>
+  <li>Beleteszem: a részeket a kártyába, a kártyát a dobozba, <code>appendChild</code>-dal, a cikluson <b>belül</b>.</li>
+</ol>
+<div class="rule">Most te jössz: fent a <b>2. Most te</b> fül.</div>`,
+    say: "Olvastasd fel valakivel. Aztán mindenki a 2. Most te fülre.",
+  },
+];
+
+let current = 0, showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, Number(sessionStorage.getItem("dom01-slide")) || 0)); } catch (e) { /* ignore */ }
+const SLIDE_DATA = dataSrc("cats", CATS);
+
+function renderSlide() {
+  const s = SLIDES[current];
+  const $s = document.getElementById("slide");
+  $s.innerHTML = `<h2>${esc(s.title)}</h2>
+    <p class="lead">${esc(s.lead)}</p>
+    ${s.html || ""}
+    ${s.run ? `<div class="runner">
+      <textarea rows="${s.run.split("\n").length + 1}" spellcheck="false" wrap="off">${esc(s.run)}</textarea>
+      <button class="run">▶ Futtatás</button>
+      <div class="shown" hidden><div class="host"></div><div class="out"></div></div>
+    </div>` : ""}
+    ${s.html2 || ""}
+    <div class="say" ${showNotes ? "" : "hidden"}><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+  const runner = $s.querySelector(".runner");
+  if (runner) {
+    const ta = runner.querySelector("textarea"), btn = runner.querySelector(".run");
+    const shown = runner.querySelector(".shown"), host = runner.querySelector(".host"), out = runner.querySelector(".out");
+    const go = async () => {
+      shown.hidden = false; btn.textContent = "↻ Újra"; host.innerHTML = "";
+      const f = await makeFrame(host, BODIES.cats, SLIDE_DATA, ta.value);
+      out.innerHTML = consoleHtml(f);
+    };
+    btn.addEventListener("click", go);
+    ta.addEventListener("keydown", e => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go(); }
+      if (e.key === "Tab") { e.preventDefault(); const a = ta.selectionStart; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = a + 2; }
+    });
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("dom01-slide", current); } catch (e) { /* ignore */ }
+}
+function goSlide(d) { current = Math.min(SLIDES.length - 1, Math.max(0, current + d)); renderSlide(); window.scrollTo(0, 0); }
+document.getElementById("prev").addEventListener("click", () => goSlide(-1));
+document.getElementById("next").addEventListener("click", () => goSlide(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; renderSlide(); });
+document.addEventListener("keydown", e => {
+  if (activeTab !== "learn") return;
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") goSlide(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") goSlide(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; renderSlide(); }
+});
+
+// ======================================================================
+// Checks
+// ======================================================================
+
+const sameArr = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+const describe = el => "<code>&lt;" + el.tagName.toLowerCase() + (el.className ? ` class="${esc(el.className)}"` : "") + "&gt;</code>";
+
+// Compare the box's children with the expected cards. spec(item) -> { tag, cls: [..], parts: [[tag, text], ..] }
+function cardProblems(doc, boxId, items, spec) {
+  const box = doc.getElementById(boxId);
+  if (!box) return [`Eltűnt a <code>#${boxId}</code> doboz az oldalról.`];
+  const kids = [...box.children];
+  const want = items.map(spec);
+  if (kids.length !== want.length) return [`A dobozban ${kids.length} elem van, ${want.length} kellene.` + (kids.length === 1 && want.length > 1 ? " Csak egy? Nézd meg, hogy az <code>appendChild</code> a cikluson belül van-e." : "")];
+  for (let i = 0; i < want.length; i++) {
+    const el = kids[i], w = want[i];
+    const where = `A(z) ${i + 1}. elem (${esc(items[i].name || items[i].excuse || "")})`;
+    if (el.tagName.toLowerCase() !== w.tag) return [`${where} ${describe(el)}, de <code>&lt;${w.tag}&gt;</code> kell.`];
+    for (const c of w.cls) if (!el.classList.contains(c)) return [`${where} nem kapta meg a <code>${c}</code> osztályt.`];
+    for (const c of el.classList) if (!w.cls.includes(c)) return [`${where} <code>${esc(c)}</code> osztályt kapott, pedig ennek nem kell.`];
+    if (w.text !== undefined) {
+      if (el.textContent.trim() !== w.text) return [`${where} szövege ${el.textContent.trim() ? `<code>${esc(el.textContent.trim())}</code>` : "üres"}, de <code>${esc(w.text)}</code> kell.`];
+      continue;
+    }
+    const parts = [...el.children];
+    if (parts.length !== w.parts.length) return [`${where}: a kártyában ${parts.length} elem van (${parts.map(describe).join(", ") || "semmi"}), ${w.parts.length} kell: ${w.parts.map(p => `<code>&lt;${p[0]}&gt;</code>`).join(", ")}.`];
+    for (let j = 0; j < w.parts.length; j++) {
+      const [tag, text] = w.parts[j], p = parts[j];
+      if (p.tagName.toLowerCase() !== tag) return [`${where}: a kártya ${j + 1}. része ${describe(p)}, de <code>&lt;${tag}&gt;</code> kell.`];
+      if (p.textContent.trim() !== text) return [`${where}: a <code>&lt;${tag}&gt;</code> szövege ${p.textContent.trim() ? `<code>${esc(p.textContent.trim())}</code>` : "üres"}, de <code>${esc(text)}</code> kell.`];
+    }
+  }
+  return [];
+}
+
+const CARD = c => ({ tag: "article", cls: ["card"], parts: [["h3", c.name], ["p", c.age + " éves"]] });
+const CARD_GRUMPY = c => ({ tag: "article", cls: c.friendly ? ["card"] : ["card", "grumpy"], parts: [["h3", c.name], ["p", c.age + " éves"]] });
+
+// ======================================================================
+// 2. MOST TE and 3. ÉLESBEN: tasks
+// Each task: id, slide, title, paper, body, data ("cats" | "excuses"), start, check(f, d) -> problems, hint, solution, why.
+// ======================================================================
+
+const TRY = [
+  {
+    id: "read", slide: 2, title: "1. Olvasd ki", body: "cats", data: "cats",
+    paper: `<p>Írd ki a Console-ba</p><ol><li>hány macska van,</li><li>a <b>harmadik</b> macska nevét.</li></ol><p>Ne írd be kézzel: vedd ki a <code>cats</code> tömbből.</p>`,
+    start: ``,
+    check(f, d) {
+      const want = [String(d.length), d[2].name];
+      if (!sameArr(f.logs(), want)) return [`A Console-ban ennek kell lennie: <code>${esc(want.join(" | "))}</code>. Most: <code>${esc(f.logs().join(" | ") || "(üres)")}</code>`];
+      return [];
+    },
+    hint: `A hossz <code>cats.length</code>. A harmadik elem indexe 2, mert 0-tól számolunk.`,
+    solution: `console.log(cats.length);
+console.log(cats[2].name);`,
+    why: `A <code>cats.length</code> a macskák száma, a <code>cats[2]</code> a harmadik macska, a <code>.name</code> a neve.`,
+  },
+  {
+    id: "one", slide: 5, title: "2. Egy név az oldalra", body: "cats", data: "cats",
+    paper: `<p>Tegyél a <code>#cats</code> dobozba egy <code>&lt;h3&gt;</code>-at, amiben az <b>első</b> macska neve van. A nevet a tömbből vedd.</p>`,
+    start: `// 1. Keresd meg a dobozt (id: cats)
+// 2. Hozz létre egy h3-at
+// 3. A szövege legyen az első macska neve
+// 4. Tedd bele a dobozba
+`,
+    check(f, d) {
+      return cardProblems(f.doc, "cats", [d[0]], c => ({ tag: "h3", cls: [], text: c.name }));
+    },
+    hint: `Négy sor: <code>getElementById("cats")</code>, <code>createElement("h3")</code>, <code>textContent = cats[0].name</code>, <code>appendChild</code>. Nézd meg az 5. diát.`,
+    solution: `const box = document.getElementById("cats");
+const title = document.createElement("h3");
+title.textContent = cats[0].name;
+box.appendChild(title);`,
+    why: `Megkeresem a dobozt, létrehozom a <code>h3</code>-at, kitöltöm az adatból, beleteszem.`,
+  },
+  {
+    id: "card", slide: 6, title: "3. Egy kártya", body: "cats", data: "cats",
+    paper: `<p>Készíts kártyát az <b>első</b> macskának, és tedd a <code>#cats</code> dobozba. Ilyen legyen:</p><pre>&lt;article class="card"&gt;
+  &lt;h3&gt;Bajusz&lt;/h3&gt;
+  &lt;p&gt;7 éves&lt;/p&gt;
+&lt;/article&gt;</pre><p>A név és a kor a tömbből jöjjön.</p>`,
+    start: `const box = document.getElementById("cats");
+`,
+    check(f, d) { return cardProblems(f.doc, "cats", [d[0]], CARD); },
+    hint: `Három <code>createElement</code>: <code>article</code>, <code>h3</code>, <code>p</code>. Az <code>article</code> kap egy <code>classList.add("card")</code>-ot. A <code>h3</code> és a <code>p</code> a kártyába kerül, a kártya a dobozba. A kor után: <code>+ " éves"</code>.`,
+    solution: `const box = document.getElementById("cats");
+
+const card = document.createElement("article");
+card.classList.add("card");
+
+const title = document.createElement("h3");
+title.textContent = cats[0].name;
+
+const age = document.createElement("p");
+age.textContent = cats[0].age + " éves";
+
+card.appendChild(title);
+card.appendChild(age);
+box.appendChild(card);`,
+    why: `A részek a kártyába, a kártya a dobozba. Az osztály a <code>classList.add</code>-dal kerül rá.`,
+  },
+  {
+    id: "loop", slide: 7, title: "4. Mind a hat", body: "cats", data: "cats",
+    paper: `<p>Ez a kód egy kártyát csinál az első macskának. Írd át úgy, hogy <b>minden</b> macskának legyen kártyája, sorrendben. Akárhány macska van a tömbben, működjön.</p>`,
+    start: `const box = document.getElementById("cats");
+
+const card = document.createElement("article");
+card.classList.add("card");
+
+const title = document.createElement("h3");
+title.textContent = cats[0].name;
+
+const age = document.createElement("p");
+age.textContent = cats[0].age + " éves";
+
+card.appendChild(title);
+card.appendChild(age);
+box.appendChild(card);`,
+    check(f, d) { return cardProblems(f.doc, "cats", d, CARD); },
+    hint: `Tedd a kártyát készítő részt egy <code>for (let i = 0; i &lt; cats.length; i++) { … }</code> ciklusba, és a <code>cats[0]</code> helyett <code>cats[i]</code> legyen. A doboz megkeresése maradjon a ciklus előtt.`,
+    solution: FULL,
+    why: `A ciklus belseje ugyanaz, mint az egy kártyánál, csak <code>cats[0]</code> helyett <code>cats[i]</code>.`,
+  },
+  {
+    id: "grumpy", slide: 8, title: "5. Morcos macskák", body: "cats", data: "cats",
+    paper: `<p>A kártyák már elkészülnek. Egészítsd ki: ha egy macska <b>nem barátságos</b> (<code>friendly</code> értéke <code>false</code>), a kártyája kapja meg a <code>grumpy</code> osztályt is.</p>`,
+    start: FULL,
+    check(f, d) { return cardProblems(f.doc, "cats", d, CARD_GRUMPY); },
+    hint: `A ciklusban, a <code>card.classList.add("card");</code> után: <code>if (cats[i].friendly === false) { … }</code>, és benne még egy <code>classList.add</code>.`,
+    solution: FULL.replace(`  card.classList.add("card");\n`, `  card.classList.add("card");\n  if (cats[i].friendly === false) {\n    card.classList.add("grumpy");\n  }\n`),
+    why: `Az <code>if</code> a cikluson belül minden macskánál megnézi a <code>friendly</code>-t, és csak a morcosaknak adja hozzá a második osztályt.`,
+  },
+  {
+    id: "fix1", slide: 9, title: "6. Javítsd ki: két hiba", body: "cats", data: "cats",
+    paper: `<p>Ennek minden macskának kártyát kellene csinálnia, de piros hibára fut, és semmi nem látszik. <b>Két</b> hiba van benne: javítsd ki az elsőt, és nézd meg, mi jön utána.</p>`,
+    start: `const box = document.getElementById("cats");
+
+for (let i = 0; i < cats.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+
+  const title = document.createElement("h3");
+  title.textContent = cats.name;
+
+  const age = document.createElement("p");
+  age.textContent = cats[i].age + " éves";
+
+  card.appendChild(title);
+  card.appendChild(age);
+}
+box.appendChild(card);`,
+    check(f, d) { return cardProblems(f.doc, "cats", d, CARD); },
+    hint: `<code>card is not defined</code>: hol van most a <code>box.appendChild(card)</code>, a ciklus <code>}</code>-je előtt vagy után? Ha ez megvan, a kártyákon üres lesz a cím: nézd meg a 9. dia táblázatában a <code>cats.name</code> sort.`,
+    solution: FULL,
+    why: `A <code>box.appendChild(card)</code> bekerült a ciklusba, a <code>}</code> elé: a <code>card</code> csak a cikluson belül létezik. És <code>cats.name</code> helyett <code>cats[i].name</code>.`,
+  },
+  {
+    id: "fix2", slide: 9, title: "7. Javítsd ki: piros hiba", body: "cats", data: "cats",
+    paper: `<p>Ez a kód piros hibára fut, és semmi nem jelenik meg. Olvasd el a hibát a Console-ban, javítsd, és nézd meg, mi a következő. Két hiba van benne.</p>`,
+    start: FULL.replace(`getElementById("cats")`, `getElementById("cat")`).replace(`title.textContent = cats[i].name;`, `title = cats[i].name;`),
+    check(f, d) {
+      if (f.errors().length) return [`A Console-ban piros hiba van: <code>${esc(f.errors()[0])}</code>`];
+      return cardProblems(f.doc, "cats", d, CARD);
+    },
+    hint: `<code>Assignment to constant variable</code>: egy <code>const</code>-ot próbálsz felülírni, pedig az elem szövegét akartad beállítani. <code>Cannot read properties of null</code>: a <code>getElementById</code> nem talált ilyen id-t. Mi az id az oldalon (index.html)?`,
+    solution: FULL,
+    why: `Az id <code>cats</code>, nem <code>cat</code>. És a <code>title</code> elem szövegét állítjuk: <code>title.textContent = …</code>, nem magát a <code>title</code>-t írjuk felül.`,
+  },
+];
+
+const LIVE_TASKS = [
+  {
+    id: "liveCats", slide: 8, title: "1. Az éles macskák", body: "cats", data: "cats",
+    paper: `<p>A <code>cats</code> tömbben most az API-ból letöltött macskák vannak (nézd meg: <a href="${API}cats.json" target="_blank" rel="noopener">cats.json</a>). Csinálj mindegyiknek kártyát a <code>#cats</code> dobozba:</p><pre>&lt;article class="card"&gt;        (a morcosaknál: class="card grumpy")
+  &lt;h3&gt;Bajusz&lt;/h3&gt;
+  &lt;p&gt;7 éves&lt;/p&gt;
+  &lt;p&gt;2 hobbi&lt;/p&gt;
+&lt;/article&gt;</pre>`,
+    start: ``,
+    check(f, d) {
+      return cardProblems(f.doc, "cats", d, c => ({ tag: "article", cls: c.friendly ? ["card"] : ["card", "grumpy"], parts: [["h3", c.name], ["p", c.age + " éves"], ["p", c.hobbies.length + " hobbi"]] }));
+    },
+    hint: `Ugyanaz, mint a Most te 5. feladata, plusz egy harmadik <code>p</code>. A hobbik száma: a <code>hobbies</code> tömb hossza, <code>cats[i].hobbies.length</code>.`,
+    solution: `const box = document.getElementById("cats");
+
+for (let i = 0; i < cats.length; i++) {
+  const card = document.createElement("article");
+  card.classList.add("card");
+  if (cats[i].friendly === false) {
+    card.classList.add("grumpy");
+  }
+
+  const title = document.createElement("h3");
+  title.textContent = cats[i].name;
+
+  const age = document.createElement("p");
+  age.textContent = cats[i].age + " éves";
+
+  const hobbies = document.createElement("p");
+  hobbies.textContent = cats[i].hobbies.length + " hobbi";
+
+  card.appendChild(title);
+  card.appendChild(age);
+  card.appendChild(hobbies);
+  box.appendChild(card);
+}`,
+    why: `A hobbik egy tömbben vannak, és a tömbnek van hossza: <code>cats[i].hobbies.length</code>.`,
+  },
+  {
+    id: "liveExcuses", slide: 10, title: "2. Kifogáslista", body: "excuses", data: "excuses",
+    paper: `<p>Most más adat, más elem, ugyanaz a recept. Az <code>excuses</code> tömbben az API kifogásai vannak (<a href="${API}excuses.json" target="_blank" rel="noopener">excuses.json</a>). Az oldalon egy üres lista van: <code>&lt;ul id="excuses"&gt;&lt;/ul&gt;</code>. Tegyél bele minden kifogásnak egy <code>&lt;li&gt;</code>-t, ilyen szöveggel:</p><pre>1. A laptopom frissített. Még most is frissít.</pre><p>(a kifogás <code>id</code>-je, pont, szóköz, a kifogás szövege)</p>`,
+    start: ``,
+    check(f, d) {
+      return cardProblems(f.doc, "excuses", d, e => ({ tag: "li", cls: [], text: e.id + ". " + e.excuse }));
+    },
+    hint: `Nézd meg az adatban, hogy hívják a mezőket. A doboz most <code>getElementById("excuses")</code>, az elem <code>li</code>, a szöveg <code>excuses[i].id + ". " + excuses[i].excuse</code>.`,
+    solution: `const list = document.getElementById("excuses");
+
+for (let i = 0; i < excuses.length; i++) {
+  const item = document.createElement("li");
+  item.textContent = excuses[i].id + ". " + excuses[i].excuse;
+  list.appendChild(item);
+}`,
+    why: `Ugyanaz a recept: doboz a ciklus előtt, a ciklusban létrehozom, kitöltöm, beleteszem. Csak a doboz, az elem és a mezők neve más.`,
+  },
+];
+
+// ======================================================================
+// Task engine (shared by tab 2 and tab 3)
+// ======================================================================
+
+const KEY = "dom01-lesson-v1";
+let state = { code: {}, done: {}, fails: {}, revealed: {}, cur: { try: 0, live: 0 }, tab: "learn" };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") state = Object.assign(state, s); } catch (e) { /* ignore */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const STUCK_AFTER = 2;
+
+let LIVE = null;
+const PANES = {
+  try: { tasks: TRY, data: () => ({ cats: CATS }), done: "Mind kész. Jöhet az éles adat: fent a 3. Élesben fül." },
+  live: { tasks: LIVE_TASKS, data: () => LIVE, done: "Kész: a kódod valódi, letöltött adatból épít oldalt. A fetch-leckében ezt a letöltést is te írod meg." },
+};
+
+function renderSteps(pane) {
+  const P = PANES[pane];
+  const $s = document.getElementById("steps-" + pane);
+  $s.innerHTML = "";
+  P.tasks.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (i === state.cur[pane]) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    b.addEventListener("click", () => { state.cur[pane] = i; save(); renderPane(pane); });
+    $s.appendChild(b);
+  });
+  const n = P.tasks.filter(t => state.done[t.id]).length;
+  document.getElementById("fin-" + pane).innerHTML = n === P.tasks.length ? `<div class="finished">${P.done}</div>` : "";
+}
+
+let liveTimer;
+function renderPane(pane) {
+  const P = PANES[pane];
+  if (!P.data()) return;
+  renderSteps(pane);
+  const t = P.tasks[state.cur[pane]];
+  const d = P.data()[t.data];
+  const given = dataSrc(t.data, pane === "try" ? d : d.slice(0, 3)) + (pane === "live" ? `\n// … összesen ${d.length} elem, az API-ból` : "");
+  const $t = document.getElementById("task-" + pane);
+  $t.innerHTML = `
+    <div class="goal">
+      ${pane === "try" ? `<a class="back" href="#" id="backToSlide">Nézd meg újra: ${t.slide}. dia</a>` : ""}
+      <h3>${esc(t.title)}</h3>
+      ${t.paper}
+    </div>
+    <div class="grid">
+      <div>
+        <p class="label">index.html (adott)</p>
+        <pre class="given">${esc(BODIES[t.body])}</pre>
+        <p class="label">script.js eleje (adott, ezt nem kell átírni)</p>
+        <pre class="given">${esc(given)}</pre>
+        <p class="label">A te kódod</p>
+        <textarea class="code" id="code-${pane}" spellcheck="false" wrap="off"></textarea>
+        <div class="buttons">
+          <button class="primary" id="check-${pane}">Ellenőrzés</button>
+          <button id="reset-${pane}">Visszaállítás</button>
+          <span class="kbd">vagy Ctrl+Enter</span>
+        </div>
+        <div id="result-${pane}"></div><div id="hint-${pane}"></div><div id="solution-${pane}"></div>
+      </div>
+      <div>
+        <p class="label">Az oldal</p>
+        <div id="host-${pane}"></div>
+        <div class="console" id="console-${pane}"></div>
+      </div>
+    </div>`;
+  const back = document.getElementById("backToSlide");
+  if (back) back.addEventListener("click", e => { e.preventDefault(); current = t.slide - 1; setTab("learn"); });
+  const $c = document.getElementById("code-" + pane);
+  $c.value = state.code[t.id] ?? t.start;
+  const fit = () => { $c.style.height = "auto"; $c.style.height = Math.max(200, $c.scrollHeight + 4) + "px"; };
+  fit();
+  $c.addEventListener("input", () => {
+    fit(); state.code[t.id] = $c.value; save();
+    clearTimeout(liveTimer); liveTimer = setTimeout(() => preview(pane, t), 300);
+  });
+  $c.addEventListener("keydown", e => {
+    if (e.key === "Tab") { e.preventDefault(); const a = $c.selectionStart; $c.value = $c.value.slice(0, a) + "  " + $c.value.slice($c.selectionEnd); $c.selectionStart = $c.selectionEnd = a + 2; $c.dispatchEvent(new Event("input")); }
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doCheck(pane, t); }
+  });
+  document.getElementById("check-" + pane).addEventListener("click", () => doCheck(pane, t));
+  document.getElementById("reset-" + pane).addEventListener("click", () => { delete state.code[t.id]; save(); renderPane(pane); });
+  preview(pane, t);
+  if (state.revealed[t.id]) showSolution(pane, t);
+}
+
+async function preview(pane, t) {
+  const host = document.getElementById("host-" + pane);
+  if (!host) return;
+  const code = document.getElementById("code-" + pane).value;
+  const d = PANES[pane].data()[t.data];
+  host.innerHTML = "";
+  const f = await makeFrame(host, BODIES[t.body], dataSrc(t.data, d), code);
+  document.getElementById("console-" + pane).innerHTML = consoleHtml(f);
+  return f;
+}
+
+async function runCheck(pane, t, code) {
+  const d = PANES[pane].data()[t.data];
+  const f = await checkFrame(BODIES[t.body], dataSrc(t.data, d), code);
+  let p;
+  try { p = t.check(f, d); } catch (e) { p = ["Valami elromlott az ellenőrzés közben: " + esc(e.message)]; }
+  if (!p.length && f.errors().length) p = [`Az oldal jó, de a Console-ban piros hiba van: <code>${esc(f.errors()[0])}</code>`];
+  f.fr.remove();
+  if (p.length) {
+    const errs = !p[0].includes("piros hiba") && f.errors().length ? [`(A Console-ban piros hiba is van: <code>${esc(f.errors()[0])}</code>. Kezdd azzal.)`] : [];
+    return p.concat(errs);
+  }
+  const alt = ALT[t.data];
+  const g = await checkFrame(BODIES[t.body], dataSrc(t.data, alt), code);
+  let q;
+  try { q = t.check(g, alt); } catch (e) { q = ["x"]; }
+  if (g.errors().length) q.push("x");
+  g.fr.remove();
+  if (q.length) return ["Ezzel az adattal jó, de más adattal (ha holnap mást küld a szerver) nem működne. Ne írd be kézzel a neveket, a számokat vagy a darabszámot: vedd ki a tömbből, és a ciklus <code>.length</code>-ig menjen."];
+  return [];
+}
+
+async function doCheck(pane, t) {
+  const code = document.getElementById("code-" + pane).value;
+  preview(pane, t);
+  const problems = await runCheck(pane, t, code);
+  const $r = document.getElementById("result-" + pane), $h = document.getElementById("hint-" + pane);
+  const tasks = PANES[pane].tasks;
+  if (!problems.length) {
+    state.done[t.id] = true; save();
+    const nextIdx = tasks.findIndex((x, i) => i > state.cur[pane] && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button id="next-${pane}">Tovább: ${esc(tasks[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("next-" + pane).addEventListener("click", () => { state.cur[pane] = nextIdx; save(); renderPane(pane); });
+    renderSteps(pane);
+    return;
+  }
+  $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  state.fails[t.id] = (state.fails[t.id] || 0) + 1; save();
+  $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+  if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+    $h.innerHTML += `<button class="stuck" id="stuck-${pane}">Elakadtam, mutasd a megoldást</button>`;
+    document.getElementById("stuck-" + pane).addEventListener("click", () => {
+      if (!confirm("Biztos? Előbb nézd meg újra a diát és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+      document.getElementById("stuck-" + pane).remove();
+      state.revealed[t.id] = true; save();
+      showSolution(pane, t); renderSteps(pane);
+    });
+  }
+}
+
+function showSolution(pane, t) {
+  document.getElementById("solution-" + pane).innerHTML = `<div class="solution">
+    <h4>Megoldás</h4><p>${t.why}</p><pre>${esc(t.solution)}</pre>
+    <p>Írd be magad, vagy töltsd be, és nézd meg, mi változik az oldalon.</p>
+    <button id="load-${pane}">Betöltöm a szerkesztőbe</button></div>`;
+  document.getElementById("load-" + pane).addEventListener("click", () => {
+    const $c = document.getElementById("code-" + pane);
+    $c.value = t.solution; $c.dispatchEvent(new Event("input")); doCheck(pane, t);
+  });
+}
+
+async function loadLive() {
+  const $st = document.getElementById("liveStatus");
+  try {
+    const [cats, excuses] = await Promise.all(["cats.json", "excuses.json"].map(async f => {
+      const r = await fetch(API + f, { cache: "no-store" });
+      if (!r.ok) throw new Error(f + ": " + r.status);
+      return r.json();
+    }));
+    LIVE = { cats, excuses };
+    $st.className = "live-status";
+    $st.innerHTML = `✓ Letöltve az API-ból: <code>cats</code> (${cats.length} macska) és <code>excuses</code> (${excuses.length} kifogás).`;
+    renderPane("live");
+  } catch (e) {
+    $st.className = "live-status err";
+    $st.innerHTML = `Nem sikerült letölteni az adatot (${esc(e.message)}). Van internet? Frissítsd az oldalt.`;
+  }
+}
+
+// ======================================================================
+// Tabs
+// ======================================================================
+
+let activeTab = "learn";
+function setTab(tab) {
+  activeTab = tab; state.tab = tab; save();
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
+  for (const name of ["learn", "try", "live"]) document.getElementById("tab-" + name).hidden = name !== tab;
+  if (tab === "learn") renderSlide();
+  if (tab === "try") renderPane("try");
+  if (tab === "live") { if (LIVE) renderPane("live"); else loadLive(); }
+  window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => setTab(b.dataset.tab));
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Biztosan visszaállítod a 2. és 3. részt?")) return;
+  state = { code: {}, done: {}, fails: {}, revealed: {}, cur: { try: 0, live: 0 }, tab: activeTab };
+  save(); setTab(activeTab);
+});
+
+const fromHash = { "#magyarazat": "learn", "#most-te": "try", "#elesben": "live" }[location.hash];
+setTab(fromHash || state.tab || "learn");
+</script>
+</body>
+</html>

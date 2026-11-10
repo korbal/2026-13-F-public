@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git 1 · Git egyedül</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5d636b;
+    --line: #d9d5cc;
+    --accent: #2b2d42;
+    --ok: #1a7f37;
+    --ok-bg: #e6f4ea;
+    --bad: #b42318;
+    --bad-bg: #fdecea;
+    --hint-bg: #fff7e0;
+    --mark: #ffe08a;
+    --code-bg: #1e1f29;
+    --code-ink: #e8e8ec;
+    --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+  a { color: #1a5fb4; }
+  code { font-family: var(--mono); background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+  header.top { background: var(--accent); color: #fff; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  header.top h1 { font-size: 19px; margin: 0; font-weight: 600; }
+  header.top a { color: #fff; opacity: .85; font-size: 15px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .tabs button { font: inherit; font-size: 15px; background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .tabs button.on { background: #fff; color: var(--accent); font-weight: 600; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { main, header.top { padding-left: 16px; padding-right: 16px; } }
+  [hidden] { display: none !important; }
+
+  /* ---------- 1. Magyarázat: slides for the projector ---------- */
+  .slidebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+  .slidebar button { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .slidebar .count { margin-left: auto; color: var(--muted); font-size: 15px; }
+  .slide { font-size: 22px; line-height: 1.45; }
+  .slide h2 { font-size: 38px; margin: 0 0 6px; line-height: 1.2; }
+  .slide .lead { font-size: 25px; margin: 0 0 20px; color: var(--muted); }
+  .slide p { margin: 0 0 14px; }
+  .slide ul, .slide ol { margin: 0 0 14px; padding-left: 30px; }
+  .slide li { margin: 0 0 6px; }
+  .slide pre.show { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); white-space: pre; overflow-x: auto; margin: 0 0 14px; }
+  .slide pre.show mark { background: var(--mark); border-radius: 3px; padding: 0 2px; }
+  .slide .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .slide .pair > div { min-width: 0; }
+  @media (max-width: 900px) { .slide .pair { grid-template-columns: 1fr; } }
+  .slide .pair h3 { font-size: 22px; margin: 0 0 6px; }
+  .slide table { border-collapse: collapse; margin: 0 0 14px; font-size: 21px; }
+  .slide th, .slide td { border: 1px solid var(--line); padding: 6px 14px; text-align: left; vertical-align: top; background: var(--panel); }
+  .slide th { background: var(--bg); }
+  .slide .rule { margin-top: 18px; background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; font-size: 24px; }
+  .slide .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 10px 0 22px; }
+  .slide .box { background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 220px; }
+  .slide .box small { display: block; color: var(--muted); font-size: 17px; }
+  .slide .wire { flex: 1; min-width: 200px; text-align: center; font: 19px/1.4 var(--mono); color: var(--accent); border-bottom: 3px dashed var(--accent); padding-bottom: 6px; }
+  .slide .runner textarea { width: 100%; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); resize: vertical; tab-size: 2; }
+  .slide .runner button { margin: 8px 0 0; font: inherit; font-size: 19px; font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+  .slide .runner .out { margin-top: 8px; background: #000; color: var(--code-ink); border-radius: 8px; padding: 10px 16px; font: 20px/1.45 var(--mono); white-space: pre-wrap; min-height: 48px; }
+  .out .err, .console .err { color: #ff8a80; }
+  .out .dim, .console .dim { color: #8b8fa3; }
+  .slide .say { margin-top: 18px; color: var(--muted); font-size: 17px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .slide .big-link { font-size: 26px; }
+
+  /* ---------- 2. Most te + 3. Élesben ---------- */
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  nav.steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  nav.steps button { border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  nav.steps button.current { border-color: var(--accent); font-weight: 600; }
+  nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
+  .goal { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px; }
+  .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .goal h3:first-child { margin-top: 0; }
+  .goal p { margin: 0 0 6px; }
+  .goal .back { float: right; font-size: 14px; margin-left: 12px; }
+  .goal pre { margin: 6px 0; background: #f0eee8; border-radius: 6px; padding: 8px 12px; font: 15px/1.5 var(--mono); overflow-x: auto; }
+  table.exp { border-collapse: collapse; margin: 6px 0; font-size: 15px; }
+  table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; vertical-align: top; }
+  table.exp th { background: var(--bg); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid > div { min-width: 0; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+  textarea.code { width: 100%; min-height: 200px; resize: vertical; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px; font: 15px/1.55 var(--mono); tab-size: 2; }
+  pre.given { margin: 0 0 12px; background: #f0eee8; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: 14px/1.45 var(--mono); white-space: pre; overflow: auto; max-height: 260px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .buttons button { font: inherit; border-radius: 6px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .buttons .kbd { align-self: center; font-size: 13px; color: var(--muted); }
+  .result { border-radius: 8px; padding: 12px 16px; margin: 6px 0 12px; }
+  .result.ok { background: var(--ok-bg); color: var(--ok); }
+  .result.bad { background: var(--bad-bg); color: var(--bad); }
+  .result ul { margin: 6px 0 0; padding-left: 20px; }
+  .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 12px; font: 14px/1.5 var(--mono); overflow-x: auto; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  .console { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; min-height: 200px; padding: 14px; font: 15px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+  .seen { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-height: 200px; }
+  .seen .okline { color: var(--ok); font-weight: 600; margin: 0 0 8px; }
+  .seen .badline { color: var(--bad); font-weight: 600; margin: 0 0 6px; }
+  .seen code { white-space: pre-wrap; }
+  .seen .dim { color: var(--muted); margin: 0; }
+  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 14px 16px; font-weight: 600; margin-bottom: 16px; }
+  .finished button { font: inherit; margin-left: 8px; border-radius: 6px; padding: 4px 12px; border: 1px solid var(--ok); background: #fff; color: var(--ok); cursor: pointer; }
+
+  .live-status { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+  .live-status.err { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .q { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .q.ok { border-left-color: var(--ok); }
+  .q .ask { font-weight: 600; margin: 0 0 8px; }
+  .q .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .q input { flex: 1; min-width: 220px; font: 16px/1.4 var(--mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  .q .val { font: 15px/1.4 var(--mono); margin: 8px 0 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+  .q .val.ok { color: var(--ok); font-weight: 600; }
+  .q .val.err { color: var(--bad); }
+  .q details { margin-top: 6px; font-size: 15px; color: var(--muted); }
+  footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
+  footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .sim { display: grid; grid-template-columns: 240px 1fr; gap: 12px; margin: 8px 0 14px; }
+  @media (max-width: 760px) { .sim { grid-template-columns: 1fr; } }
+  .sim > div { min-width: 0; }
+  .files { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; }
+  .files .ftitle { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 6px; }
+  .files ul { list-style: none; margin: 0 0 8px; padding: 0; }
+  .files li { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 4px; cursor: pointer; font-family: var(--mono); font-size: 14px; }
+  .files li:hover, .files li.open { background: var(--bg); }
+  .files .badge { margin-left: auto; font: 11px/1.6 system-ui, sans-serif; border-radius: 999px; padding: 0 7px; white-space: nowrap; }
+  .b-new { background: #e6f4ea; color: #1a7f37; }
+  .b-mod { background: #fff4d6; color: #8a5a00; }
+  .b-staged { background: #e3ecfb; color: #1a5fb4; }
+  .b-ign { background: #eee; color: #777; }
+  .files button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .files textarea { width: 100%; min-height: 110px; font: 13px/1.45 var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+  .files .editing { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .term { background: #0c0c14; color: #e8e8ec; border-radius: 8px; padding: 10px 14px; font: 15px/1.45 var(--mono); height: 340px; overflow-y: auto; cursor: text; }
+  .slide .term { font-size: 18px; height: 380px; }
+  .term .line { white-space: pre-wrap; word-break: break-word; }
+  .term .cmd { color: #8ce99a; }
+  .term .prompt { color: #78aeed; }
+  .term .red { color: #ff8a80; }
+  .term .green { color: #8ce99a; }
+  .term .yellow { color: #ffd479; }
+  .term .dim { color: #8b8fa3; }
+  .term .inrow { display: flex; gap: 8px; }
+  .term input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: inherit; padding: 0; }
+  .steprow { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+  .steprow button { font: inherit; font-size: 17px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; cursor: pointer; font-family: var(--mono); }
+  .steprow button.restart { background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-family: inherit; }
+  .places { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 18px; }
+  .places .box { background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; text-align: center; min-width: 200px; }
+  .places .box small { display: block; color: var(--muted); font-size: 16px; }
+  .places .arrow { font: 19px/1.3 var(--mono); color: var(--accent); text-align: center; }
+  .answer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .answer input { font: 16px var(--mono); padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; min-width: 220px; }
+  .paste textarea { width: 100%; min-height: 120px; font: 14px/1.45 var(--mono); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #0c0c14; color: #e8e8ec; }
+  .paste .verdict { margin: 6px 0 0; font-size: 15px; }
+  .paste .verdict.ok { color: var(--ok); font-weight: 600; }
+  .paste .verdict.bad { color: var(--bad); }
+  .tabpane-intro { color: var(--muted); margin: 0 0 16px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Git 1 · Git egyedül</h1>
+  <a href="../">Kezdőlap</a>
+  <div class="tabs" id="tabs">
+    <button data-tab="learn">1. Magyarázat</button>
+    <button data-tab="try">2. Most te</button>
+    <button data-tab="live">3. Élesben</button>
+  </div>
+</header>
+
+<main>
+  <section id="tab-learn">
+    <div class="slidebar">
+      <button id="prev">← Előző</button>
+      <button id="next">Következő →</button>
+      <button id="notes">Jegyzet (N)</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slide" id="slide"></div>
+  </section>
+
+  <section id="tab-try" hidden>
+    <p class="tabpane-intro">Ez egy gyakorló terminál: úgy viselkedik, mint az igazi Git, de semmit nem tudsz elrontani. Bal oldalt a projekt fájljai: rájuk kattintva szerkesztheted őket, és látod, mit gondol róluk a Git. Írd a parancsokat a terminálba, Enterrel futnak (a ↑ előhozza az előzőt). Ha kész, nyomd meg az <b>Ellenőrzés</b> gombot.</p>
+    <nav class="steps" id="steps"></nav>
+    <div id="fin-try"></div>
+    <div id="task"></div>
+  </section>
+
+  <section id="tab-live" hidden>
+    <p class="tabpane-intro">Most a saját gépeden, az igazi Gittel. Csináld végig a lépéseket a VS Code termináljában, aztán másold be ide, amit a parancsok kiírnak. Az oldal megnézi, rendben van-e.</p>
+    <div class="goal">
+      <h3>A lépések</h3>
+      <ol>
+        <li>A <code>Webdev</code> mappádban hozz létre egy <code>git-lecke</code> mappát, és nyisd meg VS Code-ban (<b>File → Open Folder</b>).</li>
+        <li>Nyiss terminált: <b>Terminal → New Terminal</b>. Nézd meg, hogy a sor végén a <code>git-lecke</code> mappa áll-e.</li>
+        <li><code>git init</code>. Ha még nem tetted meg ezen a gépen: <code>git config --global user.name "A neved"</code> és <code>git config --global user.email "az@emailed.hu"</code>.</li>
+        <li>Csinálj egy <code>index.html</code>-t (bármi lehet benne), és commitold.</li>
+        <li>Csinálj egy <code>style.css</code>-t, kösd be az <code>index.html</code>-be, és commitold.</li>
+        <li>Változtass valamit a <code>style.css</code>-ben, és commitold. Minden commit üzenete mondja meg, mi változott.</li>
+        <li>Csinálj egy <code>jegyzet.txt</code>-t (a saját jegyzeted, ami nem kell a projektbe), és egy <code>.gitignore</code>-t, amiben a <code>jegyzet.txt</code> szerepel. A <code>.gitignore</code>-t commitold.</li>
+      </ol>
+    </div>
+    <div id="pastes"></div>
+    <div id="fin-live"></div>
+  </section>
+</main>
+<footer class="bottom"><button id="resetAll">A 2. és 3. rész visszaállítása</button></footer>
+
+<script>
+"use strict";
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ======================================================================
+// The Git simulator. State is plain data (saved per task in localStorage):
+// { repo, config: {name, email}, files: {path: text}, index: {path: text}, commits: [{hash, msg, name, email, date, tree}], out: [[cls, text]], hist: [] }
+// ======================================================================
+
+const DIR = "C:\\Users\\diak\\Webdev\\git-lecke";
+const DIR_SLASH = "C:/Users/diak/Webdev/git-lecke";
+
+function hex(n) { let s = ""; for (let i = 0; i < n; i++) s += "0123456789abcdef"[Math.floor(Math.random() * 16)]; return s; }
+function gitDate(d) {
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+  const p = n => String(n).padStart(2, "0");
+  return `${day} ${mon} ${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} ${d.getFullYear()} +0100`;
+}
+function newSim(o) {
+  return Object.assign({ repo: false, config: {}, files: {}, index: {}, commits: [], out: [], hist: [] }, JSON.parse(JSON.stringify(o || {})));
+}
+// Build a sim with a history: steps = [{ files: {...}, msg }] committed in order.
+function withHistory(base, steps) {
+  const s = newSim(Object.assign({ repo: true, config: { name: "Kiss Anna", email: "kiss.anna@example.com" } }, base));
+  let t = Date.now() - steps.length * 3600e3;
+  for (const st of steps) {
+    Object.assign(s.files, st.files);
+    for (const p of Object.keys(st.files)) s.index[p] = s.files[p];
+    s.commits.push({ hash: hex(40), msg: st.msg, name: s.config.name, email: s.config.email, date: gitDate(new Date(t += 3600e3)), tree: Object.assign({}, s.index) });
+  }
+  return s;
+}
+const head = s => s.commits.length ? s.commits[s.commits.length - 1].tree : {};
+
+function ignored(s, path) {
+  const gi = s.files[".gitignore"];
+  if (gi === undefined) return false;
+  const segs = path.split("/");
+  for (let pat of gi.split(/\r?\n/)) {
+    pat = pat.trim();
+    if (!pat || pat.startsWith("#")) continue;
+    pat = pat.replace(/^\//, "");
+    const dirOnly = pat.endsWith("/");
+    if (dirOnly) pat = pat.slice(0, -1);
+    const re = new RegExp("^" + pat.split("*").map(x => x.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join("[^/]*") + "$");
+    if (pat.includes("/")) { if (re.test(path) || path.startsWith(pat + "/")) return true; }
+    else if ((dirOnly ? segs.slice(0, -1) : segs).some(x => re.test(x))) return true;
+  }
+  return false;
+}
+
+function statusOf(s) {
+  const h = head(s), staged = [], unstaged = [], untracked = new Set();
+  for (const p of new Set([...Object.keys(s.index), ...Object.keys(h)]).values()) {
+    if (s.index[p] === h[p]) continue;
+    staged.push([h[p] === undefined ? "new file" : s.index[p] === undefined ? "deleted" : "modified", p]);
+  }
+  for (const p of Object.keys(s.index)) if (s.files[p] !== undefined && s.files[p] !== s.index[p]) unstaged.push(["modified", p]);
+  for (const p of Object.keys(s.files)) if (!(p in s.index) && !ignored(s, p)) untracked.add(p.includes("/") ? p.split("/")[0] + "/" : p);
+  return { staged: staged.sort((a, b) => a[1].localeCompare(b[1])), unstaged, untracked: [...untracked].sort() };
+}
+// What the file list shows next to each file.
+function fileBadge(s, p) {
+  if (!s.repo) return "";
+  if (ignored(s, p) && !(p in s.index)) return ["b-ign", "ignorálva"];
+  if (!(p in s.index)) return ["b-new", "új (untracked)"];
+  if (s.files[p] !== s.index[p]) return ["b-mod", "módosítva"];
+  if (s.index[p] !== head(s)[p]) return ["b-staged", "add-olva"];
+  return "";
+}
+
+function tokens(line) {
+  const out = []; let cur = null, q = null;
+  for (const ch of line) {
+    if (q) { if (ch === q) q = null; else cur += ch; continue; }
+    if (ch === '"' || ch === "'") { q = ch; cur = cur ?? ""; continue; }
+    if (/\s/.test(ch)) { if (cur !== null) { out.push(cur); cur = null; } continue; }
+    cur = (cur ?? "") + ch;
+  }
+  if (cur !== null) out.push(cur);
+  return out;
+}
+
+// Run one command line. Returns lines: [[cls, text], ...]
+function exec(s, line) {
+  const t = tokens(line.trim());
+  const o = [];
+  const say = (text, cls = "") => o.push([cls, text]);
+  if (!t.length) return o;
+  const [cmd, sub, ...rest] = t;
+  if (cmd === "clear" || cmd === "cls") { s.out = []; return null; }
+  if (cmd === "ls" || cmd === "dir") {
+    const top = [...new Set(Object.keys(s.files).map(p => p.includes("/") ? p.split("/")[0] + "/" : p))].sort();
+    say(top.join("\n") || "(üres mappa)"); return o;
+  }
+  if (cmd === "cat" || cmd === "type") {
+    if (sub in s.files) say(s.files[sub]); else say(`cat: ${sub || ""}: No such file or directory`, "red");
+    return o;
+  }
+  if (cmd === "help" || cmd === "súgó") {
+    say("Ebben a gyakorló terminálban: git init, git config, git status, git add, git commit -m \"…\", git log, git log --oneline, ls, cat <fájl>, clear", "dim"); return o;
+  }
+  if (cmd !== "git") { say(`(Ebben a gyakorló terminálban csak a git-parancsok, az ls, a cat és a clear működik. A „${cmd}” az igazi terminálban működhet.)`, "dim"); return o; }
+  if (!sub) { say("usage: git [--version] [--help] <command> [<args>]", "dim"); return o; }
+
+  if (sub === "init") {
+    say(s.repo ? `Reinitialized existing Git repository in ${DIR_SLASH}/.git/` : `Initialized empty Git repository in ${DIR_SLASH}/.git/`);
+    s.repo = true; return o;
+  }
+  if (sub === "config") {
+    const args = rest.filter(a => a !== "--global");
+    if (args[0] === "--list" || args[0] === "-l") {
+      if (s.config.name) say("user.name=" + s.config.name);
+      if (s.config.email) say("user.email=" + s.config.email);
+      return o;
+    }
+    const key = args[0], val = args[1];
+    if (key !== "user.name" && key !== "user.email") { say(key ? `(Ebben a gyakorlóban csak a user.name és a user.email állítható.)` : "usage: git config [<options>]", "dim"); return o; }
+    const k = key === "user.name" ? "name" : "email";
+    if (val === undefined) { if (s.config[k]) say(s.config[k]); return o; }
+    s.config[k] = val; return o;
+  }
+  if (!s.repo) { say("fatal: not a git repository (or any of the parent directories): .git", "red"); return o; }
+
+  if (sub === "status") {
+    const st = statusOf(s);
+    say("On branch main");
+    if (!s.commits.length) say("\nNo commits yet");
+    if (st.staged.length) {
+      say("\nChanges to be committed:\n  (use \"git restore --staged <file>...\" to unstage)");
+      for (const [k, p] of st.staged) say(`\t${(k + ":").padEnd(12)}${p}`, "green");
+    }
+    if (st.unstaged.length) {
+      say("\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)");
+      for (const [k, p] of st.unstaged) say(`\t${(k + ":").padEnd(12)}${p}`, "red");
+    }
+    if (st.untracked.length) {
+      say("\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)");
+      for (const p of st.untracked) say("\t" + p, "red");
+    }
+    if (!st.staged.length) {
+      if (st.unstaged.length) say("\nno changes added to commit (use \"git add\" and/or \"git commit -a\")");
+      else if (st.untracked.length) say("\nnothing added to commit but untracked files present (use \"git add\" to track)");
+      else if (!s.commits.length) say("\nnothing to commit (create/copy files and use \"git add\" to track)");
+      else say("nothing to commit, working tree clean");
+    }
+    return o;
+  }
+  if (sub === "add") {
+    if (!rest.length) { say("Nothing specified, nothing added.\nhint: Maybe you wanted to say 'git add .'?", "yellow"); return o; }
+    for (const a of rest) {
+      if (a === "." || a === "-A" || a === "--all") {
+        for (const p of Object.keys(s.files)) if (!ignored(s, p) || p in s.index) s.index[p] = s.files[p];
+        for (const p of Object.keys(s.index)) if (!(p in s.files)) delete s.index[p];
+        continue;
+      }
+      const base = a.replace(/\/$/, "");
+      const hits = Object.keys(s.files).filter(p => p === base || p.startsWith(base + "/"));
+      if (!hits.length) { say(`fatal: pathspec '${a}' did not match any files`, "red"); return o; }
+      const ok = hits.filter(p => !ignored(s, p) || p in s.index);
+      if (!ok.length) { say(`The following paths are ignored by one of your .gitignore files:\n${a}\nhint: Use -f if you really want to add them.`, "yellow"); continue; }
+      for (const p of ok) s.index[p] = s.files[p];
+    }
+    return o;
+  }
+  if (sub === "commit") {
+    const mi = rest.indexOf("-m");
+    if (mi < 0 || rest[mi + 1] === undefined) { say("Ebben a gyakorló terminálban a commit üzenetét mindig -m után add meg: git commit -m \"Mit változtattam\"\n(Az igazi Git ilyenkor megnyit egy szövegszerkesztőt.)", "yellow"); return o; }
+    const msg = rest[mi + 1];
+    if (!s.config.name || !s.config.email) {
+      say("Author identity unknown\n\n*** Please tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'diak@LAB-PC.(none)')", "red");
+      return o;
+    }
+    const st = statusOf(s);
+    if (!st.staged.length) {
+      say("On branch main");
+      if (st.unstaged.length) { say("Changes not staged for commit:"); for (const [k, p] of st.unstaged) say(`\t${(k + ":").padEnd(12)}${p}`, "red"); }
+      if (st.untracked.length) { say("Untracked files:"); for (const p of st.untracked) say("\t" + p, "red"); }
+      say(st.unstaged.length ? "\nno changes added to commit (use \"git add\" and/or \"git commit -a\")" : st.untracked.length ? "\nnothing added to commit but untracked files present (use \"git add\" to track)" : "nothing to commit, working tree clean");
+      return o;
+    }
+    const root = !s.commits.length;
+    let ins = 0;
+    for (const [, p] of st.staged) if (s.index[p] !== undefined) ins += s.index[p].split("\n").filter(x => x !== "").length;
+    const c = { hash: hex(40), msg, name: s.config.name, email: s.config.email, date: gitDate(new Date()), tree: Object.assign({}, s.index) };
+    s.commits.push(c);
+    say(`[main${root ? " (root-commit)" : ""} ${c.hash.slice(0, 7)}] ${msg}`);
+    say(` ${st.staged.length} file${st.staged.length > 1 ? "s" : ""} changed, ${ins} insertion${ins === 1 ? "" : "s"}(+)`);
+    for (const [k, p] of st.staged) if (k === "new file") say(` create mode 100644 ${p}`);
+    return o;
+  }
+  if (sub === "log") {
+    if (!s.commits.length) { say("fatal: your current branch 'main' does not have any commits yet", "red"); return o; }
+    const list = s.commits.slice().reverse();
+    if (rest.includes("--oneline")) {
+      list.forEach((c, i) => say(`<y>${c.hash.slice(0, 7)}</y>${i === 0 ? " (HEAD -> main)" : ""} ${c.msg}`, "rich"));
+    } else {
+      list.forEach((c, i) => {
+        say(`<y>commit ${c.hash}${i === 0 ? " (HEAD -> main)" : ""}</y>`, "rich");
+        say(`Author: ${c.name} <${c.email}>\nDate:   ${c.date}\n\n    ${c.msg}\n`);
+      });
+    }
+    return o;
+  }
+  say(`git: '${sub}' is not a git command. See 'git --help'.`, "red");
+  return o;
+}
+
+// Mount a simulator: files on the left, terminal on the right. Returns { refresh, run }.
+function mountSim(host, s, onChange) {
+  host.innerHTML = `<div class="sim">
+    <div class="files"><p class="ftitle">A projekt fájljai</p><ul></ul><button class="newfile">+ Új fájl</button><div class="editor"></div></div>
+    <div><div class="term"><div class="lines"></div><div class="inrow"><span class="prompt">PS ${esc(DIR)}&gt;</span><input spellcheck="false" autocomplete="off" aria-label="Parancs"></div></div></div>
+  </div>`;
+  const $ul = host.querySelector(".files ul"), $ed = host.querySelector(".editor");
+  const $term = host.querySelector(".term"), $lines = host.querySelector(".lines"), $in = host.querySelector("input");
+  let openFile = null, hpos = s.hist.length;
+  function lineHtml([cls, text]) {
+    if (cls === "cmd") return `<div class="line"><span class="prompt">PS ${esc(DIR)}&gt;</span> <span class="cmd">${esc(text)}</span></div>`;
+    if (cls === "rich") return `<div class="line">${esc(text).replace(/&lt;y&gt;/g, '<span class="yellow">').replace(/&lt;\/y&gt;/g, "</span>")}</div>`;
+    return `<div class="line ${cls}">${esc(text)}</div>`;
+  }
+  function drawFiles() {
+    const paths = Object.keys(s.files).sort();
+    $ul.innerHTML = paths.map(p => { const b = fileBadge(s, p); return `<li data-p="${esc(p)}" class="${p === openFile ? "open" : ""}">${esc(p)}${b ? `<span class="badge ${b[0]}">${b[1]}</span>` : ""}</li>`; }).join("") || `<li class="dim">(üres)</li>`;
+    $ul.querySelectorAll("li[data-p]").forEach(li => li.addEventListener("click", () => { openFile = li.dataset.p; drawFiles(); drawEditor(); }));
+  }
+  function drawEditor() {
+    if (openFile === null || !(openFile in s.files)) { $ed.innerHTML = ""; return; }
+    $ed.innerHTML = `<p class="editing">Szerkeszted: <b>${esc(openFile)}</b> (a változás azonnal mentődik)</p><textarea spellcheck="false"></textarea>`;
+    const ta = $ed.querySelector("textarea");
+    ta.value = s.files[openFile];
+    ta.addEventListener("input", () => { s.files[openFile] = ta.value; drawFiles(); onChange(); });
+  }
+  function drawTerm() { $lines.innerHTML = s.out.map(lineHtml).join(""); $term.scrollTop = $term.scrollHeight; }
+  function run(line) {
+    s.hist.push(line); hpos = s.hist.length;
+    s.out.push(["cmd", line]);
+    const res = exec(s, line);
+    if (res) s.out.push(...res);
+    if (s.out.length > 400) s.out = s.out.slice(-400);
+    drawTerm(); drawFiles(); drawEditor(); onChange();
+  }
+  host.querySelector(".newfile").addEventListener("click", () => {
+    const n = prompt("Az új fájl neve (pl. .gitignore):");
+    if (!n || !n.trim()) return;
+    const name = n.trim().replace(/\\/g, "/");
+    if (!(name in s.files)) s.files[name] = "";
+    openFile = name; drawFiles(); drawEditor(); onChange();
+  });
+  $term.addEventListener("click", e => { if (!window.getSelection().toString()) $in.focus(); });
+  $in.addEventListener("keydown", e => {
+    if (e.key === "Enter") { const v = $in.value; $in.value = ""; if (v.trim()) run(v); else { s.out.push(["cmd", ""]); drawTerm(); } }
+    if (e.key === "ArrowUp") { e.preventDefault(); if (hpos > 0) { hpos--; $in.value = s.hist[hpos]; } }
+    if (e.key === "ArrowDown") { e.preventDefault(); if (hpos < s.hist.length) { hpos++; $in.value = s.hist[hpos] ?? ""; } }
+  });
+  drawFiles(); drawTerm();
+  return {
+    run,
+    setFile(p, text) { s.files[p] = text; openFile = p; drawFiles(); drawEditor(); onChange(); },
+    focus() { $in.focus(); },
+  };
+}
+
+// ======================================================================
+// Shared starting projects
+// ======================================================================
+
+const HTML1 = `<!doctype html>
+<html lang="hu">
+<head>
+  <title>Macskák</title>
+</head>
+<body>
+  <h1>Macskák</h1>
+</body>
+</html>
+`;
+const HTML2 = HTML1.replace("  <title>Macskák</title>\n", "  <title>Macskák</title>\n  <link rel=\"stylesheet\" href=\"style.css\">\n");
+const CSS1 = `body {
+  font-family: Arial, sans-serif;
+}
+`;
+const CSS2 = CSS1.replace("}\n", "  background: #fdecea;\n}\n");
+const FRESH = { files: { "index.html": HTML2, "style.css": CSS1 } };
+const HISTORY4 = [
+  { files: { "index.html": HTML1 }, msg: "Oldal váza" },
+  { files: { "index.html": HTML2, "style.css": CSS1 }, msg: "Színek és betűk" },
+  { files: { "script.js": "// kártyák\n" }, msg: "Kártyák a macskáknak" },
+  { files: { "style.css": CSS2 }, msg: "Mobil nézet" },
+];
+
+// ======================================================================
+// 1. MAGYARÁZAT
+// Slides may carry a simulator: sim = () => state, steps = [command | { file, text, label }]
+// ======================================================================
+
+const SLIDES = [
+  {
+    title: "Miért kell?",
+    lead: "index_vegleges_v2_JAVITOTT_tenyleg_vegleges.html",
+    html: `<ul>
+  <li><b>Vissza tudsz menni.</b> Elrontottad, ami tegnap még működött? Megnézed, mi volt tegnap, és visszahozod.</li>
+  <li><b>Csapatban dolgoztok.</b> A vizsgaremeken 2–3-an dolgoztok ugyanazon a kódon. Pendrive-val és Messengeren küldött zipekkel ez nem megy.</li>
+  <li><b>A vizsgához kell.</b> A vizsgaremeket GitHubon kell megosztani a vizsgaközponttal, legalább 14 nappal a vizsga előtt. Enélkül nem lehet vizsgázni.</li>
+</ul>
+<div class="rule">A <b>Git</b> a projekted története, pillanatképekben. Egy pillanatkép neve: <b>commit</b>. A GitHub (a következő lecke) ezt a történetet tárolja a neten, hogy mások is elérjék.</div>`,
+    say: "Kérdezd meg: kinek volt már olyan, hogy elrontott valamit, ami előtte működött, és nem tudta visszahozni? A 14 napos GitHub-határidőt mondd ki hangosan: ez a vizsgára bocsátás feltétele (KKK).",
+  },
+  {
+    title: "A repó: git init",
+    lead: "A Git egy mappát figyel. Előbb meg kell mondani neki, melyiket.",
+    html: `<p>VS Code-ban: <b>Terminal → New Terminal</b>. A sor elején látod, melyik mappában vagy: annak a projekt mappájának kell lennie.</p>`,
+    sim: () => newSim(FRESH),
+    steps: ["git status", "git init", "git status"],
+    html2: `<div class="rule">A <code>git init</code> egy rejtett <code>.git</code> mappát csinál: ebben lesz a történet. Ez a mappa a <b>repository</b>, röviden <b>repó</b>. Projektenként egyszer kell.</div>`,
+    say: "Nyomd végig a gombokat. Az első git status piros hiba: ez a mappa még nem repó. git init után már működik, és kiírja, hogy két fájl untracked: a Git látja őket, de még nem követi. A bal oldali listán is látszik ('új').",
+  },
+  {
+    title: "Ki vagy?",
+    lead: "Minden commitra ráírja a Git, ki csinálta. Ezt egyszer kell beállítani a gépen.",
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.index = { "index.html": HTML2, "style.css": CSS1 }; return s; },
+    steps: ['git commit -m "Oldal váza"', 'git config --global user.name "Kiss Anna"', 'git config --global user.email "kiss.anna@example.com"', 'git commit -m "Oldal váza"'],
+    html2: `<div class="rule">Ha ezt látod: <code>Author identity unknown</code>, akkor ez a két sor kell, a saját neveddel és e-mail-címeddel. A <code>--global</code> azt jelenti: ezen a gépen minden projektre.</div>`,
+    say: "Először hibát kapunk: Author identity unknown. Ez az iskolai gépeken bármikor előjöhet, ha a gép elfelejti a beállítást. Olvasd fel a hibaüzenetből a megoldást: maga a Git mondja meg, mit kell beírni.",
+  },
+  {
+    title: "Három hely",
+    lead: "A fájl nem rögtön kerül a történetbe. Előbb kiválasztod, mi menjen bele.",
+    html: `<div class="places">
+  <div class="box"><b>Munkakönyvtár</b><small>a fájljaid, ahogy szerkeszted</small></div>
+  <div class="arrow">git add →</div>
+  <div class="box"><b>Staging</b><small>ami a következő commitba megy</small></div>
+  <div class="arrow">git commit →</div>
+  <div class="box"><b>Repó</b><small>a történet: a commitok</small></div>
+</div>
+<p>Olyan, mint egy csoportkép: előbb összeállítod, ki legyen rajta (<code>add</code>), aztán kattintasz (<code>commit</code>).</p>`,
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = { name: "Kiss Anna", email: "kiss.anna@example.com" }; return s; },
+    steps: ["git status", "git add index.html", "git status"],
+    say: "A git add után az index.html zöld lett (Changes to be committed), a style.css piros maradt (Untracked). Kérdezd: ha most commitolnék, mi kerülne bele? (Csak az index.html.)",
+  },
+  {
+    title: "A git status olvasása",
+    lead: "A legfontosabb parancs. Mielőtt bármit csinálsz, nézd meg, hol tartasz.",
+    html: `<table>
+  <tr><th>Ezt írja</th><th>Ezt jelenti</th></tr>
+  <tr><td><code>Untracked files</code> (piros)</td><td>új fájl, a Git még nem követi</td></tr>
+  <tr><td><code>Changes not staged for commit</code> (piros)</td><td>módosítottad, de még nem add-oltad</td></tr>
+  <tr><td><code>Changes to be committed</code> (zöld)</td><td>add-olva: bekerül a következő commitba</td></tr>
+  <tr><td><code>nothing to commit, working tree clean</code></td><td>minden benne van a történetben</td></tr>
+</table>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Oldal váza" }]); s.files["index.html"] = HTML2; s.index["index.html"] = HTML2; s.files["style.css"] = CSS2; s.files["jegyzet.txt"] = "holnap: kártyák\n"; return s; },
+    steps: ["git status"],
+    say: "Egy git status, mindhárom rész benne. Menj végig a kimeneten a táblázat alapján: index.html zöld (add-olva), style.css piros modified (módosítva, nincs add-olva), jegyzet.txt piros untracked. Kérdezd: mi kerülne most egy commitba?",
+  },
+  {
+    title: "Commit: pillanatkép",
+    lead: "git add, aztán git commit -m \"üzenet\". Az üzenet mondja meg, mi változott.",
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = { name: "Kiss Anna", email: "kiss.anna@example.com" }; return s; },
+    steps: ["git add .", 'git commit -m "Oldal váza"', "git status"],
+    html2: `<table>
+  <tr><th>Jó üzenet</th><th>Rossz üzenet</th></tr>
+  <tr><td><code>Kártyák a macskáknak</code></td><td><code>asd</code></td></tr>
+  <tr><td><code>Menü mobilon egymás alatt</code></td><td><code>javitas</code></td></tr>
+  <tr><td><code>Hibás id javítva a script.js-ben</code></td><td><code>.</code></td></tr>
+</table>`,
+    say: "A git add . mindent add-ol a mappában (a pont = ez a mappa). Commit után: working tree clean. Az üzenetekről: két hét múlva a csapattársad a log-ból akarja megtalálni, mikor romlott el valami. Az 'asd'-ből nem fogja.",
+  },
+  {
+    title: "A történet: git log",
+    lead: "Minden commit megmarad: ki, mikor, mit.",
+    sim: () => withHistory({}, HISTORY4),
+    steps: ["git log --oneline", "git log"],
+    html2: `<div class="rule">Az elején a hét karakter a commit azonosítója (<b>hash</b>). Ezzel hivatkozol rá. A legfelső a legújabb, a <code>HEAD -&gt; main</code> jelzi, hol tartasz most.</div>`,
+    say: "Az --oneline a rövid változat, ezt használjuk a legtöbbször. Kérdezd: melyik commitban került be a script.js? (Kártyák a macskáknak.) Mutasd meg, hogy a hosszú git log-ban ott a név és az idő is.",
+  },
+  {
+    title: "Módosítás után újra",
+    lead: "A munka egy kör: szerkesztesz, status, add, commit. És újra.",
+    sim: () => withHistory({}, [{ files: { "index.html": HTML2, "style.css": CSS1 }, msg: "Oldal váza" }]),
+    steps: [{ file: "style.css", text: CSS2, label: "📝 style.css szerkesztése" }, "git status", "git add style.css", 'git commit -m "Piros háttér"', "git log --oneline"],
+    html2: `<div class="rule">Egy commit = egy dolog, ami elkészült. Commitolj gyakran: egy óra alatt több commit is lehet.</div>`,
+    say: "Az első gomb úgy szerkeszti a style.css-t, mintha VS Code-ban írnád át (bal oldalt meg is nyílik). Utána a status 'modified'-ot mutat. Élőben is átírhatsz valamit a bal oldali szerkesztőben, és megnézheted a git status-t.",
+  },
+  {
+    title: ".gitignore: ami nem kell bele",
+    lead: "Vannak fájlok, amiknek nincs helyük a történetben.",
+    html: `<p>Például a <code>node_modules</code> mappa (a backendnél jön: több ezer fájl, bárki újra le tudja tölteni), vagy a saját jegyzeteid, jelszavak.</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML2, "style.css": CSS1 }, msg: "Oldal váza" }]); s.files["node_modules/express/index.js"] = "module.exports = {};\n"; s.files["node_modules/express/package.json"] = "{}\n"; s.files["jegyzet.txt"] = "a tanár szerint ez fontos\n"; return s; },
+    steps: ["git status", { file: ".gitignore", text: "node_modules/\njegyzet.txt\n", label: "📝 .gitignore létrehozása" }, "git status", "git add .", 'git commit -m "gitignore"'],
+    html2: `<div class="rule">A <code>.gitignore</code> egy sima szövegfájl a projekt gyökerében. Soronként egy fájl vagy mappa, amit a Git ne vegyen észre. VS Code-ban hozd létre, ne a terminálban.</div>`,
+    say: "Az első status-ban ott a node_modules/ és a jegyzet.txt. A .gitignore után eltűnnek a status-ból, és a git add . sem veszi fel őket. Fontos: VS Code-ban hozzák létre a fájlt (New File), mert PowerShellben az echo > rossz kódolással ír.",
+  },
+  {
+    title: "Összefoglaló",
+    lead: "Egy projekt elején egyszer, utána mindig ugyanaz a kör.",
+    html: `<table>
+  <tr><th>Mikor</th><th>Parancs</th></tr>
+  <tr><td>egyszer a gépen</td><td><code>git config --global user.name "…"</code><br><code>git config --global user.email "…"</code></td></tr>
+  <tr><td>egyszer a projektben</td><td><code>git init</code>, és egy <code>.gitignore</code></td></tr>
+  <tr><td>mindig, körben</td><td>szerkesztés → <code>git status</code> → <code>git add …</code> → <code>git commit -m "…"</code></td></tr>
+  <tr><td>ha kíváncsi vagy</td><td><code>git log --oneline</code></td></tr>
+</table>
+<div class="rule">Ha nem tudod, mit csinálj: <code>git status</code>. Most te jössz: fent a <b>2. Most te</b> fül.</div>`,
+    say: "A 'ha nem tudod, mit csinálj: git status' legyen a mantra. Aztán mindenki a 2. Most te fülre.",
+  },
+];
+
+let current = 0, showNotes = false, slideSim = null;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, Number(sessionStorage.getItem("git01-slide")) || 0)); } catch (e) { /* ignore */ }
+
+function renderSlide() {
+  const sl = SLIDES[current];
+  const $s = document.getElementById("slide");
+  $s.innerHTML = `<h2>${esc(sl.title)}</h2>
+    <p class="lead">${esc(sl.lead)}</p>
+    ${sl.html || ""}
+    ${sl.sim ? `<div class="steprow" id="steprow"></div><div id="simhost"></div>` : ""}
+    ${sl.html2 || ""}
+    <div class="say" ${showNotes ? "" : "hidden"}><b>Jegyzet:</b> ${esc(sl.say)}</div>`;
+  if (sl.sim) {
+    let state = sl.sim(), next = 0, api;
+    const $row = document.getElementById("steprow");
+    const draw = () => {
+      const st = sl.steps[next];
+      $row.innerHTML = (st !== undefined ? `<button id="stepbtn">▶ ${esc(typeof st === "string" ? st : st.label)}</button>` : "") + `<button class="restart" id="restart">↺ Elölről</button>`;
+      const b = document.getElementById("stepbtn");
+      if (b) b.addEventListener("click", () => { const x = sl.steps[next++]; if (typeof x === "string") api.run(x); else api.setFile(x.file, x.text); draw(); });
+      document.getElementById("restart").addEventListener("click", () => { state = sl.sim(); next = 0; api = mountSim(document.getElementById("simhost"), state, () => {}); draw(); });
+    };
+    api = mountSim(document.getElementById("simhost"), state, () => {});
+    draw();
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("git01-slide", current); } catch (e) { /* ignore */ }
+}
+function goSlide(d) { current = Math.min(SLIDES.length - 1, Math.max(0, current + d)); renderSlide(); window.scrollTo(0, 0); }
+document.getElementById("prev").addEventListener("click", () => goSlide(-1));
+document.getElementById("next").addEventListener("click", () => goSlide(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; renderSlide(); });
+document.addEventListener("keydown", e => {
+  if (activeTab !== "learn") return;
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") goSlide(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") goSlide(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; renderSlide(); }
+});
+
+// ======================================================================
+// 2. MOST TE: tasks in the simulator. check(s) -> problems
+// ======================================================================
+
+const ME = { name: "Diák Dóra", email: "diak.dora@example.com" };
+const badMsg = m => m.trim().length < 4 || /^(asd+|a+|x+|\.+|teszt|commit|javitas|javítás|valami)$/i.test(m.trim());
+const clean = s => { const st = statusOf(s); return !st.staged.length && !st.unstaged.length && !st.untracked.length; };
+
+const TASKS = [
+  {
+    id: "init", slide: 3, title: "1. Kezdés",
+    paper: `<p>Ez a mappa még nem repó. Tedd azzá, és állítsd be a neved és az e-mail-címed (bármilyen kitalált cím jó, csak legyen benne <code>@</code>).</p>`,
+    sim: () => newSim(FRESH),
+    check(s) {
+      const p = [];
+      if (!s.repo) p.push("A mappa még nem repó: <code>git init</code>.");
+      if (!s.config.name) p.push("Nincs beállítva a neved: <code>git config --global user.name \"…\"</code>.");
+      if (!s.config.email || !s.config.email.includes("@")) p.push("Nincs beállítva (jó) e-mail-cím: <code>git config --global user.email \"…\"</code>.");
+      return p;
+    },
+    hint: `Három parancs: <code>git init</code>, aztán a két <code>git config --global …</code>. Nézd meg a 2. és a 3. diát.`,
+    solution: `git init
+git config --global user.name "Diák Dóra"
+git config --global user.email "diak.dora@example.com"`,
+  },
+  {
+    id: "first", slide: 6, title: "2. Az első commit",
+    paper: `<p>A repó kész, a neved be van állítva. Commitold <b>mindkét</b> fájlt egy commitban, értelmes üzenettel. A végén a <code>git status</code> mondja azt, hogy <code>working tree clean</code>.</p>`,
+    sim: () => { const s = newSim(FRESH); s.repo = true; s.config = Object.assign({}, ME); return s; },
+    check(s) {
+      if (!s.commits.length) return ["Még nincs commit. Előbb <code>git add</code>, utána <code>git commit -m \"…\"</code>."];
+      const c = s.commits[0];
+      const p = [];
+      if (!("index.html" in c.tree) || !("style.css" in c.tree)) p.push("Az első commitban mindkét fájlnak benne kell lennie. Most ezek vannak benne: " + Object.keys(c.tree).map(x => `<code>${esc(x)}</code>`).join(", ") + ". Kezdd elölről (Visszaállítás), és add-old mindkettőt a commit előtt.");
+      if (badMsg(c.msg)) p.push(`Az üzenet (<code>${esc(c.msg)}</code>) nem mondja meg, mi történt. Kezdd elölről, és írj olyat, mint a 6. dián.`);
+      if (!clean(s)) p.push("A <code>git status</code> még nem tiszta.");
+      return p;
+    },
+    hint: `<code>git add .</code> (vagy a két fájl neve), aztán <code>git commit -m "Oldal váza"</code>. Ellenőrizd: <code>git status</code>.`,
+    solution: `git add .
+git commit -m "Oldal váza"
+git status`,
+  },
+  {
+    id: "log", slide: 7, title: "3. Olvasd a történetet",
+    paper: `<p>Ebben a repóban már van néhány commit. Nézd meg a történetet, és írd be annak a commitnak a <b>hash</b>-ét (az első 7 karaktert), amelyikben a <code>script.js</code> bekerült.</p>`,
+    sim: () => withHistory({}, HISTORY4),
+    answer: true,
+    check(s, ans) {
+      const c = s.commits.find(x => "script.js" in x.tree);
+      const a = (ans || "").trim().toLowerCase();
+      if (a.length < 7) return ["Írd be a hash első 7 karakterét a mezőbe."];
+      if (!c.hash.startsWith(a)) return [`A <code>${esc(a)}</code> nem annak a commitnak a hash-e. Melyik commit üzenete szól a kártyákról (a script.js-ről)?`];
+      return [];
+    },
+    hint: `<code>git log --oneline</code>. Az a commit kell, amelyik a kártyákról szól; az első 7 karakter a hash.`,
+    solution: `git log --oneline
+(a „Kártyák a macskáknak” sor elején lévő 7 karakter)`,
+  },
+  {
+    id: "only", slide: 8, title: "4. Csak a CSS",
+    paper: `<p>Mindkét fájlt módosítottad, de az <code>index.html</code> még nincs kész. Commitold <b>csak a <code>style.css</code>-t</b>, értelmes üzenettel. Az <code>index.html</code> maradjon módosítva, commit nélkül.</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML1, "style.css": CSS1 }, msg: "Oldal váza" }]); s.config = Object.assign({}, ME); s.files["style.css"] = CSS2; s.files["index.html"] = HTML2; return s; },
+    check(s) {
+      if (s.commits.length < 2) return ["Még nincs új commit."];
+      const c = s.commits[s.commits.length - 1], prev = s.commits[s.commits.length - 2].tree;
+      const changed = Object.keys(Object.assign({}, prev, c.tree)).filter(p => prev[p] !== c.tree[p]);
+      const p = [];
+      if (!changed.includes("style.css")) p.push("Az utolsó commitban nincs benne a <code>style.css</code> változása.");
+      if (changed.includes("index.html")) p.push("Az <code>index.html</code> is bekerült a commitba. Kezdd elölről (Visszaállítás), és csak a <code>style.css</code>-t add-old: <code>git add style.css</code>.");
+      if (badMsg(c.msg)) p.push(`Az üzenet (<code>${esc(c.msg)}</code>) nem mondja meg, mi változott.`);
+      return p;
+    },
+    hint: `<code>git add style.css</code> (nem <code>git add .</code>!), aztán <code>git commit -m "…"</code>. A <code>git status</code>-ban az index.html maradjon piros.`,
+    solution: `git status
+git add style.css
+git commit -m "Piros háttér"
+git status`,
+  },
+  {
+    id: "ignore", slide: 9, title: "5. .gitignore",
+    paper: `<p>Bekerült a projektbe egy <code>node_modules</code> mappa és egy <code>app.js</code>. Csinálj egy <code>.gitignore</code>-t (bal oldalt: <b>+ Új fájl</b>), ami kihagyja a <code>node_modules</code>-t, aztán commitold az <code>app.js</code>-t és a <code>.gitignore</code>-t. A végén a <code>git status</code> legyen tiszta.</p>`,
+    sim: () => { const s = withHistory({}, [{ files: { "index.html": HTML2, "style.css": CSS1 }, msg: "Oldal váza" }]); s.config = Object.assign({}, ME); s.files["node_modules/express/index.js"] = "module.exports = {};\n"; s.files["node_modules/express/package.json"] = "{}\n"; s.files["app.js"] = "console.log(\"szerver\");\n"; return s; },
+    check(s) {
+      const t = head(s), p = [];
+      if (Object.keys(t).some(x => x.startsWith("node_modules/"))) p.push("A <code>node_modules</code> bekerült egy commitba. Kezdd elölről (Visszaállítás): előbb a <code>.gitignore</code>, utána az add.");
+      if (!(".gitignore" in t)) p.push("A <code>.gitignore</code> nincs benne az utolsó commitban.");
+      if (!("app.js" in t)) p.push("Az <code>app.js</code> nincs benne az utolsó commitban.");
+      if (!p.length && !clean(s)) p.push("A <code>git status</code> még nem tiszta: mi maradt ki?");
+      return p;
+    },
+    hint: `Bal oldalt <b>+ Új fájl</b>, a neve <code>.gitignore</code>, a tartalma egy sor: <code>node_modules/</code>. Utána <code>git status</code> (a node_modules eltűnik), <code>git add .</code>, <code>git commit -m "…"</code>.`,
+    solution: `(+ Új fájl: .gitignore, benne: node_modules/)
+git status
+git add .
+git commit -m "gitignore és app.js"
+git status`,
+  },
+];
+
+const KEY = "git01-lesson-v1";
+let state = { sims: {}, answers: {}, done: {}, fails: {}, revealed: {}, cur: 0, pastes: {}, tab: "learn" };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") state = Object.assign(state, s); } catch (e) { /* ignore */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const STUCK_AFTER = 2;
+
+function simFor(t) {
+  if (!state.sims[t.id]) state.sims[t.id] = t.sim();
+  return state.sims[t.id];
+}
+
+function renderSteps() {
+  const $s = document.getElementById("steps");
+  $s.innerHTML = "";
+  TASKS.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
+    if (i === state.cur) b.classList.add("current");
+    if (state.done[t.id]) b.classList.add("done");
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    b.addEventListener("click", () => { state.cur = i; save(); renderTry(); });
+    $s.appendChild(b);
+  });
+  const n = TASKS.filter(t => state.done[t.id]).length;
+  document.getElementById("fin-try").innerHTML = n === TASKS.length ? `<div class="finished">Mind kész. Jöhet az igazi Git a saját gépeden: fent a 3. Élesben fül.</div>` : "";
+}
+
+function renderTry() {
+  renderSteps();
+  const t = TASKS[state.cur];
+  const s = simFor(t);
+  document.getElementById("task").innerHTML = `
+    <div class="goal">
+      <a class="back" href="#" id="backToSlide">Nézd meg újra: ${t.slide}. dia</a>
+      <h3>${esc(t.title)}</h3>
+      ${t.paper}
+    </div>
+    <div id="simhost"></div>
+    ${t.answer ? `<div class="answer"><label for="ans">A hash:</label><input id="ans" spellcheck="false" autocomplete="off" placeholder="pl. a1b2c3d"></div>` : ""}
+    <div class="buttons">
+      <button class="primary" id="check">Ellenőrzés</button>
+      <button id="reset">Visszaállítás (elölről)</button>
+    </div>
+    <div id="result"></div><div id="hint"></div><div id="solution"></div>`;
+  document.getElementById("backToSlide").addEventListener("click", e => { e.preventDefault(); current = t.slide - 1; setTab("learn"); });
+  mountSim(document.getElementById("simhost"), s, save);
+  const $a = document.getElementById("ans");
+  if ($a) { $a.value = state.answers[t.id] || ""; $a.addEventListener("input", () => { state.answers[t.id] = $a.value; save(); }); }
+  document.getElementById("check").addEventListener("click", () => doCheck(t));
+  document.getElementById("reset").addEventListener("click", () => { delete state.sims[t.id]; save(); renderTry(); });
+  if (state.revealed[t.id]) showSolution(t);
+}
+
+function doCheck(t) {
+  const s = simFor(t);
+  let problems;
+  try { problems = t.check(s, state.answers[t.id]); } catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message)]; }
+  const $r = document.getElementById("result"), $h = document.getElementById("hint");
+  if (!problems.length) {
+    state.done[t.id] = true; save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.cur && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button id="nextTask">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+    $h.innerHTML = "";
+    if (nextIdx >= 0) document.getElementById("nextTask").addEventListener("click", () => { state.cur = nextIdx; save(); renderTry(); });
+    renderSteps();
+    return;
+  }
+  $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  state.fails[t.id] = (state.fails[t.id] || 0) + 1; save();
+  $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+  if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+    $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
+    document.getElementById("stuck").addEventListener("click", () => {
+      if (!confirm("Biztos? Előbb nézd meg újra a diát és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+      document.getElementById("stuck").remove();
+      state.revealed[t.id] = true; save();
+      showSolution(t); renderSteps();
+    });
+  }
+}
+
+function showSolution(t) {
+  document.getElementById("solution").innerHTML = `<div class="solution"><h4>Megoldás</h4><pre>${esc(t.solution)}</pre><p>Nyomd meg a Visszaállítás gombot, és írd be a parancsokat egyenként.</p></div>`;
+}
+
+// ======================================================================
+// 3. ÉLESBEN: paste the output of the real Git
+// ======================================================================
+
+const PASTES = [
+  {
+    id: "log", cmd: "git log --oneline", ask: "Legalább három commit, mindegyiknek más, értelmes üzenettel.",
+    check(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return [false, ""];
+      const bad = lines.filter(l => !/^[0-9a-f]{7,40}( \([^)]*\))? .+/.test(l));
+      if (bad.length) return [false, `Ez a sor nem úgy néz ki, mint a git log --oneline kimenete: „${bad[0]}”. Az egész kimenetet másold be, és csak azt.`];
+      const msgs = lines.map(l => l.replace(/^[0-9a-f]{7,40}( \([^)]*\))? /, ""));
+      if (lines.length < 3) return [false, `${lines.length} commit van, legalább 3 kell.`];
+      if (new Set(msgs.map(m => m.toLowerCase())).size !== msgs.length) return [false, "Van két egyforma üzenet. Minden commit mást csinált, az üzenet is legyen más."];
+      const weak = msgs.find(badMsg);
+      if (weak) return [false, `A „${weak}” üzenet nem mondja meg, mi változott.`];
+      return [true, `✓ ${lines.length} commit, rendes üzenetekkel.`];
+    },
+  },
+  {
+    id: "status", cmd: "git status", ask: "Minden be van commitolva.",
+    check(text) {
+      if (!text.trim()) return [false, ""];
+      if (/not a git repository/.test(text)) return [false, "Ez a mappa nem repó: rossz mappában vagy, vagy kimaradt a git init."];
+      if (/Untracked files/.test(text)) return [false, "Van untracked fájl. Ha a jegyzet.txt az, akkor a .gitignore nem jó (vagy nem a projekt gyökerében van). Ha más, add-old és commitold."];
+      if (/Changes not staged|Changes to be committed/.test(text)) return [false, "Van még nem commitolt változás: add, aztán commit."];
+      if (/nothing to commit, working tree clean/.test(text)) return [true, "✓ Tiszta: minden benne van a történetben."];
+      return [false, "Ez nem úgy néz ki, mint a git status kimenete. Az egészet másold be."];
+    },
+  },
+  {
+    id: "files", cmd: "git ls-files", ask: "Ez mutatja, mely fájlokat követi a Git. Benne kell lennie az index.html-nek, a style.css-nek és a .gitignore-nak, a jegyzet.txt-nek nem.",
+    check(text) {
+      const f = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!f.length) return [false, ""];
+      const miss = ["index.html", "style.css", ".gitignore"].filter(x => !f.includes(x));
+      if (miss.length) return [false, "Hiányzik: " + miss.join(", ") + ". Commitoltad?"];
+      if (f.includes("jegyzet.txt")) return [false, "A jegyzet.txt bekerült. Ha egyszer bekerült, a .gitignore már nem hagyja ki: git rm --cached jegyzet.txt, aztán commit."];
+      return [true, "✓ A Git pontosan azt követi, amit kell."];
+    },
+  },
+];
+
+function renderLive() {
+  const $p = document.getElementById("pastes");
+  $p.innerHTML = PASTES.map((x, i) => `
+    <div class="goal paste">
+      <h3>${i + 1}. Futtasd: <code>${esc(x.cmd)}</code></h3>
+      <p>${esc(x.ask)} Másold be ide, amit kiírt:</p>
+      <textarea id="paste-${x.id}" spellcheck="false" placeholder="Ide másold a kimenetet…"></textarea>
+      <p class="verdict" id="verdict-${x.id}"></p>
+    </div>`).join("");
+  const upd = () => {
+    let n = 0;
+    for (const x of PASTES) {
+      const [ok, msg] = x.check(state.pastes[x.id] || "");
+      const v = document.getElementById("verdict-" + x.id);
+      v.className = "verdict " + (ok ? "ok" : msg ? "bad" : "");
+      v.textContent = msg;
+      if (ok) n++;
+    }
+    document.getElementById("fin-live").innerHTML = n === PASTES.length ? `<div class="finished">Kész: van egy igazi repód, rendes történettel. A következő leckében felkerül a GitHubra.</div>` : "";
+  };
+  for (const x of PASTES) {
+    const ta = document.getElementById("paste-" + x.id);
+    ta.value = state.pastes[x.id] || "";
+    ta.addEventListener("input", () => { state.pastes[x.id] = ta.value; save(); upd(); });
+  }
+  upd();
+}
+
+// ======================================================================
+// Tabs
+// ======================================================================
+
+let activeTab = "learn";
+function setTab(tab) {
+  activeTab = tab; state.tab = tab; save();
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
+  for (const name of ["learn", "try", "live"]) document.getElementById("tab-" + name).hidden = name !== tab;
+  if (tab === "learn") renderSlide();
+  if (tab === "try") renderTry();
+  if (tab === "live") renderLive();
+  window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => setTab(b.dataset.tab));
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Biztosan visszaállítod a 2. és 3. részt?")) return;
+  state = { sims: {}, answers: {}, done: {}, fails: {}, revealed: {}, cur: 0, pastes: {}, tab: activeTab };
+  save(); setTab(activeTab);
+});
+
+const fromHash = { "#magyarazat": "learn", "#most-te": "try", "#elesben": "live" }[location.hash];
+setTab(fromHash || state.tab || "learn");
+</script>
+</body>
+</html>
