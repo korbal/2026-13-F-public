@@ -1,0 +1,22 @@
+{
+  "message": "Szia! Ez az osztály API-ja. Csak GET kérést tud.",
+  "docs": "https://korbal.github.io/2026-13-F-public/api/",
+  "endpoints": [
+    {
+      "url": "https://korbal.github.io/2026-13-F-public/api/excuses.json",
+      "description": "Kifogások, ha nincs kész a házi (tömb)"
+    },
+    {
+      "url": "https://korbal.github.io/2026-13-F-public/api/excuses/1.json",
+      "description": "Egy kifogás id alapján (1–16)"
+    },
+    {
+      "url": "https://korbal.github.io/2026-13-F-public/api/canteen.json",
+      "description": "A heti menza (objektum, benne egy tömb)"
+    },
+    {
+      "url": "https://korbal.github.io/2026-13-F-public/api/cats.json",
+      "description": "Macskák, mindegyikben egy hobbitömb"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "excuse": "A laptopom frissített. Még most is frissít.",
+    "category": "technika",
+    "believability": 7,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 2,
+    "excuse": "Megcsináltam, csak nem mentettem el.",
+    "category": "technika",
+    "believability": 4,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 3,
+    "excuse": "Nálam működött.",
+    "category": "technika",
+    "believability": 6,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 4,
+    "excuse": "A git push lefutott, csak nem tudom, hova.",
+    "category": "technika",
+    "believability": 6,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 5,
+    "excuse": "Elmentettem, csak a Letöltések mappába, a többi 4000 fájl közé.",
+    "category": "technika",
+    "believability": 8,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 6,
+    "excuse": "Papírra írtam meg, de a papír nem futtatható.",
+    "category": "technika",
+    "believability": 3,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 7,
+    "excuse": "A kutyám megette. Nincs kutyám, ez engem is aggaszt.",
+    "category": "család",
+    "believability": 1,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 8,
+    "excuse": "A tesómnak kellett a gép, mert holnap neki is határideje van. Neki sincs kész.",
+    "category": "család",
+    "believability": 6,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 9,
+    "excuse": "Anya szerint aludnom kellett. Anyának mindig igaza van.",
+    "category": "család",
+    "believability": 7,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 10,
+    "excuse": "Nem jött a busz, és vele együtt a motivációm sem.",
+    "category": "közlekedés",
+    "believability": 5,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 11,
+    "excuse": "A vonat késett, így a tanulásra szánt idő is késik.",
+    "category": "közlekedés",
+    "believability": 4,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 12,
+    "excuse": "Edzésem volt. Minden nap. Egész nap.",
+    "category": "sport",
+    "believability": 3,
+    "teacherHeardIt": true
+  },
+  {
+    "id": 13,
+    "excuse": "Azt hittem, a határidő csak egy javaslat.",
+    "category": "egzisztenciális",
+    "believability": 2,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 14,
+    "excuse": "Megnyitottam a VS Code-ot, és ezzel elfogyott az aznapi energiám.",
+    "category": "egzisztenciális",
+    "believability": 9,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 15,
+    "excuse": "Elfelejtettem, hogy emlékeznem kellene rá.",
+    "category": "egzisztenciális",
+    "believability": 6,
+    "teacherHeardIt": false
+  },
+  {
+    "id": 16,
+    "excuse": "Elkezdtem, de a console.log azt írta, hogy undefined, és ezt személyesnek vettem.",
+    "category": "egzisztenciális",
+    "believability": 8,
+    "teacherHeardIt": false
+  }
+]

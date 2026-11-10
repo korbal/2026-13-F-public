@@ -1,0 +1,73 @@
+[
+  {
+    "id": 1,
+    "name": "Bajusz",
+    "age": 7,
+    "weightKg": 6.2,
+    "sleepHoursPerDay": 16,
+    "friendly": true,
+    "hobbies": [
+      "billentyűzeten alvás",
+      "monitor eltakarása"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Null",
+    "age": 2,
+    "weightKg": 3.4,
+    "sleepHoursPerDay": 12,
+    "friendly": false,
+    "hobbies": [
+      "poharak leverése az asztalról",
+      "hajnali négykor futás"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Undefined",
+    "age": 4,
+    "weightKg": 4.1,
+    "sleepHoursPerDay": 14,
+    "friendly": true,
+    "hobbies": []
+  },
+  {
+    "id": 4,
+    "name": "Szotyi",
+    "age": 11,
+    "weightKg": 7.8,
+    "sleepHoursPerDay": 18,
+    "friendly": true,
+    "hobbies": [
+      "dobozban ülés",
+      "a doboz mellett ülés",
+      "evés"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Rendszergazda",
+    "age": 9,
+    "weightKg": 5.5,
+    "sleepHoursPerDay": 15,
+    "friendly": false,
+    "hobbies": [
+      "kábelek rágása",
+      "mindenkit lenézni"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Pötyi",
+    "age": 1,
+    "weightKg": 2.3,
+    "sleepHoursPerDay": 13,
+    "friendly": true,
+    "hobbies": [
+      "egérkurzor üldözése",
+      "bekapcsolt laptopra fekvés",
+      "nyávogás hívás közben"
+    ]
+  }
+]

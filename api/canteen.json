@@ -1,0 +1,66 @@
+{
+  "week": 46,
+  "school": "Széchenyi",
+  "days": [
+    {
+      "day": "hétfő",
+      "soup": "Paradicsomleves betűtésztával (a betűkből néha kijön, hogy SEGÍTSÉG)",
+      "main": {
+        "name": "Rántott sajt rizzsel",
+        "vegetarian": true,
+        "calories": 820
+      },
+      "dessert": null,
+      "queueMinutes": 12,
+      "rating": 4.5
+    },
+    {
+      "day": "kedd",
+      "soup": "Gulyásleves",
+      "main": {
+        "name": "Mákos tészta (a mák külön kapható, csak éppen nem kapható)",
+        "vegetarian": true,
+        "calories": 640
+      },
+      "dessert": "alma",
+      "queueMinutes": 4,
+      "rating": 2.5
+    },
+    {
+      "day": "szerda",
+      "soup": "Zöldborsóleves",
+      "main": {
+        "name": "Csirkepaprikás nokedlivel",
+        "vegetarian": false,
+        "calories": 760
+      },
+      "dessert": "puding",
+      "queueMinutes": 9,
+      "rating": 4
+    },
+    {
+      "day": "csütörtök",
+      "soup": "Krémleves, ismeretlen összetevőkből",
+      "main": {
+        "name": "Főzelék, feltéttel",
+        "vegetarian": false,
+        "calories": 510
+      },
+      "dessert": null,
+      "queueMinutes": 2,
+      "rating": 1.5
+    },
+    {
+      "day": "péntek",
+      "soup": "Nincs leves, mert péntek van",
+      "main": {
+        "name": "Pizza",
+        "vegetarian": false,
+        "calories": 950
+      },
+      "dessert": "fánk",
+      "queueMinutes": 25,
+      "rating": 5
+    }
+  ]
+}

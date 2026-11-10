@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Osztály API</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --code-bg: #f0efe9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --code-bg: #232326; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  .back { font-size: 15px; }
+  h1 { font-size: 1.6rem; margin: 12px 0 4px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1rem; margin: 24px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--link); }
+  code { font: 14px/1.5 ui-monospace, Consolas, monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  .ep { padding: 12px 0; border-top: 1px solid var(--line); }
+  .ep:last-of-type { border-bottom: 1px solid var(--line); }
+  .ep .url { font-weight: 600; }
+  .ep p { margin: 4px 0; color: var(--muted); }
+  ol li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../">← Kezdőlap</a>
+  <h1>Osztály API</h1>
+  <p class="sub">Valódi adatok, valódi URL-ekről, <code>fetch</code>-csel. Csak GET kérést tud.</p>
+
+  <p>Alap URL:</p>
+  <pre><code>https://korbal.github.io/2026-13-F-public/api/</code></pre>
+  <p>Bármelyik végpontot megnyithatod a böngészőben is. Mielőtt kódot írsz, nézd meg, milyen alakú az adat.</p>
+
+  <h2>Végpontok</h2>
+
+  <div class="ep">
+    <a class="url" href="excuses.json">excuses.json</a>
+    <p>Kifogások arra az esetre, ha nincs kész a házi. <b>Tömb</b>, minden eleme egy objektum.</p>
+    <pre><code>{ "id": 3, "excuse": "Nálam működött.", "category": "technika",
+  "believability": 6, "teacherHeardIt": true }</code></pre>
+  </div>
+
+  <div class="ep">
+    <a class="url" href="excuses/1.json">excuses/1.json</a> … <code>excuses/16.json</code>
+    <p>Egyetlen kifogás az <code>id</code>-ja alapján. <b>Objektum</b>. Nem létező id esetén a válasz 404.</p>
+  </div>
+
+  <div class="ep">
+    <a class="url" href="canteen.json">canteen.json</a>
+    <p>A heti menza. <b>Objektum</b>, a napok a <code>days</code> tömbben vannak. Figyelj: a <code>dessert</code> néha <code>null</code>.</p>
+    <pre><code>{ "week": 46, "school": "Széchenyi", "days": [
+  { "day": "hétfő", "soup": "...", "main": { "name": "Rántott sajt rizzsel",
+    "vegetarian": true, "calories": 820 }, "dessert": null,
+    "queueMinutes": 12, "rating": 4.5 }, ...
+] }</code></pre>
+  </div>
+
+  <div class="ep">
+    <a class="url" href="cats.json">cats.json</a>
+    <p>Macskák. <b>Tömb</b>, és minden macskában van egy <code>hobbies</code> tömb (lehet üres is).</p>
+    <pre><code>{ "id": 2, "name": "Null", "age": 2, "weightKg": 3.4, "sleepHoursPerDay": 12,
+  "friendly": false, "hobbies": ["poharak leverése az asztalról", "hajnali négykor futás"] }</code></pre>
+  </div>
+
+  <div class="ep">
+    <a class="url" href="index.json">index.json</a>
+    <p>Az összes végpont listája, JSON-ban.</p>
+  </div>
+
+  <h2>Így kérsz le adatot</h2>
+  <pre><code>async function loadExcuses() {
+  // 1. Elküldjük a kérést, és megvárjuk a választ
+  const response = await fetch("https://korbal.github.io/2026-13-F-public/api/excuses.json");
+
+  // 2. A válasz szövegét JavaScript-adattá alakítjuk (ez is időbe telik, ezért await)
+  const excuses = await response.json();
+
+  // 3. Innentől ez egy sima tömb, ugyanúgy dolgozol vele, mint eddig
+  console.log(excuses);
+  console.log(excuses[0].excuse);
+}
+
+loadExcuses();</code></pre>
+
+  <h3>Ha valami elromlik</h3>
+  <pre><code>const response = await fetch(url);
+if (!response.ok) {
+  // pl. 404: nincs ilyen fájl
+  console.log("Hiba: " + response.status);
+  return;
+}
+const data = await response.json();</code></pre>
+
+  <h2>Feladatok</h2>
+  <ol>
+    <li>Írd ki a konzolba az összes kifogást, majd csak az első kifogás szövegét.</li>
+    <li>Jelenítsd meg a kifogásokat egy <code>&lt;ul&gt;</code> listában az oldalon.</li>
+    <li><b>Kifogásgenerátor:</b> egy gombra kattintva jelenjen meg egy véletlenszerű kifogás (<code>Math.random()</code>).</li>
+    <li>Csak azokat a kifogásokat mutasd, amelyeket a tanár még nem hallott (<code>teacherHeardIt</code>), hihetőség szerint csökkenő sorrendben.</li>
+    <li>Rakd ki a menzát táblázatba: nap, leves, főétel, desszert. Ahol nincs desszert, ott ez álljon: „nincs”.</li>
+    <li>Melyik napon a legrövidebb a sor? Mennyi az összes kalória a héten?</li>
+    <li>Készíts kártyát minden macskának, a hobbijaival együtt. Ha nincs hobbija, írd ki: „semmi, csak létezik”.</li>
+    <li>Számold ki a macskák átlagos alvásidejét, és emeld ki azt, amelyik a legtöbbet alszik.</li>
+    <li>Egy számmezőbe beírt id alapján kérd le az <code>excuses/&lt;id&gt;.json</code> végpontot. Ha 404 jön vissza, írd ki: „Nincs ilyen kifogás.”</li>
+  </ol>
+</main>
+</body>
+</html>

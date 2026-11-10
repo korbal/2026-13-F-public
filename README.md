@@ -2,6 +2,10 @@
 
 Public pages for the 13F1 Frontend-Backend class (2026/27): https://korbal.github.io/2026-13-F-public/
 
+`index.html` is the home page: the class API first, then the tests.
+
+`api/` is a read-only JSON API for `fetch` practice (GitHub Pages serves it with `Access-Control-Allow-Origin: *`). `api/index.html` is the docs page with tasks; `api/index.json` lists the endpoints. Test folders never move, so old links keep working.
+
 One folder per test (`testNN/`), linked from `index.html` (newest first):
 
 - `demo.html` – **Hibák**: the class's most common mistakes, wrong and right side by side (shown on the projector).

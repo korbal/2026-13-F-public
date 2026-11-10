@@ -10,6 +10,7 @@
     :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; }
   }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
+  * { box-sizing: border-box; }
   main { max-width: 640px; margin: 0 auto; padding: 40px 16px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   .sub { color: var(--muted); margin: 0 0 32px; }
@@ -18,12 +19,22 @@
   li:last-child { border-bottom: 1px solid var(--line); }
   .name { font-weight: 600; min-width: 90px; }
   a { color: var(--link); }
+  h2 { font-size: 1.1rem; margin: 32px 0 8px; }
+  .desc { color: var(--muted); }
+  code { font: 15px ui-monospace, Consolas, monospace; }
 </style>
 </head>
 <body>
 <main>
   <h1>13F1 Frontend-Backend</h1>
-  <p class="sub">2026/27 · tesztek javítása</p>
+  <p class="sub">2026/27</p>
+
+  <h2>API</h2>
+  <ul>
+    <li><span class="name"><a href="api/">Osztály API</a></span> <span class="desc">Adatok <code>fetch</code>-hez: végpontok, példakód, feladatok</span></li>
+  </ul>
+
+  <h2>Tesztek</h2>
   <ul>
     <!-- One <li> per test, newest first. -->
     <li><span class="name">Test 04</span> <a href="test04/demo.html">Hibák</a> <a href="test04/walkthrough.html">Javítás</a> <a href="test04/solution/index.html?v=2">Megoldás</a> <a href="test04/test04-megoldas.zip?v=2">Megoldás (zip)</a> <a href="test04/paper.html">Feladatlap</a> <a href="test04/test04-kiindulo.zip">Kiinduló fájlok (zip)</a></li>
