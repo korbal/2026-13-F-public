@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fetch 1 · JSON olvasása</title>
+<title>Fetch 1 · Mi az a JSON?</title>
 <style>
   :root {
     --bg: #f5f3ee;
@@ -17,60 +17,79 @@
     --bad: #b42318;
     --bad-bg: #fdecea;
     --hint-bg: #fff7e0;
+    --mark: #ffe08a;
     --code-bg: #1e1f29;
     --code-ink: #e8e8ec;
+    --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
   a { color: #1a5fb4; }
-  header.top { background: var(--accent); color: #fff; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
-  header.top h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  code { font-family: var(--mono); background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+  header.top { background: var(--accent); color: #fff; padding: 10px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  header.top h1 { font-size: 19px; margin: 0; font-weight: 600; }
   header.top a { color: #fff; opacity: .85; font-size: 15px; }
-  header.top .progress { margin-left: auto; font-size: 15px; opacity: .9; }
-  nav.steps { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .tabs button { font: inherit; font-size: 15px; background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .tabs button.on { background: #fff; color: var(--accent); font-weight: 600; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { main, header.top { padding-left: 16px; padding-right: 16px; } }
+  [hidden] { display: none !important; }
+
+  /* ---------- 1. Magyarázat: slides for the projector ---------- */
+  .slidebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+  .slidebar button { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .slidebar .count { margin-left: auto; color: var(--muted); font-size: 15px; }
+  .slide { font-size: 22px; line-height: 1.45; }
+  .slide h2 { font-size: 38px; margin: 0 0 6px; line-height: 1.2; }
+  .slide .lead { font-size: 25px; margin: 0 0 20px; color: var(--muted); }
+  .slide p { margin: 0 0 14px; }
+  .slide ul, .slide ol { margin: 0 0 14px; padding-left: 30px; }
+  .slide li { margin: 0 0 6px; }
+  .slide pre.show { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); white-space: pre; overflow-x: auto; margin: 0 0 14px; }
+  .slide pre.show mark { background: var(--mark); border-radius: 3px; padding: 0 2px; }
+  .slide .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .slide .pair > div { min-width: 0; }
+  @media (max-width: 900px) { .slide .pair { grid-template-columns: 1fr; } }
+  .slide .pair h3 { font-size: 22px; margin: 0 0 6px; }
+  .slide table { border-collapse: collapse; margin: 0 0 14px; font-size: 21px; }
+  .slide th, .slide td { border: 1px solid var(--line); padding: 6px 14px; text-align: left; vertical-align: top; background: var(--panel); }
+  .slide th { background: var(--bg); }
+  .slide .rule { margin-top: 18px; background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 18px; font-size: 24px; }
+  .slide .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 10px 0 22px; }
+  .slide .box { background: var(--panel); border: 2px solid var(--accent); border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 220px; }
+  .slide .box small { display: block; color: var(--muted); font-size: 17px; }
+  .slide .wire { flex: 1; min-width: 200px; text-align: center; font: 19px/1.4 var(--mono); color: var(--accent); border-bottom: 3px dashed var(--accent); padding-bottom: 6px; }
+  .slide .runner textarea { width: 100%; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px 18px; font: 21px/1.45 var(--mono); resize: vertical; tab-size: 2; }
+  .slide .runner button { margin: 8px 0 0; font: inherit; font-size: 19px; font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 20px; cursor: pointer; }
+  .slide .runner .out { margin-top: 8px; background: #000; color: var(--code-ink); border-radius: 8px; padding: 10px 16px; font: 20px/1.45 var(--mono); white-space: pre-wrap; min-height: 48px; }
+  .out .err, .console .err { color: #ff8a80; }
+  .out .dim, .console .dim { color: #8b8fa3; }
+  .slide .say { margin-top: 18px; color: var(--muted); font-size: 17px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .slide .big-link { font-size: 26px; }
+
+  /* ---------- 2. Most te + 3. Élesben ---------- */
+  .intro { color: var(--muted); margin: 0 0 16px; }
+  nav.steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
   nav.steps button { border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
   nav.steps button.current { border-color: var(--accent); font-weight: 600; }
   nav.steps button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
   nav.steps button.done.revealed { background: #fff4d6; border-color: #b7791f; color: #8a5a00; }
-  nav.steps button.extra { border-style: dashed; }
-  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
-  .solution h4 { margin: 0 0 6px; font-size: 16px; }
-  .solution p { margin: 0 0 8px; }
-  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 0; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
-  .solution pre div { white-space: pre; padding: 0 12px; }
-  .solution pre div.new { background: #d3f0dc; box-shadow: inset 4px 0 #1a7f37; }
-  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
-  .stuck { margin: 0 0 12px; }
-  main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 40px; }
-  @media (max-width: 600px) { main, header.top, nav.steps { padding-left: 16px; padding-right: 16px; } }
-  .intro { color: var(--muted); margin: 0 0 16px; }
-  .task-head h2 { margin: 0 0 4px; font-size: 24px; }
-  .task-head .tag { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .goal { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px; }
-  .goal p { margin: 0 0 6px; }
-  .goal p:last-child { margin-bottom: 0; }
   .goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
   .goal h3:first-child { margin-top: 0; }
-  .goal .paper { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
-  .goal .now { color: var(--bad); font-weight: 600; }
-  .goal .live { float: right; font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 10px; margin-left: 12px; }
-  .goal .learn { background: #eef3fb; border-radius: 6px; padding: 10px 14px; }
-  .goal .learn pre { margin: 6px 0; background: rgba(255,255,255,.7); border-radius: 4px; padding: 6px 10px; font: 14px/1.5 Consolas, "Cascadia Mono", "Courier New", monospace; overflow-x: auto; }
-  .goal .bridge { background: #f3f0fa; border-radius: 6px; padding: 10px 14px 10px 8px; }
-  .goal .bridge ol { margin: 0; padding-left: 26px; }
-  .goal .bridge li { margin: 0 0 6px; }
-  .goal .bridge li:last-child { margin-bottom: 0; }
-  table.exp { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  .goal p { margin: 0 0 6px; }
+  .goal .back { float: right; font-size: 14px; margin-left: 12px; }
+  .goal pre { margin: 6px 0; background: #f0eee8; border-radius: 6px; padding: 8px 12px; font: 15px/1.5 var(--mono); overflow-x: auto; }
+  table.exp { border-collapse: collapse; margin: 6px 0; font-size: 15px; }
   table.exp th, table.exp td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; vertical-align: top; }
-  table.exp th { background: var(--bg); font-weight: 600; }
-  table.exp code { white-space: pre-wrap; }
-  .result code, .goal code, .hint code, table.exp code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
-  pre.snippet { margin: 0 0 12px; background: #f0eee8; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: 13px/1.45 Consolas, "Cascadia Mono", "Courier New", monospace; white-space: pre; overflow: auto; max-height: 280px; }
+  table.exp th { background: var(--bg); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .grid > div { min-width: 0; }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
   .label { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
-  textarea.code { width: 100%; min-height: 220px; resize: vertical; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px; font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace; tab-size: 2; }
+  textarea.code { width: 100%; min-height: 200px; resize: vertical; background: var(--code-bg); color: var(--code-ink); border: 0; border-radius: 8px; padding: 14px; font: 15px/1.55 var(--mono); tab-size: 2; }
+  pre.given { margin: 0 0 12px; background: #f0eee8; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: 14px/1.45 var(--mono); white-space: pre; overflow: auto; max-height: 260px; }
   .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
   .buttons button { font: inherit; border-radius: 6px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
   .buttons button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
@@ -80,551 +99,790 @@
   .result.bad { background: var(--bad-bg); color: var(--bad); }
   .result ul { margin: 6px 0 0; padding-left: 20px; }
   .hint { background: var(--hint-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
-  .console { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; min-height: 220px; padding: 14px; font: 15px/1.55 Consolas, "Cascadia Mono", "Courier New", monospace; white-space: pre-wrap; word-break: break-word; }
-  .console .err { color: #ff8a80; }
-  .console .dim { color: #8b8fa3; }
-  .next { margin-top: 4px; }
-  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 16px; font-weight: 600; margin-bottom: 16px; }
+  .solution { background: #fff4d6; border: 1px solid #e3c27a; border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .solution h4 { margin: 0 0 6px; font-size: 16px; }
+  .solution p { margin: 0 0 8px; }
+  .solution pre { margin: 0 0 10px; background: #fff; border: 1px solid #e3c27a; border-radius: 6px; padding: 8px 12px; font: 14px/1.5 var(--mono); overflow-x: auto; }
+  .solution button, .stuck { font: inherit; border-radius: 6px; padding: 7px 14px; cursor: pointer; border: 1px solid #b7791f; background: #fff; color: #8a5a00; }
+  .stuck { margin: 0 0 12px; }
+  .console { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; min-height: 200px; padding: 14px; font: 15px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+  .seen { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-height: 200px; }
+  .seen .okline { color: var(--ok); font-weight: 600; margin: 0 0 8px; }
+  .seen .badline { color: var(--bad); font-weight: 600; margin: 0 0 6px; }
+  .seen code { white-space: pre-wrap; }
+  .seen .dim { color: var(--muted); margin: 0; }
+  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 14px 16px; font-weight: 600; margin-bottom: 16px; }
+  .finished button { font: inherit; margin-left: 8px; border-radius: 6px; padding: 4px 12px; border: 1px solid var(--ok); background: #fff; color: var(--ok); cursor: pointer; }
+
+  .live-status { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+  .live-status.err { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .q { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+  .q.ok { border-left-color: var(--ok); }
+  .q .ask { font-weight: 600; margin: 0 0 8px; }
+  .q .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .q input { flex: 1; min-width: 220px; font: 16px/1.4 var(--mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  .q .val { font: 15px/1.4 var(--mono); margin: 8px 0 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+  .q .val.ok { color: var(--ok); font-weight: 600; }
+  .q .val.err { color: var(--bad); }
+  .q details { margin-top: 6px; font-size: 15px; color: var(--muted); }
   footer.bottom { text-align: center; color: var(--muted); font-size: 13px; padding: 0 0 24px; }
   footer.bottom button { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
 </style>
 </head>
 <body>
 <header class="top">
-  <h1>Fetch 1 · JSON olvasása</h1>
+  <h1>Fetch 1 · Mi az a JSON?</h1>
   <a href="../">Kezdőlap</a>
   <a href="../api/">Az API</a>
-  <div class="progress" id="progress"></div>
+  <div class="tabs" id="tabs">
+    <button data-tab="learn">1. Magyarázat</button>
+    <button data-tab="try">2. Most te</button>
+    <button data-tab="live">3. Élesben</button>
+  </div>
 </header>
-<nav class="steps" id="steps"></nav>
+
 <main>
-  <p class="intro">Amit egy szerver visszaküld, az <b>szöveg</b>, JSON formában. Mielőtt <code>fetch</code>-csel lekérnéd, meg kell tudnod olvasni: tömb vagy objektum, hol van benne az, ami neked kell, és hogyan jutsz el odáig. Itt még nincs <code>fetch</code>. Az adat pontosan az, amit az osztály API-ja küld, csak be van másolva a kód elejére (az „Élesben” linken megnézheted az eredetit). Javítsd ki a sötét dobozban lévő kódot, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet. A csillagos feladat extra.</p>
-  <div id="finished"></div>
-  <section id="task"></section>
+  <section id="tab-learn">
+    <div class="slidebar">
+      <button id="prev">← Előző</button>
+      <button id="next">Következő →</button>
+      <button id="notes">Jegyzet (N)</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slide" id="slide"></div>
+  </section>
+
+  <section id="tab-try" hidden>
+    <p class="intro">Ugyanaz, mint a magyarázatban, csak most te írod. Minden feladatnál ott a link a diához, ha vissza akarsz nézni. Írd be a választ, és nyomd meg az <b>Ellenőrzés</b> gombot. Ha zöld, mehetsz tovább. Ha piros, kapsz egy tippet.</p>
+    <nav class="steps" id="steps"></nav>
+    <div id="tryFinished"></div>
+    <div id="task"></div>
+  </section>
+
+  <section id="tab-live" hidden>
+    <p class="intro">Most már a <b>valódi</b> adattal dolgozol: ez az oldal letöltötte az osztály API-jából a macskákat, a menzát és a kifogásokat. (Hogy hogyan, azt a következő leckében te írod meg.) Nyisd meg a linkeket egy új lapon, nézd meg az adatot, és minden kérdésre írj egy JavaScript-kifejezést, ami kiolvassa a választ. Ne a választ írd be, hanem az utat hozzá: például <code>cats[0].name</code>, nem <code>"Bajusz"</code>.</p>
+    <div class="live-status" id="liveStatus">Letöltés…</div>
+    <div id="liveFinished"></div>
+    <div id="questions"></div>
+  </section>
 </main>
-<footer class="bottom"><button id="resetAll">Minden feladat visszaállítása</button></footer>
+<footer class="bottom"><button id="resetAll">A 2. és 3. rész visszaállítása</button></footer>
 
 <script>
 "use strict";
 
-// ---------- Data: copies of the class API (api/*.json) ----------
-
 const API = "https://korbal.github.io/2026-13-F-public/api/";
-const DATA = {"excuse": {"id": 3, "excuse": "Nálam működött.", "category": "technika", "believability": 6, "teacherHeardIt": true}, "excuses": [{"id": 1, "excuse": "A laptopom frissített. Még most is frissít.", "category": "technika", "believability": 7, "teacherHeardIt": true}, {"id": 2, "excuse": "Megcsináltam, csak nem mentettem el.", "category": "technika", "believability": 4, "teacherHeardIt": true}, {"id": 3, "excuse": "Nálam működött.", "category": "technika", "believability": 6, "teacherHeardIt": true}, {"id": 4, "excuse": "A git push lefutott, csak nem tudom, hova.", "category": "technika", "believability": 6, "teacherHeardIt": false}, {"id": 5, "excuse": "Elmentettem, csak a Letöltések mappába, a többi 4000 fájl közé.", "category": "technika", "believability": 8, "teacherHeardIt": false}, {"id": 6, "excuse": "Papírra írtam meg, de a papír nem futtatható.", "category": "technika", "believability": 3, "teacherHeardIt": false}, {"id": 7, "excuse": "A kutyám megette. Nincs kutyám, ez engem is aggaszt.", "category": "család", "believability": 1, "teacherHeardIt": true}, {"id": 8, "excuse": "A tesómnak kellett a gép, mert holnap neki is határideje van. Neki sincs kész.", "category": "család", "believability": 6, "teacherHeardIt": false}, {"id": 9, "excuse": "Anya szerint aludnom kellett. Anyának mindig igaza van.", "category": "család", "believability": 7, "teacherHeardIt": true}, {"id": 10, "excuse": "Nem jött a busz, és vele együtt a motivációm sem.", "category": "közlekedés", "believability": 5, "teacherHeardIt": true}, {"id": 11, "excuse": "A vonat késett, így a tanulásra szánt idő is késik.", "category": "közlekedés", "believability": 4, "teacherHeardIt": false}, {"id": 12, "excuse": "Edzésem volt. Minden nap. Egész nap.", "category": "sport", "believability": 3, "teacherHeardIt": true}, {"id": 13, "excuse": "Azt hittem, a határidő csak egy javaslat.", "category": "egzisztenciális", "believability": 2, "teacherHeardIt": false}, {"id": 14, "excuse": "Megnyitottam a VS Code-ot, és ezzel elfogyott az aznapi energiám.", "category": "egzisztenciális", "believability": 9, "teacherHeardIt": false}, {"id": 15, "excuse": "Elfelejtettem, hogy emlékeznem kellene rá.", "category": "egzisztenciális", "believability": 6, "teacherHeardIt": false}, {"id": 16, "excuse": "Elkezdtem, de a console.log azt írta, hogy undefined, és ezt személyesnek vettem.", "category": "egzisztenciális", "believability": 8, "teacherHeardIt": false}], "canteen": {"week": 46, "school": "Széchenyi", "days": [{"day": "hétfő", "soup": "Paradicsomleves betűtésztával (a betűkből néha kijön, hogy SEGÍTSÉG)", "main": {"name": "Rántott sajt rizzsel", "vegetarian": true, "calories": 820}, "dessert": null, "queueMinutes": 12, "rating": 4.5}, {"day": "kedd", "soup": "Gulyásleves", "main": {"name": "Mákos tészta (a mák külön kapható, csak éppen nem kapható)", "vegetarian": true, "calories": 640}, "dessert": "alma", "queueMinutes": 4, "rating": 2.5}, {"day": "szerda", "soup": "Zöldborsóleves", "main": {"name": "Csirkepaprikás nokedlivel", "vegetarian": false, "calories": 760}, "dessert": "puding", "queueMinutes": 9, "rating": 4}, {"day": "csütörtök", "soup": "Krémleves, ismeretlen összetevőkből", "main": {"name": "Főzelék, feltéttel", "vegetarian": false, "calories": 510}, "dessert": null, "queueMinutes": 2, "rating": 1.5}, {"day": "péntek", "soup": "Nincs leves, mert péntek van", "main": {"name": "Pizza", "vegetarian": false, "calories": 950}, "dessert": "fánk", "queueMinutes": 25, "rating": 5}]}, "cats": [{"id": 1, "name": "Bajusz", "age": 7, "weightKg": 6.2, "sleepHoursPerDay": 16, "friendly": true, "hobbies": ["billentyűzeten alvás", "monitor eltakarása"]}, {"id": 2, "name": "Null", "age": 2, "weightKg": 3.4, "sleepHoursPerDay": 12, "friendly": false, "hobbies": ["poharak leverése az asztalról", "hajnali négykor futás"]}, {"id": 3, "name": "Undefined", "age": 4, "weightKg": 4.1, "sleepHoursPerDay": 14, "friendly": true, "hobbies": []}, {"id": 4, "name": "Szotyi", "age": 11, "weightKg": 7.8, "sleepHoursPerDay": 18, "friendly": true, "hobbies": ["dobozban ülés", "a doboz mellett ülés", "evés"]}, {"id": 5, "name": "Rendszergazda", "age": 9, "weightKg": 5.5, "sleepHoursPerDay": 15, "friendly": false, "hobbies": ["kábelek rágása", "mindenkit lenézni"]}, {"id": 6, "name": "Pötyi", "age": 1, "weightKg": 2.3, "sleepHoursPerDay": 13, "friendly": true, "hobbies": ["egérkurzor üldözése", "bekapcsolt laptopra fekvés", "nyávogás hívás közben"]}]};
-
-// Same shapes, other values: the check reruns the code with these, so typed-in answers fail.
-const ALT = {
-  excuse: { id: 9, excuse: "A macska ráült a billentyűzetre, és törölte.", category: "család", believability: 5, teacherHeardIt: false },
-  excuses: [
-    { id: 21, excuse: "Elfogyott a tinta a nyomtatóban.", category: "technika", believability: 4, teacherHeardIt: true },
-    { id: 22, excuse: "Rossz mappába dolgoztam egész este.", category: "technika", believability: 7, teacherHeardIt: false },
-    { id: 23, excuse: "Úgy éreztem, a feladat engem nem akar.", category: "egzisztenciális", believability: 2, teacherHeardIt: false },
-  ],
-  canteen: {
-    week: 47, school: "Széchenyi",
-    days: [
-      { day: "kedd", soup: "Húsleves", main: { name: "Rakott krumpli", vegetarian: false, calories: 700 }, dessert: "kakaós csiga", queueMinutes: 8, rating: 4 },
-      { day: "szerda", soup: "Gombaleves", main: { name: "Spagetti", vegetarian: true, calories: 610 }, dessert: null, queueMinutes: 3, rating: 3 },
-      { day: "csütörtök", soup: "Babgulyás", main: { name: "Hal rizzsel", vegetarian: false, calories: 540 }, dessert: "körte", queueMinutes: 6, rating: 2 },
-    ],
-  },
-  cats: [
-    { id: 1, name: "Morzsa", age: 3, weightKg: 4, sleepHoursPerDay: 14, friendly: true, hobbies: ["dobozban ülés"] },
-    { id: 2, name: "Cirmi", age: 5, weightKg: 5, sleepHoursPerDay: 15, friendly: false, hobbies: [] },
-    { id: 3, name: "Bug", age: 1, weightKg: 2, sleepHoursPerDay: 13, friendly: true, hobbies: ["kábelrágás", "fára mászás", "evés", "alvás"] },
-  ],
-};
-
-// What sits above the student's code: the server's answer as text, like a fetch response before .json().
-const VAR = { excuse: "excuseText", excuses: "excusesText", canteen: "canteenText", cats: "catsText" };
-const URL_OF = { excuse: "excuses/3.json", excuses: "excuses.json", canteen: "canteen.json", cats: "cats.json" };
-function prelude(key, alt) {
-  const obj = alt ? ALT[key] : DATA[key];
-  return "const " + VAR[key] + " = `" + JSON.stringify(obj, null, 2) + "`;";
-}
-
-// ---------- Helpers ----------
 
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
+// How the Console shows a value (strings without quotes, like the browser).
 function show(v) {
   if (typeof v === "string") return v;
   if (v === undefined) return "undefined";
   if (typeof v === "object" && v !== null) { try { return JSON.stringify(v); } catch (e) { return String(v); } }
   return String(v);
 }
+// Like show(), but strings in quotes: used where the type matters.
+function showTyped(v) {
+  if (typeof v === "string") return '"' + v + '"';
+  return show(v);
+}
+function typeName(v) {
+  if (v === null) return "null";
+  if (Array.isArray(v)) return "tömb";
+  return { string: "szöveg", number: "szám", boolean: "logikai", object: "objektum", undefined: "undefined" }[typeof v] || typeof v;
+}
 
-// Run the data + the student's code with a fake console. Returns { logs, error, code }.
-function runJs(code, key, alt) {
+// Run code with a fake console. Returns { logs, error }.
+function runCode(code, before) {
   const logs = [];
   const fake = { log: (...a) => logs.push(a.map(show).join(" ")) };
   fake.error = fake.warn = fake.info = fake.log;
   let error;
-  try { new Function("console", prelude(key, alt) + "\n" + code)(fake); }
+  try { new Function("console", (before || "") + "\n" + code)(fake); }
   catch (e) { error = e; }
-  return { logs, error, code };
+  return { logs, error };
+}
+function consoleHtml(run) {
+  let html = run.logs.map(esc).join("\n");
+  if (run.error) html += (html ? "\n" : "") + `<span class="err">Uncaught ${esc(run.error.name)}: ${esc(run.error.message)}</span>`;
+  return html || '<span class="dim">(üres: semmi nem jelent meg a Console-ban)</span>';
 }
 
-function sameLines(got, want) { return got.length === want.length && got.every((l, i) => l === want[i]); }
-function linesTable(got, want) {
-  const n = Math.max(got.length, want.length);
-  let rows = "";
-  for (let i = 0; i < n; i++) {
-    const g = got[i], w = want[i];
-    rows += `<tr><td><code>${esc(w ?? "")}</code></td><td><code>${g === undefined ? "(nincs)" : esc(g)}</code></td><td>${g === w ? "✓" : "✗"}</td></tr>`;
-  }
-  return `<table class="exp"><tr><th>Elvárt</th><th>Most</th><th></th></tr>${rows}</table>`;
-}
-function expTable(lines) {
-  return `<table class="exp"><tr><th>Elvárt kimenet</th></tr>${lines.map(l => `<tr><td><code>${esc(l)}</code></td></tr>`).join("")}</table>`;
-}
+// ======================================================================
+// 1. MAGYARÁZAT
+// Each slide: title, lead, html (body), run (optional runnable code), say (teacher notes).
+// ======================================================================
 
-// The standard check: right lines with the real data, and still right with other data.
-function standardCheck(t, run) {
-  const p = [];
-  const want = t.expected(DATA[t.data]);
-  if (run.error) p.push(`A kód hibára fut: <code>${esc(run.error.name + ": " + run.error.message)}</code>`);
-  if (!sameLines(run.logs, want)) p.push("A Console nem pontosan az elvárt sorokat mutatja:" + linesTable(run.logs, want));
-  if (p.length === 0) {
-    const other = runJs(run.code, t.data, true);
-    if (other.error || !sameLines(other.logs, t.expected(ALT[t.data])))
-      p.push("Más adattal (például ha holnap mást küld a szerver) nem működne. Ne írd be kézzel a szöveget vagy a számot: vedd ki az adatból.");
-  }
-  return p;
-}
+const SLIDES = [
+  {
+    title: "Két gép beszélget",
+    lead: "Az adat nem a te gépeden van, hanem egy szerveren.",
+    html: `<div class="flow">
+  <div class="box"><b>Szerver</b><small>itt van az adat (macskák, menza…)</small></div>
+  <div class="wire">csak szöveg megy át →</div>
+  <div class="box"><b>Böngésző</b><small>a te oldalad, a te JavaScripted</small></div>
+</div>
+<p>Eddig az adat ott volt a <code>script.js</code>-ben, egy tömbben. Mostantól egy másik gépről jön.</p>
+<p>A két gép között a hálózaton csak <b>szöveg</b> tud utazni. Egy JavaScript-tömböt nem lehet átküldeni, csak a leírását, betűkkel.</p>
+<div class="rule">Ennek a szövegnek a formája a <b>JSON</b> (JavaScript Object Notation): egy szabály arra, hogyan írjunk le adatot szövegként.</div>`,
+    say: "Kérdezd meg: honnan jön a menza adata a menza honlapján? Ki írja be? Cél: az adat egy másik gépen van, és szövegként érkezik. Ne menj bele a hálózat részleteibe.",
+  },
+  {
+    title: "Amit már ismersz: az objektum",
+    lead: "A Test 03 óta ilyeneket írtok. Ez JavaScript.",
+    html: ``,
+    run: `const cat = {
+  name: "Bajusz",
+  age: 7,
+  friendly: true
+};
 
-// ---------- Tasks ----------
-// Each task: id, title, tag, data (which dataset), paper, now, bridge, learn, start, hint, solution, why, expected(data) -> lines, extra (optional).
+console.log(cat.name);
+console.log(cat.age + 1);`,
+    say: "Futtasd. Kérdezd meg: mi a kulcs, mi az érték? (name a kulcs, \"Bajusz\" az érték.) Mit ír ki a második sor és miért 8? Ez ismétlés, gyorsan menjen.",
+  },
+  {
+    title: "Ugyanez JSON-ban",
+    lead: "Majdnem ugyanaz. A különbség a kiemelt rész.",
+    html: `<div class="pair">
+  <div><h3>JavaScript (a kódodban)</h3><pre class="show"><mark>const cat = </mark>{
+  <mark>name</mark>: "Bajusz",
+  <mark>age</mark>: 7,
+  <mark>friendly</mark>: true
+}<mark>;</mark></pre></div>
+  <div><h3>JSON (ezt küldi a szerver)</h3><pre class="show">{
+  <mark>"name"</mark>: "Bajusz",
+  <mark>"age"</mark>: 7,
+  <mark>"friendly"</mark>: true
+}</pre></div>
+</div>
+<ol>
+  <li>A JSON-ban <b>minden kulcs idézőjelben van</b>: <code>"name"</code>, nem <code>name</code>.</li>
+  <li>Nincs <code>const cat =</code> és nincs <code>;</code>. A JSON nem kód, hanem csak maga az adat.</li>
+</ol>`,
+    say: "Mutasd meg a két oldalt sorról sorra. Kérdezd meg: mi maradt ugyanaz? (Az értékek: \"Bajusz\", 7, true.) Miért nincs változónév? (Mert a szerver nem tudja, te minek fogod hívni.)",
+  },
+  {
+    title: "A szerver szöveget küld",
+    lead: "Ami megérkezik, az még csak szöveg. Előbb át kell alakítani.",
+    html: `<p>A <code>typeof</code> megmondja, milyen típusú egy érték. Nézd meg, mi a különbség a <code>JSON.parse</code> előtt és után:</p>`,
+    run: `const text = '{"name": "Bajusz", "age": 7}';
+console.log(typeof text);
+console.log(text.name);
 
-const TASKS = [
+const cat = JSON.parse(text);
+console.log(typeof cat);
+console.log(cat.name);`,
+    html2: `<div class="rule"><code>JSON.parse(szöveg)</code> → objektum vagy tömb. Csak utána működik a <code>.name</code> és a <code>[0]</code>.<br>A következő leckében a <code>fetch</code>-nél ezt a <code>response.json()</code> csinálja meg helyetted.</div>`,
+    say: "Futtasd. Első két sor: string és undefined. Kérdezd meg: miért undefined? (A szövegnek nincs name-je, a szöveg csak betűk.) Utána: object és Bajusz. Ez a legfontosabb dia: a JSON szöveg, a JSON.parse csinál belőle adatot.",
+  },
   {
-    id: "parse",
-    title: "1. A szerver szöveget küld",
-    tag: "JSON.parse",
-    data: "excuse",
-    paper: `The variable <code>excuseText</code> holds what the server sent for <code>excuses/3.json</code>. Log the text of the excuse to the Console.`,
-    now: `A Console-ban <code>undefined</code> jelenik meg.`,
-    bridge: `<ol>
-<li>Nézd meg a bal oldali adatot: az egész két <code>\`</code> jel (backtick) között van. Ez egy <b>szöveg</b> (string). A <code>{</code>, az <code>"excuse"</code>, minden benne csak betű.</li>
-<li>Az <code>excuseText.excuse</code> azt kérdezi: van-e ennek a szövegnek <code>excuse</code> nevű része? Egy szövegnek van hossza (<code>length</code>), de <code>excuse</code>-a nincs. Ezért <code>undefined</code>.</li>
-<li>Ahhoz, hogy a <code>.excuse</code> működjön, a szövegből előbb JavaScript-objektumot kell csinálni. Ezt csinálja a <code>JSON.parse</code>.</li>
-</ol>`,
-    learn: `<p>A <b>JSON</b> egy szöveg, ami úgy néz ki, mint egy JavaScript-objektum vagy -tömb. A szerverek így küldik az adatot, mert a hálózaton csak szöveg utazik.</p><p><code>JSON.parse(szöveg)</code> a szövegből valódi objektumot (vagy tömböt) csinál. Utána már működik a pont.</p><pre>const text = '{"name": "Kiss Anna", "class": "13F"}';
-console.log(text.name);        // undefined: ez még csak szöveg
+    title: "A JSON szigorú",
+    lead: "Egy JavaScript-objektumban sok minden belefér. JSON-ban nem.",
+    html: `<table>
+  <tr><th>JavaScriptben szabad</th><th>JSON-ban hiba</th><th>JSON-ban így kell</th></tr>
+  <tr><td><code>name: "Bajusz"</code></td><td>kulcs idézőjel nélkül</td><td><code>"name": "Bajusz"</code></td></tr>
+  <tr><td><code>'Bajusz'</code></td><td>szimpla idézőjel</td><td><code>"Bajusz"</code></td></tr>
+  <tr><td><code>age: 7,</code> az utolsó után</td><td>vessző az utolsó elem után</td><td><code>"age": 7</code></td></tr>
+  <tr><td><code>// megjegyzés</code></td><td>megjegyzés</td><td>nem lehet</td></tr>
+</table>
+<p>A JavaScript a <code>JSON.parse</code>-szal olvas JSON-t. Ha a szöveg nem szabályos, hibát dob. Próbáld ki:</p>`,
+    run: `console.log(JSON.parse('{"name": "Bajusz"}'));
+console.log(JSON.parse("{'name': 'Bajusz'}"));`,
+    say: "Futtasd: az első sor jó, a második piros SyntaxError. Kérdezd meg: mi a különbség a két szöveg között? (szimpla idézőjel). Ezután írd át a második sort úgy, hogy vessző legyen a végén: {\"name\": \"Bajusz\",} – ez is hiba. Emlékeztess: a JSON.parse az előző diáról való, itt a 'szigorú ellenőr' szerepében látjuk.",
+  },
+  {
+    title: "Milyen értékek lehetnek benne",
+    lead: "Hatféle érték van. Az idézőjel számít.",
+    html: `<table>
+  <tr><th>JSON-ban</th><th>Mi ez</th></tr>
+  <tr><td><code>"Bajusz"</code></td><td>szöveg (mindig dupla idézőjelben)</td></tr>
+  <tr><td><code>7</code>, <code>4.5</code></td><td>szám (idézőjel nélkül)</td></tr>
+  <tr><td><code>true</code>, <code>false</code></td><td>logikai érték</td></tr>
+  <tr><td><code>null</code></td><td>„nincs érték” (például nincs desszert)</td></tr>
+  <tr><td><code>{ … }</code></td><td>objektum</td></tr>
+  <tr><td><code>[ … ]</code></td><td>tömb</td></tr>
+</table>
+<p>A <code>7</code> szám, a <code>"7"</code> szöveg. Nézd meg, mi lesz belőle, ha hozzáadunk egyet:</p>`,
+    run: `const data = JSON.parse('{"a": 7, "b": "7"}');
 
-const student = JSON.parse(text);
-console.log(student.name);     // Kiss Anna</pre><p>Később a <code>fetch</code>-nél ugyanezt a <code>response.json()</code> csinálja meg helyetted.</p>`,
-    start: `console.log(excuseText.excuse);`,
-    hint: `Alakítsd át a szöveget <code>JSON.parse</code>-szal, az eredményt tedd egy változóba, és annak kérd el az <code>excuse</code>-át.`,
-    solution: `const excuse = JSON.parse(excuseText);
-console.log(excuse.excuse);`,
-    why: `Előbb <code>JSON.parse</code>, és csak utána a pont: az objektumnak már van <code>excuse</code>-a.`,
-    expected: d => [d.excuse],
+console.log(data.a + 1);
+console.log(data.b + 1);`,
+    say: "Mielőtt futtatod, kérdezd meg: mit fog kiírni? Aztán futtasd: 8 és 71. A szövegnél a + összefűz. Ez később a fetch-nél is visszajön (ár szövegként érkezik).",
   },
   {
-    id: "array",
-    title: "2. Tömb vagy objektum?",
-    tag: "[ ] vagy { }",
-    data: "cats",
-    paper: `The variable <code>catsText</code> holds what the server sent for <code>cats.json</code>. Log the name of the <b>first</b> cat, then the name of the <b>last</b> cat. The second line must still be right if cats are added or removed.`,
-    now: `Két <code>undefined</code> jelenik meg.`,
-    bridge: `<ol>
-<li>Nézd meg az adat <b>első karakterét</b>: <code>[</code>. Ez egy tömb. A <code>JSON.parse</code> után a <code>cats</code> tehát egy tömb, benne hat macskával.</li>
-<li>A <code>cats.name</code> a tömb nevét kérdezi. A tömbnek nincs neve, csak az elemeinek. Ezért <code>undefined</code>.</li>
-<li>Az első macska a tömb 0. eleme: <code>cats[0]</code>. Neki már van <code>name</code>-je.</li>
-<li>Az utolsó macska indexe nem 6. Hat elemnél az indexek 0, 1, 2, 3, 4, 5, tehát az utolsó a hossz mínusz egy. Ha holnap hét macska jön, akkor 6. Ezért ne írj be fix számot.</li>
-</ol>`,
-    learn: `<p>JSON-ban mindig az <b>első karakter</b> mondja meg, mit kaptál:</p><table class="exp"><tr><th>Első karakter</th><th>Mi ez</th><th>Hogyan érsz el egy részét</th></tr><tr><td><code>[</code></td><td>tömb</td><td>szögletes zárójel és index: <code>tomb[0]</code></td></tr><tr><td><code>{</code></td><td>objektum</td><td>pont és név: <code>obj.name</code></td></tr></table><pre>const songs = JSON.parse('[{"title": "Elso"}, {"title": "Masodik"}, {"title": "Harmadik"}]');
-console.log(songs.title);                    // undefined: a tömbnek nincs title-je
-console.log(songs[1].title);                 // Masodik
-console.log(songs[songs.length - 1].title);  // Harmadik, akárhány dal van</pre>`,
-    start: `const cats = JSON.parse(catsText);
-console.log(cats.name);
-console.log(cats.name);`,
-    hint: `Az első macska <code>cats[0]</code>. Az utolsó indexe <code>cats.length - 1</code>.`,
-    solution: `const cats = JSON.parse(catsText);
-console.log(cats[0].name);
-console.log(cats[cats.length - 1].name);`,
-    why: `A tömb elemeit indexszel éred el, és csak az elemnek van <code>name</code>-je. Az utolsó index <code>cats.length - 1</code>.`,
-    expected: d => [d[0].name, d[d.length - 1].name],
-  },
-  {
-    id: "nested",
-    title: "3. Objektum, benne egy tömb",
-    tag: "Cannot read properties of undefined",
-    data: "canteen",
-    paper: `The variable <code>canteenText</code> holds what the server sent for <code>canteen.json</code>. Log the name of the first day, then how many days there are in the menu.`,
-    now: `Piros hiba: <code>Uncaught TypeError: Cannot read properties of undefined (reading 'day')</code>`,
-    bridge: `<ol>
-<li>Az adat első karaktere <code>{</code>: a <code>canteen</code> egy <b>objektum</b>, nem tömb. Három része van: <code>week</code>, <code>school</code> és <code>days</code>.</li>
-<li>A <code>canteen[0]</code> az objektum 0. elemét kéri. Ilyen nincs, ezért ez <code>undefined</code>.</li>
-<li>A <code>canteen[0].day</code> tehát <code>undefined.day</code>. Az <code>undefined</code>-tól nem lehet semmit kérni, és ez a piros hiba. Olvasd el: <i>reading 'day'</i> = a <code>.day</code>-nél állt meg a program, mert ami <b>előtte</b> van, az <code>undefined</code>.</li>
-<li>A napok a <code>days</code> tömbben vannak: <code>canteen.days</code>. Az első nap <code>canteen.days[0]</code>.</li>
-<li>A második sor is rossz: az objektumnak nincs <code>length</code>-je, csak a tömbnek. Ezt most nem látod, mert az első sor hibájánál a program megáll.</li>
-</ol>`,
-    learn: `<p>Egy útvonalat (<code>a.b[0].c</code>) balról jobbra olvass, és minden lépésnél kérdezd meg: <b>ez most mi?</b></p><table class="exp"><tr><th>Kifejezés</th><th>Mi ez</th></tr><tr><td><code>canteen</code></td><td>objektum (<code>{</code>)</td></tr><tr><td><code>canteen.days</code></td><td>tömb (<code>[</code>), 5 elemmel</td></tr><tr><td><code>canteen.days[4]</code></td><td>objektum: a péntek</td></tr><tr><td><code>canteen.days[4].soup</code></td><td>szöveg: <code>"Nincs leves, mert péntek van"</code></td></tr></table><p>A hibaüzenet szabálya: <code>Cannot read properties of undefined (reading 'X')</code> → a <code>.X</code> <b>előtti</b> rész <code>undefined</code>. Ott keresd a hibát, ne a <code>.X</code>-nél.</p>`,
-    start: `const canteen = JSON.parse(canteenText);
-console.log(canteen[0].day);
-console.log(canteen.length);`,
-    hint: `A napok a <code>canteen.days</code> tömbben vannak. Az első nap neve és a napok száma is innen jön.`,
-    solution: `const canteen = JSON.parse(canteenText);
-console.log(canteen.days[0].day);
-console.log(canteen.days.length);`,
-    why: `A <code>canteen</code> objektum, a tömb a <code>days</code>-ben van. Az index és a <code>length</code> is a <code>canteen.days</code>-re vonatkozik.`,
-    expected: d => [d.days[0].day, String(d.days.length)],
-  },
-  {
-    id: "deeper",
-    title: "4. [object Object]",
-    tag: "Egy szinttel mélyebbre",
-    data: "canteen",
-    paper: `Log the first day's main dish and its calories in this format:${expTable(["hétfő: Rántott sajt rizzsel (820 kcal)"])}`,
-    now: `A Console-ban ez áll: <code>hétfő: [object Object] (undefined kcal)</code>`,
-    bridge: `<ol>
-<li>A <code>firstDay</code> a <code>canteen.days[0]</code>, a hétfő objektuma. A <code>firstDay.day</code> jó: <code>"hétfő"</code>.</li>
-<li>Nézd meg az adatban a hétfőt: <code>"main": { "name": ..., "vegetarian": ..., "calories": ... }</code>. A <code>main</code> után <code>{</code> jön, tehát a <code>main</code> maga is egy <b>objektum</b>.</li>
-<li>Ha egy egész objektumot adsz egy szöveghez <code>+</code>-szal, a JavaScript nem tudja, melyik részét írja ki, ezért ezt írja: <code>[object Object]</code>.</li>
-<li>A <code>firstDay.calories</code> a hétfő objektumban keresi a <code>calories</code>-t. Ott nincs, mert a <code>main</code>-en belül van. Ezért <code>undefined</code>.</li>
-<li>Mindkét helyen egy szinttel mélyebbre kell menni.</li>
-</ol>`,
-    learn: `<p>Két jel, ami ugyanazt jelenti, csak két irányból:</p><table class="exp"><tr><th>Ezt látod</th><th>Ezt jelenti</th></tr><tr><td><code>[object Object]</code></td><td>egy egész objektumot raktál a szövegbe. Menj tovább egy ponttal.</td></tr><tr><td><code>undefined</code> egy érték helyén</td><td>rossz szinten keresed: a mező egy másik objektumon belül van.</td></tr></table><pre>const order = { id: 7, customer: { name: "Kiss Anna", city: "Győr" } };
-console.log("Vevő: " + order.customer);       // Vevő: [object Object]
-console.log("Város: " + order.city);          // Város: undefined
-console.log("Vevő: " + order.customer.name);  // Vevő: Kiss Anna</pre>`,
-    start: `const canteen = JSON.parse(canteenText);
-const firstDay = canteen.days[0];
-console.log(firstDay.day + ": " + firstDay.main + " (" + firstDay.calories + " kcal)");`,
-    hint: `A főétel neve <code>firstDay.main.name</code>. A kalória is a <code>main</code>-en belül van.`,
-    solution: `const canteen = JSON.parse(canteenText);
-const firstDay = canteen.days[0];
-console.log(firstDay.day + ": " + firstDay.main.name + " (" + firstDay.main.calories + " kcal)");`,
-    why: `A <code>main</code> egy objektum: a neve <code>main.name</code>, a kalóriája <code>main.calories</code>.`,
-    expected: d => [`${d.days[0].day}: ${d.days[0].main.name} (${d.days[0].main.calories} kcal)`],
-  },
-  {
-    id: "loop",
-    title: "5. Végig a tömbön",
-    tag: "tomb[i].mezo",
-    data: "excuses",
-    paper: `The variable <code>excusesText</code> holds what the server sent for <code>excuses.json</code>. Log every excuse in the format <code>&lt;id&gt;. &lt;excuse&gt;</code>, one per line. The first lines:${expTable(DATA.excuses.slice(0, 3).map(e => e.id + ". " + e.excuse))}It must work for any number of excuses.`,
-    now: `Tizenhatszor jelenik meg: <code>undefined. undefined</code>`,
-    bridge: `<ol>
-<li>A ciklus jó: az <code>i</code> 0-tól 15-ig megy, ez 16 kör, ahány kifogás van.</li>
-<li>A ciklusban viszont az <code>excuses</code>-t kérdezed, vagyis <b>az egész tömböt</b>. A tömbnek nincs <code>id</code>-je és <code>excuse</code>-a, ezért minden körben <code>undefined. undefined</code>.</li>
-<li>Az <code>i</code> sehol nem szerepel a ciklus belsejében. Ez a jel: a ciklus fut, de nem használja, hogy éppen hányadik elemnél tart.</li>
-<li>Az aktuális kifogás az <code>excuses[i]</code>:<table class="exp"><tr><th>Kör</th><th><code>i</code></th><th><code>excuses[i].id</code></th><th><code>excuses[i].excuse</code></th></tr><tr><td>1.</td><td>0</td><td>1</td><td>A laptopom frissített…</td></tr><tr><td>2.</td><td>1</td><td>2</td><td>Megcsináltam, csak nem…</td></tr><tr><td>…</td><td>…</td><td>…</td><td>…</td></tr><tr><td>16.</td><td>15</td><td>16</td><td>Elkezdtem, de a console.log…</td></tr></table></li>
-</ol>`,
-    learn: `<p>Egy tömbön végigmenő ciklusban az aktuális elem <b>mindig</b> <code>tomb[i]</code>, a mezője <code>tomb[i].mezo</code>. A <code>tomb.mezo</code> szinte mindig hiba.</p><pre>const songs = JSON.parse('[{"title": "Elso", "year": 2021}, {"title": "Masodik", "year": 2024}]');
-for (let i = 0; i < songs.length; i++) {
-  console.log(songs[i].year + " - " + songs[i].title);
-}
-// 2021 - Elso
-// 2024 - Masodik</pre>`,
-    start: `const excuses = JSON.parse(excusesText);
-for (let i = 0; i < excuses.length; i++) {
-  console.log(excuses.id + ". " + excuses.excuse);
-}`,
-    hint: `Az aktuális kifogás <code>excuses[i]</code>, a száma <code>excuses[i].id</code>.`,
-    solution: `const excuses = JSON.parse(excusesText);
-for (let i = 0; i < excuses.length; i++) {
-  console.log(excuses[i].id + ". " + excuses[i].excuse);
-}`,
-    why: `Az <code>excuses</code> helyett <code>excuses[i]</code>: így minden körben az aktuális kifogás mezőit írja ki.`,
-    expected: d => d.map(e => e.id + ". " + e.excuse),
-  },
-  {
-    id: "null",
-    title: "6. A null nem szöveg",
-    tag: "null",
-    data: "canteen",
-    paper: `For each day log <code>&lt;day&gt;: &lt;dessert&gt;</code>. If a day has no dessert (its value is <code>null</code>), log <code>&lt;day&gt;: nincs desszert</code> instead.`,
-    now: `A Console-ban ez is megjelenik: <code>hétfő: null</code> és <code>csütörtök: null</code>`,
-    bridge: `<ol>
-<li>Nézd meg az adatot: <code>"dessert": null</code>, idézőjel nélkül. Az <code>"alma"</code> idézőjelben van, az szöveg. A <code>null</code> nincs idézőjelben: ez nem szöveg, hanem azt jelenti, hogy <b>nincs érték</b>.</li>
-<li>Hétfőn a <code>day.dessert</code> értéke <code>null</code>. Az <code>if</code> ezt kérdezi: <code>null === "null"</code>? Az egyik a „nincs érték”, a másik egy négybetűs szöveg. Nem egyformák, ezért ez <b>hamis</b>.</li>
-<li>Így az <code>else</code> ág fut, és a <code>+</code> a <code>null</code>-t szövegként írja ki: <code>hétfő: null</code>.</li>
-</ol>`,
-    learn: `<p>JSON-ban az idézőjel számít:</p><table class="exp"><tr><th>JSON-ban</th><th>JavaScriptben</th></tr><tr><td><code>"12"</code></td><td>szöveg</td></tr><tr><td><code>12</code></td><td>szám</td></tr><tr><td><code>true</code>, <code>false</code></td><td>logikai érték</td></tr><tr><td><code>null</code></td><td>„nincs érték”</td></tr><tr><td><code>"null"</code></td><td>egy négybetűs szöveg</td></tr></table><pre>const user = JSON.parse('{"name": "Kiss Anna", "phone": null}');
-console.log(user.phone === null);     // true
-console.log(user.phone === "null");   // false</pre>`,
-    start: `const canteen = JSON.parse(canteenText);
-for (let i = 0; i < canteen.days.length; i++) {
-  const day = canteen.days[i];
-  if (day.dessert === "null") {
-    console.log(day.day + ": nincs desszert");
-  } else {
-    console.log(day.day + ": " + day.dessert);
-  }
-}`,
-    hint: `Az <code>if</code>-ben a <code>null</code> értékkel hasonlíts, idézőjel nélkül.`,
-    solution: `const canteen = JSON.parse(canteenText);
-for (let i = 0; i < canteen.days.length; i++) {
-  const day = canteen.days[i];
-  if (day.dessert === null) {
-    console.log(day.day + ": nincs desszert");
-  } else {
-    console.log(day.day + ": " + day.dessert);
-  }
-}`,
-    why: `<code>"null"</code> helyett <code>null</code>: az adatban sincs idézőjel, mert az nem szöveg.`,
-    expected: d => d.days.map(x => x.day + ": " + (x.dessert === null ? "nincs desszert" : x.dessert)),
-  },
-  {
-    id: "inner",
-    title: "7. Tömb a tömbben",
-    tag: "cats[i].hobbies",
-    data: "cats",
-    paper: `For each cat log <code>&lt;name&gt;: &lt;number of hobbies&gt; hobbi</code>. The first line:${expTable([DATA.cats[0].name + ": " + DATA.cats[0].hobbies.length + " hobbi"])}`,
-    now: `Piros hiba: <code>Uncaught TypeError: Cannot read properties of undefined (reading 'length')</code>`,
-    bridge: `<ol>
-<li>A hibaüzenet: <i>reading 'length'</i>. A szabály: a <code>.length</code> <b>előtti</b> rész <code>undefined</code>. Az a <code>cats.hobbies</code>.</li>
-<li>A <code>cats</code> az egész tömb. A tömbnek nincsenek hobbijai, csak az egyes macskáknak.</li>
-<li>Ugyanebben a sorban a nevet jól kéred: <code>cats[i].name</code>. A hobbiknál ugyanígy kell: <code>cats[i].hobbies</code>.</li>
-<li>A <code>cats[i].hobbies</code> maga is egy tömb (az adatban <code>[</code>-rel kezdődik), ezért van <code>length</code>-je. Az <code>Undefined</code> nevű macskánál ez üres tömb: <code>[]</code>, a hossza 0.</li>
-</ol>`,
-    learn: `<p>Olvasd végig az útvonalat, lépésenként:</p><table class="exp"><tr><th>Kifejezés</th><th>Mi ez</th></tr><tr><td><code>cats</code></td><td>tömb, 6 macska</td></tr><tr><td><code>cats[1]</code></td><td>objektum: Null, a macska</td></tr><tr><td><code>cats[1].hobbies</code></td><td>tömb, 2 hobbi</td></tr><tr><td><code>cats[1].hobbies.length</code></td><td>szám: 2</td></tr><tr><td><code>cats[1].hobbies[0]</code></td><td>szöveg: <code>"poharak leverése az asztalról"</code></td></tr></table>`,
-    start: `const cats = JSON.parse(catsText);
+    title: "Tömb JSON-ban",
+    lead: "Sok macska = egy tömb, benne objektumok. Pont mint eddig.",
+    html: `<pre class="show"><mark>[</mark>
+  { "name": "Bajusz", "age": 7 },
+  { "name": "Null", "age": 2 },
+  { "name": "Szotyi", "age": 11 }
+<mark>]</mark></pre>
+<p>Az <b>első karakter</b> megmondja, mit kaptál: <code>[</code> → tömb, <code>{</code> → objektum.</p>`,
+    run: `const catsText = \`[
+  { "name": "Bajusz", "age": 7 },
+  { "name": "Null", "age": 2 },
+  { "name": "Szotyi", "age": 11 }
+]\`;
+const cats = JSON.parse(catsText);
+
+console.log(cats.length);
+console.log(cats[1].name);
+
 for (let i = 0; i < cats.length; i++) {
-  console.log(cats[i].name + ": " + cats.hobbies.length + " hobbi");
+  console.log(cats[i].name + " (" + cats[i].age + ")");
 }`,
-    hint: `Ugyanúgy, mint a névnél: a hobbik az aktuális macskánál vannak.`,
-    solution: `const cats = JSON.parse(catsText);
-for (let i = 0; i < cats.length; i++) {
-  console.log(cats[i].name + ": " + cats[i].hobbies.length + " hobbi");
-}`,
-    why: `<code>cats.hobbies</code> helyett <code>cats[i].hobbies</code>: minden macskának saját hobbitömbje van.`,
-    expected: d => d.map(c => c.name + ": " + c.hobbies.length + " hobbi"),
+    say: "Itt először van a szöveg ` (backtick) jelek között: így több soros lehet, olvashatóbb. Ugyanúgy szöveg, mint az aposztrófos. A JSON.parse után ugyanaz a tömb, amivel Test 03 óta dolgoznak: length, [i], ciklus. Kérdezd meg előre: mit ír ki a cats[1].name? (Null, mert 0-tól számolunk.)",
   },
   {
-    id: "min",
-    title: "★ Hol a legrövidebb a sor?",
-    tag: "Extra",
-    extra: true,
-    data: "canteen",
-    paper: `Find the day with the shortest queue (<code>queueMinutes</code>) and log it in this format:${expTable(["csütörtök (2 perc)"])}Find it with a loop: it must still be right if the menu changes.`,
-    now: `Még semmi: a kódban csak a lépések vannak leírva megjegyzésként.`,
-    bridge: `<ol>
-<li>Kell egy változó, ami a ciklus alatt az eddigi <b>legjobb napot</b> tárolja. Kezdetnek legyen az első nap.</li>
-<li>Utána nézd végig a többi napot. Minden napnál egy kérdés: rövidebb itt a sor, mint az eddigi legjobbnál? Ha igen, mostantól ez a legjobb.</li>
-<li>Így megy végig a mostani adaton:<table class="exp"><tr><th>Nap</th><th>sor</th><th>rövidebb, mint a legjobb?</th><th>legjobb utána</th></tr><tr><td>hétfő</td><td>12</td><td>(kezdő érték)</td><td>hétfő, 12</td></tr><tr><td>kedd</td><td>4</td><td>igen</td><td>kedd, 4</td></tr><tr><td>szerda</td><td>9</td><td>nem</td><td>kedd, 4</td></tr><tr><td>csütörtök</td><td>2</td><td>igen</td><td>csütörtök, 2</td></tr><tr><td>péntek</td><td>25</td><td>nem</td><td>csütörtök, 2</td></tr></table></li>
-<li>Kiírni csak a ciklus <b>után</b> szabad, amikor már minden napot megnézett.</li>
-</ol>`,
-    learn: `<p>Ugyanez a minta a legnagyobbra, csak a <code>&lt;</code> helyett <code>&gt;</code>. Például a legnehezebb macska:</p><pre>const cats = JSON.parse(catsText);
-let heaviest = cats[0];
-for (let i = 1; i < cats.length; i++) {
-  if (cats[i].weightKg > heaviest.weightKg) {
-    heaviest = cats[i];
-  }
-}
-console.log(heaviest.name);   // Szotyi</pre>`,
-    start: `const canteen = JSON.parse(canteenText);
-// 1. Tedd egy változóba az első napot: ez az eddigi legjobb.
-// 2. Menj végig a napokon. Ahol rövidebb a sor, az legyen az új legjobb.
-// 3. A ciklus után írd ki a legjobb napot.
-`,
-    hint: `<code>let best = canteen.days[0];</code>, aztán a ciklusban: ha <code>canteen.days[i].queueMinutes &lt; best.queueMinutes</code>, akkor <code>best = canteen.days[i];</code>`,
-    solution: `const canteen = JSON.parse(canteenText);
-let best = canteen.days[0];
-for (let i = 1; i < canteen.days.length; i++) {
-  if (canteen.days[i].queueMinutes < best.queueMinutes) {
-    best = canteen.days[i];
-  }
-}
-console.log(best.day + " (" + best.queueMinutes + " perc)");`,
-    why: `A <code>best</code> mindig az eddigi legrövidebb sorú nap. A ciklus után az lesz benne, amelyik az egész héten a legrövidebb.`,
-    expected: d => {
-      const b = d.days.reduce((a, x) => x.queueMinutes < a.queueMinutes ? x : a);
-      return [b.day + " (" + b.queueMinutes + " perc)"];
-    },
+    title: "Egymásba ágyazva",
+    lead: "Egy objektumban lehet tömb, a tömbben objektum, abban megint objektum.",
+    html: `<pre class="show">{
+  "week": 46,
+  "days": <mark>[</mark>
+    { "day": "hétfő", "main": <mark>{</mark> "name": "Rántott sajt", "calories": 820 <mark>}</mark> },
+    { "day": "kedd", "main": <mark>{</mark> "name": "Mákos tészta", "calories": 640 <mark>}</mark> }
+  <mark>]</mark>
+}</pre>
+<p>Úgy jutsz el egy értékig, hogy balról jobbra lépsz, és minden lépésnél megkérdezed: <b>ez most mi?</b></p>
+<table>
+  <tr><th>Kifejezés</th><th>Mi ez</th></tr>
+  <tr><td><code>menu</code></td><td>objektum</td></tr>
+  <tr><td><code>menu.days</code></td><td>tömb (2 nap)</td></tr>
+  <tr><td><code>menu.days[1]</code></td><td>objektum: a kedd</td></tr>
+  <tr><td><code>menu.days[1].main</code></td><td>objektum: a keddi főétel</td></tr>
+  <tr><td><code>menu.days[1].main.name</code></td><td>szöveg: <code>"Mákos tészta"</code></td></tr>
+</table>`,
+    run: `const menuText = \`{
+  "week": 46,
+  "days": [
+    { "day": "hétfő", "main": { "name": "Rántott sajt", "calories": 820 } },
+    { "day": "kedd", "main": { "name": "Mákos tészta", "calories": 640 } }
+  ]
+}\`;
+const menu = JSON.parse(menuText);
+
+console.log(menu.week);
+console.log(menu.days[1].main.name);
+console.log(menu.days[0].main);`,
+    say: "Menj végig a táblázaton sorról sorra, minden sornál kérdezd meg: ez most mi? Futtasd. Az utolsó sor egy egész objektumot ír ki: kérdezd meg, hogyan kapnánk meg csak a kalóriát (menu.days[0].main.calories). Írd be élőben.",
+  },
+  {
+    title: "Nézd meg élesben",
+    lead: "Az osztály API-ja pontosan ilyen JSON-t küld.",
+    html: `<p class="big-link"><a href="${API}cats.json" target="_blank" rel="noopener">${API}cats.json</a></p>
+<ul>
+  <li>Nyisd meg egy új lapon. Ez az, amit a szerver küld: egy szöveg.</li>
+  <li>Chrome-ban pipáld be fent a <b>Szép formázás</b> (Pretty print) jelölőt, akkor könnyebb olvasni.</li>
+  <li>Mi az első karakter? Tömb vagy objektum?</li>
+  <li>Keress benne egy <code>null</code>-t a <a href="${API}canteen.json" target="_blank" rel="noopener">canteen.json</a>-ban.</li>
+</ul>
+<p>Az összes végpont: <a href="${API}" target="_blank" rel="noopener">az API leírása</a>.</p>`,
+    say: "Nyisd meg kivetítve. Kérdezd meg: mi az első karakter? ([, tehát tömb.) Melyik macskának nincs hobbija? (Undefined, üres tömb.) A menzában hol van null? (desszert). Ezután jöhet a 2. rész: Most te.",
+  },
+  {
+    title: "Összefoglaló",
+    lead: "Ezt kell tudni a következő leckéhez.",
+    html: `<ol>
+  <li>A szerver <b>szöveget</b> küld. Ennek a formája a JSON.</li>
+  <li>JSON-ban minden kulcs és minden szöveg <b>dupla idézőjelben</b> van. Nincs vessző az utolsó elem után.</li>
+  <li>Értékek: szöveg, szám, <code>true</code>/<code>false</code>, <code>null</code>, objektum, tömb. A <code>"7"</code> nem ugyanaz, mint a <code>7</code>.</li>
+  <li>Az első karakter: <code>[</code> tömb, <code>{</code> objektum.</li>
+  <li><code>JSON.parse(szöveg)</code> csinál belőle adatot. Utána minden úgy megy, mint eddig: <code>.name</code>, <code>[0]</code>, ciklus.</li>
+</ol>
+<div class="rule">Most te jössz: fent a <b>2. Most te</b> fül.</div>`,
+    say: "Olvastasd fel valakivel. Aztán mindenki a 2. Most te fülre.",
   },
 ];
 
-// ---------- State (per browser, optional) ----------
+let current = 0, showNotes = false;
+try { current = Math.min(SLIDES.length - 1, Math.max(0, Number(sessionStorage.getItem("fetch01-slide")) || 0)); } catch (e) { /* ignore */ }
 
-const KEY = "fetch01-json-v1";
-let state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
-try {
-  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-  if (saved && typeof saved === "object") state = Object.assign(state, saved);
-} catch (e) { /* storage unavailable: start fresh */ }
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+function renderSlide() {
+  const s = SLIDES[current];
+  const $s = document.getElementById("slide");
+  $s.innerHTML = `<h2>${esc(s.title)}</h2>
+    <p class="lead">${esc(s.lead)}</p>
+    ${s.html || ""}
+    ${s.run ? `<div class="runner">
+      <textarea rows="${s.run.split("\n").length + 1}" spellcheck="false" wrap="off">${esc(s.run)}</textarea>
+      <button class="run">▶ Futtatás</button>
+      <div class="out" hidden></div>
+    </div>` : ""}
+    ${s.html2 || ""}
+    <div class="say" ${showNotes ? "" : "hidden"}><b>Jegyzet:</b> ${esc(s.say)}</div>`;
+  const runner = $s.querySelector(".runner");
+  if (runner) {
+    const ta = runner.querySelector("textarea"), btn = runner.querySelector(".run"), out = runner.querySelector(".out");
+    const go = () => { out.hidden = false; btn.textContent = "↻ Újra"; out.innerHTML = consoleHtml(runCode(ta.value)); };
+    btn.addEventListener("click", go);
+    ta.addEventListener("keydown", e => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go(); }
+      if (e.key === "Tab") { e.preventDefault(); const a = ta.selectionStart; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = a + 2; }
+    });
+  }
+  document.getElementById("count").textContent = `${current + 1} / ${SLIDES.length}`;
+  try { sessionStorage.setItem("fetch01-slide", current); } catch (e) { /* ignore */ }
+}
+function goSlide(d) { current = Math.min(SLIDES.length - 1, Math.max(0, current + d)); renderSlide(); window.scrollTo(0, 0); }
+document.getElementById("prev").addEventListener("click", () => goSlide(-1));
+document.getElementById("next").addEventListener("click", () => goSlide(1));
+document.getElementById("notes").addEventListener("click", () => { showNotes = !showNotes; renderSlide(); });
+document.addEventListener("keydown", e => {
+  if (activeTab !== "learn") return;
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") goSlide(1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") goSlide(-1);
+  if (e.key === "n" || e.key === "N") { showNotes = !showNotes; renderSlide(); }
+});
+
+// ======================================================================
+// 2. MOST TE
+// kind "json": the student writes JSON text; check(parsed) -> problems.
+// kind "js":   the student writes JS after a given text; checked with the real and with other data.
+// ======================================================================
+
+function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+// Explain a JSON.parse error in plain words, with the line it points at.
+function jsonError(text, e) {
+  const m = /position (\d+)/.exec(e.message);
+  let where = "";
+  if (m) {
+    const pos = Number(m[1]);
+    const line = text.slice(0, pos).split("\n").length;
+    where = ` A hiba a(z) <b>${line}. sorban</b> van, vagy közvetlenül előtte.`;
+  }
+  const tips = [];
+  if (/'/.test(text)) tips.push("szimpla idézőjel (<code>'</code>) van benne: JSON-ban csak dupla (<code>\"</code>) lehet");
+  if (/,\s*[}\]]/.test(text)) tips.push("vessző van egy utolsó elem után (<code>,}</code> vagy <code>,]</code>)");
+  if (/[{,]\s*[A-Za-z_]\w*\s*:/.test(text)) tips.push("van idézőjel nélküli kulcs");
+  if (/^\s*(const|let|var)\b/.test(text)) tips.push("a JSON nem kód: nem kell <code>const</code> és változónév");
+  if (/\/\//.test(text)) tips.push("megjegyzés van benne: JSON-ban nem lehet");
+  return `Ez nem érvényes JSON, a <code>JSON.parse</code> hibát dob: <code>${esc(e.message)}</code>.${where}` +
+    (tips.length ? `<br>Amit látok: ${tips.join("; ")}.` : "");
 }
 
-// ---------- UI ----------
+const ALT = {
+  cats: [
+    { name: "Morzsa", age: 3, hobbies: ["dobozban ülés"] },
+    { name: "Cirmi", age: 5, hobbies: [] },
+    { name: "Bug", age: 1, hobbies: ["kábelrágás", "fára mászás"] },
+  ],
+  menu: { week: 47, days: [
+    { day: "kedd", soup: "Húsleves" }, { day: "szerda", soup: "Gombaleves" }, { day: "csütörtök", soup: "Babgulyás" },
+  ] },
+};
 
-const $steps = document.getElementById("steps");
-const $task = document.getElementById("task");
-const $progress = document.getElementById("progress");
-const $finished = document.getElementById("finished");
+const TASKS = [
+  {
+    id: "toJson", slide: 3, kind: "json",
+    title: "1. Írd át JSON-ra",
+    paper: `<p>Ez egy JavaScript-objektum. Írd le ugyanezt az adatot <b>JSON-ban</b>: csak magát az adatot, változónév nélkül.</p><pre>const student = {
+  name: "Kiss Anna",
+  className: "13F",
+  age: 18,
+  hasLaptop: false
+};</pre>`,
+    start: ``,
+    want: { name: "Kiss Anna", className: "13F", age: 18, hasLaptop: false },
+    check(v) {
+      const p = [];
+      if (Array.isArray(v) || typeof v !== "object" || v === null) return ["Egy objektumot kell leírni: <code>{</code>-vel kezdődik."];
+      for (const k of Object.keys(this.want)) {
+        if (!(k in v)) p.push(`Hiányzik a <code>"${k}"</code> kulcs.`);
+        else if (!sameJson(v[k], this.want[k])) p.push(`A <code>"${k}"</code> értéke <code>${esc(showTyped(v[k]))}</code> (${typeName(v[k])}), de <code>${esc(showTyped(this.want[k]))}</code> (${typeName(this.want[k])}) kell.`);
+      }
+      for (const k of Object.keys(v)) if (!(k in this.want)) p.push(`Fölösleges kulcs: <code>"${esc(k)}"</code>.`);
+      return p;
+    },
+    hint: `Kezdd <code>{</code>-vel, és minden kulcsot tegyél dupla idézőjelbe: <code>"name": "Kiss Anna",</code>. A szám és a <code>false</code> idézőjel nélkül marad. Az utolsó sor után nincs vessző.`,
+    solution: `{
+  "name": "Kiss Anna",
+  "className": "13F",
+  "age": 18,
+  "hasLaptop": false
+}`,
+    why: `Minden kulcs dupla idézőjelben, az értékek ugyanazok, nincs <code>const student =</code> és nincs <code>;</code>.`,
+  },
+  {
+    id: "parse", slide: 4, kind: "js", data: "cats",
+    title: "2. Előbb parse",
+    paper: `<p>A <code>catsText</code> az, amit a szerver küldött. Írd ki az <b>első</b> macska nevét, majd azt, <b>hány macska</b> van. A kód most <code>undefined</code>-ot ír ki, javítsd ki.</p>`,
+    given: d => "const catsText = `" + JSON.stringify(d, null, 2) + "`;",
+    start: `console.log(catsText[0].name);
+console.log(catsText.length);`,
+    expected: d => [d[0].name, String(d.length)],
+    hint: `A <code>catsText</code> szöveg. Előbb: <code>const cats = JSON.parse(catsText);</code>, és utána a <code>cats</code>-szal dolgozz.`,
+    solution: `const cats = JSON.parse(catsText);
+console.log(cats[0].name);
+console.log(cats.length);`,
+    why: `A szöveg 0. eleme egy betű (<code>[</code>), a hossza a betűk száma. A <code>JSON.parse</code> után a <code>cats</code> már tömb: a 0. eleme az első macska, a hossza a macskák száma.`,
+  },
+  {
+    id: "fix", slide: 5, kind: "json",
+    title: "3. Javítsd ki",
+    paper: `<p>Ebben a JSON-ban <b>három</b> hiba van, ezért a <code>JSON.parse</code> nem tudja elolvasni. Javítsd ki úgy, hogy az adat ugyanaz maradjon.</p>`,
+    start: `{
+  'title': "Nálam működött",
+  year: 2026,
+  "tags": ["git", "bug"],
+}`,
+    want: { title: "Nálam működött", year: 2026, tags: ["git", "bug"] },
+    check(v) {
+      if (!sameJson(v, this.want)) return [`Most már érvényes JSON, de az adat megváltozott. Ennek kell lennie: <code>${esc(JSON.stringify(this.want))}</code>`];
+      return [];
+    },
+    hint: `Nézd meg az 5. dia táblázatát: szimpla idézőjel, idézőjel nélküli kulcs, vessző az utolsó elem után.`,
+    solution: `{
+  "title": "Nálam működött",
+  "year": 2026,
+  "tags": ["git", "bug"]
+}`,
+    why: `<code>'title'</code> → <code>"title"</code>, <code>year</code> → <code>"year"</code>, és nincs vessző a <code>"tags"</code> sor végén.`,
+  },
+  {
+    id: "types", slide: 6, kind: "json",
+    title: "4. Milyen típus?",
+    paper: `<p>Írd le JSON-ban ezt a terméket. Figyelj a típusokra: a jobb oldalon látod, mit lát belőle a JavaScript.</p><table class="exp"><tr><th>Kulcs</th><th>Érték</th><th>Típus</th></tr><tr><td><code>name</code></td><td>Pogácsa</td><td>szöveg</td></tr><tr><td><code>price</code></td><td>250</td><td>szám</td></tr><tr><td><code>inStock</code></td><td>igaz</td><td>logikai</td></tr><tr><td><code>discount</code></td><td>nincs érték</td><td>null</td></tr><tr><td><code>code</code></td><td>007</td><td>szöveg (különben a nullák elvesznének)</td></tr></table>`,
+    start: ``,
+    want: { name: "Pogácsa", price: 250, inStock: true, discount: null, code: "007" },
+    check(v) { return TASKS.find(x => x.id === "toJson").check.call(this, v); },
+    hint: `Szöveg: idézőjelben. Szám, <code>true</code> és <code>null</code>: idézőjel nélkül. A <code>"007"</code> szöveg, tehát idézőjelben.`,
+    solution: `{
+  "name": "Pogácsa",
+  "price": 250,
+  "inStock": true,
+  "discount": null,
+  "code": "007"
+}`,
+    why: `Csak a szöveg kerül idézőjelbe. A <code>true</code> és a <code>null</code> nem szöveg, ezért idézőjel nélkül.`,
+  },
+  {
+    id: "array", slide: 7, kind: "json",
+    title: "5. A te macskáid",
+    paper: `<p>Írj egy JSON-<b>tömböt</b> pontosan <b>két</b> macskával. Mindkettőnek legyen <code>name</code> (szöveg) és <code>age</code> (szám) mezője. A nevük és a koruk bármi lehet.</p>`,
+    start: ``,
+    check(v) {
+      if (!Array.isArray(v)) return ["Tömb kell: <code>[</code>-rel kezdődik és <code>]</code>-rel végződik."];
+      const p = [];
+      if (v.length !== 2) p.push(`${v.length} elem van a tömbben, 2 kell.`);
+      v.forEach((c, i) => {
+        if (typeof c !== "object" || c === null || Array.isArray(c)) { p.push(`A(z) ${i + 1}. elem nem objektum: <code>{ … }</code> kell.`); return; }
+        if (typeof c.name !== "string") p.push(`A(z) ${i + 1}. macska <code>name</code>-je ${c.name === undefined ? "hiányzik" : "nem szöveg"}.`);
+        if (typeof c.age !== "number") p.push(`A(z) ${i + 1}. macska <code>age</code>-e ${c.age === undefined ? "hiányzik" : "nem szám (nem kell idézőjel)"}.`);
+      });
+      return p;
+    },
+    hint: `<code>[ { "name": "…", "age": … }, { … } ]</code>. A két objektum között vessző van, a második után nincs.`,
+    solution: `[
+  { "name": "Bajusz", "age": 7 },
+  { "name": "Null", "age": 2 }
+]`,
+    why: `Egy tömb, benne két objektum, vesszővel elválasztva. A kor szám, ezért nincs idézőjelben.`,
+  },
+  {
+    id: "read", slide: 8, kind: "js", data: "menu",
+    title: "6. Olvasd ki",
+    paper: `<p>A <code>menuText</code> egy JSON-szöveg (bal oldalt látod). Alakítsd át <code>JSON.parse</code>-szal, és írd ki a Console-ba</p><ol><li>a hét számát,</li><li>a <b>második</b> nap levesét.</li></ol>`,
+    given: d => "const menuText = `" + JSON.stringify(d, null, 2) + "`;",
+    start: `const menu = JSON.parse(menuText);
+`,
+    expected: d => [String(d.week), d.days[1].soup],
+    hint: `A hét száma <code>menu.week</code>. A napok a <code>menu.days</code> tömbben vannak, a második nap indexe 1.`,
+    solution: `const menu = JSON.parse(menuText);
+console.log(menu.week);
+console.log(menu.days[1].soup);`,
+    why: `Balról jobbra: <code>menu</code> objektum → <code>menu.days</code> tömb → <code>menu.days[1]</code> a második nap → <code>.soup</code> a levese.`,
+  },
+];
+
+const TRY_DATA = {
+  cats: [{ name: "Bajusz", age: 7, hobbies: ["billentyűzeten alvás"] }, { name: "Null", age: 2, hobbies: [] }, { name: "Szotyi", age: 11, hobbies: ["evés"] }, { name: "Pötyi", age: 1, hobbies: [] }],
+  menu: { week: 46, days: [{ day: "hétfő", soup: "Paradicsomleves" }, { day: "kedd", soup: "Gulyásleves" }, { day: "szerda", soup: "Zöldborsóleves" }] },
+};
+
+function checkTask(t, code) {
+  if (t.kind === "json") {
+    if (!code.trim()) return { problems: ["Még üres. Írd be a JSON-t."] };
+    let v;
+    try { v = JSON.parse(code); }
+    catch (e) { return { problems: [jsonError(code, e)] }; }
+    return { problems: t.check(v) };
+  }
+  const run = runCode(code, t.given(TRY_DATA[t.data]));
+  const want = t.expected(TRY_DATA[t.data]);
+  const p = [];
+  if (run.error) p.push(`A kód hibára fut: <code>${esc(run.error.name + ": " + run.error.message)}</code>`);
+  if (!sameJson(run.logs, want)) {
+    const n = Math.max(run.logs.length, want.length);
+    let rows = "";
+    for (let i = 0; i < n; i++) rows += `<tr><td><code>${esc(want[i] ?? "")}</code></td><td><code>${run.logs[i] === undefined ? "(nincs)" : esc(run.logs[i])}</code></td><td>${run.logs[i] === want[i] ? "✓" : "✗"}</td></tr>`;
+    p.push(`A Console nem pontosan az elvárt sorokat mutatja:<table class="exp"><tr><th>Elvárt</th><th>Most</th><th></th></tr>${rows}</table>`);
+  }
+  if (!p.length) {
+    const other = runCode(code, t.given(ALT[t.data]));
+    if (other.error || !sameJson(other.logs, t.expected(ALT[t.data])))
+      p.push("Más adattal nem működne. Ne írd be kézzel a választ, hanem olvasd ki az adatból.");
+  }
+  return { problems: p, run };
+}
+
+// Right-hand panel: the Console for JS, "what JavaScript sees" for JSON.
+function renderSeen(t, code) {
+  const $o = document.getElementById("seen");
+  if (t.kind === "js") {
+    $o.className = "console";
+    $o.innerHTML = consoleHtml(runCode(code, t.given(TRY_DATA[t.data])));
+    return;
+  }
+  $o.className = "seen";
+  if (!code.trim()) { $o.innerHTML = '<p class="dim">Itt látod majd, mit olvas ki a JavaScript a JSON-odból.</p>'; return; }
+  let v;
+  try { v = JSON.parse(code); }
+  catch (e) { $o.innerHTML = `<p class="badline">✗ Nem érvényes JSON</p><p>${jsonError(code, e)}</p>`; return; }
+  const rows = (Array.isArray(v) ? v.map((x, i) => [`[${i}]`, x]) : v && typeof v === "object" ? Object.entries(v).map(([k, x]) => [k, x]) : [["(az egész)", v]])
+    .map(([k, x]) => `<tr><td><code>${esc(k)}</code></td><td><code>${esc(showTyped(x))}</code></td><td>${typeName(x)}</td></tr>`).join("");
+  $o.innerHTML = `<p class="okline">✓ Érvényes JSON: ${typeName(v)}</p><table class="exp"><tr><th>${Array.isArray(v) ? "Index" : "Kulcs"}</th><th>Érték</th><th>Típus</th></tr>${rows}</table>`;
+}
+
+const KEY = "fetch01-lesson-v1";
+let state = { code: {}, done: {}, fails: {}, revealed: {}, cur: 0, live: {}, tab: "learn" };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") state = Object.assign(state, s); } catch (e) { /* ignore */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const STUCK_AFTER = 2;
 
 function renderSteps() {
-  $steps.innerHTML = "";
+  const $s = document.getElementById("steps");
+  $s.innerHTML = "";
   TASKS.forEach((t, i) => {
     const b = document.createElement("button");
     b.textContent = (state.done[t.id] ? "✓ " : "") + t.title;
-    if (state.revealed[t.id]) b.classList.add("revealed");
-    if (i === state.current) b.classList.add("current");
+    if (i === state.cur) b.classList.add("current");
     if (state.done[t.id]) b.classList.add("done");
-    if (t.extra) b.classList.add("extra");
-    b.addEventListener("click", () => { state.current = i; save(); renderAll(); });
-    $steps.appendChild(b);
+    if (state.revealed[t.id]) b.classList.add("revealed");
+    b.addEventListener("click", () => { state.cur = i; save(); renderTry(); });
+    $s.appendChild(b);
   });
-  const required = TASKS.filter(t => !t.extra);
-  const n = required.filter(t => state.done[t.id]).length;
-  const shown = required.filter(t => state.done[t.id] && state.revealed[t.id]).length;
-  const extras = TASKS.filter(t => t.extra && state.done[t.id]).length;
-  $progress.textContent = `Kész: ${n} / ${required.length}` + (shown ? ` (ebből ${shown} megoldással)` : "") + (extras ? ` + ${extras} extra ★` : "");
-  $finished.innerHTML = n === required.length
-    ? `<div class="finished">Mind a ${required.length} feladat kész. Most már el tudsz igazodni bármelyik JSON-ban, amit az API küld. Ha van időd, jöhet a ★ extra.</div>`
-    : "";
+  const n = TASKS.filter(t => state.done[t.id]).length;
+  document.getElementById("tryFinished").innerHTML = n === TASKS.length
+    ? `<div class="finished">Mind a ${TASKS.length} kész. Jöhet az éles adat. <button id="toLive">3. Élesben →</button></div>` : "";
+  const tl = document.getElementById("toLive");
+  if (tl) tl.addEventListener("click", () => setTab("live"));
 }
 
-function renderTask() {
-  const t = TASKS[state.current];
+function renderTry() {
+  renderSteps();
+  const t = TASKS[state.cur];
   const code = state.code[t.id] ?? t.start;
-  $task.innerHTML = `
-    <div class="task-head">
-      <div class="tag">${esc(t.tag)}</div>
-      <h2>${esc(t.title)}</h2>
-    </div>
+  const isJson = t.kind === "json";
+  document.getElementById("task").innerHTML = `
     <div class="goal">
-      <span class="live">Élesben: <a href="${API + URL_OF[t.data]}" target="_blank" rel="noopener">${URL_OF[t.data]}</a></span>
-      <h3>A feladat</h3>
-      <div class="paper">${t.paper}</div>
-      <h3>Mi történik most</h3>
-      <p class="now">${t.now}</p>
-      <h3>Lépésről lépésre: mit csinál most a kód</h3>
-      <div class="bridge">${t.bridge}</div>
-      <h3>Amit tudni kell</h3>
-      <div class="learn">${t.learn}</div>
+      <a class="back" href="#" id="backToSlide">Nézd meg újra: ${t.slide}. dia</a>
+      <h3>${esc(t.title)}</h3>
+      ${t.paper}
     </div>
     <div class="grid">
       <div>
-        <p class="label">Amit a szerver küldött (adott, ezt nem kell átírni)</p>
-        <pre class="snippet">${esc(prelude(t.data))}</pre>
-        <p class="label">A te kódod: ezt javítsd</p>
-        <textarea class="code" id="code" spellcheck="false" wrap="off"></textarea>
+        ${t.given ? `<p class="label">Amit a szerver küldött (adott, ezt nem kell átírni)</p><pre class="given">${esc(t.given(TRY_DATA[t.data]))}</pre>` : ""}
+        <p class="label">${isJson ? "A te JSON-od" : "A te kódod"}</p>
+        <textarea class="code" id="code" spellcheck="false" wrap="off" placeholder="${isJson ? "Ide írd a JSON-t…" : ""}"></textarea>
         <div class="buttons">
           <button class="primary" id="check">Ellenőrzés</button>
           <button id="reset">Visszaállítás</button>
           <span class="kbd">vagy Ctrl+Enter</span>
         </div>
-        <div id="result"></div>
-        <div id="hint"></div>
-        <div id="solution"></div>
+        <div id="result"></div><div id="hint"></div><div id="solution"></div>
       </div>
       <div>
-        <p class="label">Console (F12)</p>
-        <div id="out" class="console"></div>
+        <p class="label">${isJson ? "Mit lát belőle a JavaScript (JSON.parse után)" : "Console (F12)"}</p>
+        <div id="seen"></div>
       </div>
     </div>`;
-  const $code = document.getElementById("code");
-  $code.value = code;
-  const fit = () => { $code.style.height = "auto"; $code.style.height = Math.max(220, $code.scrollHeight + 4) + "px"; };
+  document.getElementById("backToSlide").addEventListener("click", e => { e.preventDefault(); current = t.slide - 1; setTab("learn"); });
+  const $c = document.getElementById("code");
+  $c.value = code;
+  const fit = () => { $c.style.height = "auto"; $c.style.height = Math.max(200, $c.scrollHeight + 4) + "px"; };
   fit();
-  $code.addEventListener("input", fit);
-  $code.addEventListener("input", () => { state.code[t.id] = $code.value; save(); runOutput(t); });
-  $code.addEventListener("keydown", e => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const s = $code.selectionStart, en = $code.selectionEnd;
-      $code.value = $code.value.slice(0, s) + "  " + $code.value.slice(en);
-      $code.selectionStart = $code.selectionEnd = s + 2;
-      $code.dispatchEvent(new Event("input"));
-    }
+  $c.addEventListener("input", () => { fit(); state.code[t.id] = $c.value; save(); renderSeen(t, $c.value); });
+  $c.addEventListener("keydown", e => {
+    if (e.key === "Tab") { e.preventDefault(); const a = $c.selectionStart; $c.value = $c.value.slice(0, a) + "  " + $c.value.slice($c.selectionEnd); $c.selectionStart = $c.selectionEnd = a + 2; $c.dispatchEvent(new Event("input")); }
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doCheck(t); }
   });
   document.getElementById("check").addEventListener("click", () => doCheck(t));
-  document.getElementById("reset").addEventListener("click", () => {
-    delete state.code[t.id];
-    save();
-    renderTask();
-  });
-  runOutput(t);
+  document.getElementById("reset").addEventListener("click", () => { delete state.code[t.id]; save(); renderTry(); });
+  renderSeen(t, code);
   if (state.revealed[t.id]) showSolution(t);
 }
 
-function runOutput(t) {
-  const code = document.getElementById("code").value;
-  const run = runJs(code, t.data);
-  let html = run.logs.map(l => esc(l)).join("\n");
-  if (run.error) html += (html ? "\n" : "") + `<span class="err">Uncaught ${esc(run.error.name)}: ${esc(run.error.message)}</span>`;
-  if (!html) html = '<span class="dim">(üres: semmi nem jelent meg a Console-ban)</span>';
-  document.getElementById("out").innerHTML = html;
-  return run;
-}
-
 function doCheck(t) {
-  const run = runOutput(t);
+  const code = document.getElementById("code").value;
+  renderSeen(t, code);
   let problems;
-  try { problems = standardCheck(t, run); }
-  catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message)]; }
-  const $r = document.getElementById("result");
-  const $h = document.getElementById("hint");
-  if (problems.length === 0) {
-    state.done[t.id] = true;
-    save();
-    const nextIdx = TASKS.findIndex((x, i) => i > state.current && !state.done[x.id]);
-    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button class="next" id="next">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
+  try { problems = checkTask(t, code).problems; } catch (e) { problems = ["Valami elromlott az ellenőrzés közben: " + esc(e.message)]; }
+  const $r = document.getElementById("result"), $h = document.getElementById("hint");
+  if (!problems.length) {
+    state.done[t.id] = true; save();
+    const nextIdx = TASKS.findIndex((x, i) => i > state.cur && !state.done[x.id]);
+    $r.innerHTML = `<div class="result ok"><b>Kész, ez jó!</b>${nextIdx >= 0 ? ` <button id="nextTask">Tovább: ${esc(TASKS[nextIdx].title)} →</button>` : ""}</div>`;
     $h.innerHTML = "";
-    if (nextIdx >= 0) document.getElementById("next").addEventListener("click", () => {
-      state.current = nextIdx; save(); renderAll();
-    });
+    if (nextIdx >= 0) document.getElementById("nextTask").addEventListener("click", () => { state.cur = nextIdx; save(); renderTry(); });
     renderSteps();
-  } else {
-    $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
-    state.fails[t.id] = (state.fails[t.id] || 0) + 1;
-    save();
-    $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
-    if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
-      $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
-      document.getElementById("stuck").addEventListener("click", () => {
-        if (!confirm("Biztos? Előbb olvasd el még egyszer a „Lépésről lépésre” részt és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
-        document.getElementById("stuck").remove();
-        state.revealed[t.id] = true;
-        save();
-        showSolution(t);
-        renderSteps();
-      });
-    }
+    return;
+  }
+  $r.innerHTML = `<div class="result bad"><b>Még nem jó.</b><ul>${problems.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  state.fails[t.id] = (state.fails[t.id] || 0) + 1; save();
+  $h.innerHTML = `<div class="hint"><b>Tipp:</b> ${t.hint}</div>`;
+  if (state.fails[t.id] >= STUCK_AFTER && !state.revealed[t.id]) {
+    $h.innerHTML += `<button class="stuck" id="stuck">Elakadtam, mutasd a megoldást</button>`;
+    document.getElementById("stuck").addEventListener("click", () => {
+      if (!confirm("Biztos? Előbb nézd meg újra a diát és a tippet. Ha megnézed a megoldást, a feladat sárgán jelölve lesz kész.")) return;
+      document.getElementById("stuck").remove();
+      state.revealed[t.id] = true; save();
+      showSolution(t); renderSteps();
+    });
   }
 }
 
-// After this many failed checks the student may open the solution.
-const STUCK_AFTER = 2;
-
 function showSolution(t) {
-  const before = t.start.split("\n").map(l => l.trim());
-  const lines = t.solution.split("\n").map(l =>
-    `<div${l.trim() && !before.includes(l.trim()) ? ' class="new"' : ""}>${esc(l) || " "}</div>`).join("");
   document.getElementById("solution").innerHTML = `<div class="solution">
-    <h4>Megoldás</h4>
-    <p>${t.why}</p>
-    <pre>${lines}</pre>
-    <p>A zöld sorok változtak. Írd be magad, vagy töltsd be, és nézd meg, mi változik a Console-ban.</p>
-    <button id="load">Betöltöm a szerkesztőbe</button>
-  </div>`;
+    <h4>Megoldás</h4><p>${t.why}</p><pre>${esc(t.solution)}</pre>
+    <p>Írd be magad, vagy töltsd be, és nézd meg, mi változik jobb oldalt.</p>
+    <button id="load">Betöltöm a szerkesztőbe</button></div>`;
   document.getElementById("load").addEventListener("click", () => {
-    const $code = document.getElementById("code");
-    $code.value = t.solution;
-    $code.dispatchEvent(new Event("input"));
-    doCheck(t);
+    const $c = document.getElementById("code");
+    $c.value = t.solution; $c.dispatchEvent(new Event("input")); doCheck(t);
   });
 }
 
-function renderAll() { renderSteps(); renderTask(); }
+// ======================================================================
+// 3. ÉLESBEN: the live API. The student types an expression; it is evaluated on the
+// live data, and once more on other data so that typing in the answer does not pass.
+// ======================================================================
 
+const QUESTIONS = [
+  { id: "q1", url: "cats.json", ask: "Hány macska van?", want: d => d.cats.length, hint: "A tömb hossza: <code>cats.length</code>." },
+  { id: "q2", url: "cats.json", ask: "Mi az első macska neve?", want: d => d.cats[0].name, hint: "Az első elem indexe 0." },
+  { id: "q3", url: "cats.json", ask: "Hány éves az utolsó macska? (Akkor is legyen jó, ha holnap több macska lesz.)", want: d => d.cats[d.cats.length - 1].age, hint: "Az utolsó index <code>cats.length - 1</code>." },
+  { id: "q4", url: "cats.json", ask: "Hány hobbija van a második macskának?", want: d => d.cats[1].hobbies.length, hint: "A <code>hobbies</code> maga is tömb, és annak is van <code>length</code>-je." },
+  { id: "q5", url: "excuses.json", ask: "Mi a harmadik kifogás szövege?", want: d => d.excuses[2].excuse, hint: "Nézd meg az adatban, hogy hívják azt a mezőt, amiben a szöveg van." },
+  { id: "q6", url: "canteen.json", ask: "Hányadik héten jár a menza?", want: d => d.canteen.week, hint: "A <code>canteen</code> objektum, a hét a <code>week</code> kulcsban van." },
+  { id: "q7", url: "canteen.json", ask: "Mi a keddi (második nap) főétel neve?", want: d => d.canteen.days[1].main.name, hint: "<code>canteen.days[1]</code> a kedd. A <code>main</code> egy objektum, annak a <code>name</code>-je kell." },
+  { id: "q8", url: "canteen.json", ask: "Mi a csütörtöki (negyedik nap) desszert?", want: d => d.canteen.days[3].dessert, hint: "Lehet, hogy a válasz az, hogy nincs: akkor <code>null</code>-t kapsz, és az a jó válasz." },
+];
+
+const LIVE_ALT = {
+  cats: [
+    { id: 1, name: "Morzsa", age: 3, weightKg: 4, sleepHoursPerDay: 14, friendly: true, hobbies: ["dobozban ülés", "evés", "alvás"] },
+    { id: 2, name: "Cirmi", age: 5, weightKg: 5, sleepHoursPerDay: 15, friendly: false, hobbies: ["fára mászás", "kábelrágás", "egérvadászat", "nyávogás"] },
+    { id: 3, name: "Bug", age: 13, weightKg: 2, sleepHoursPerDay: 13, friendly: true, hobbies: [] },
+  ],
+  excuses: [
+    { id: 1, excuse: "Elfogyott a tinta.", category: "technika", believability: 4, teacherHeardIt: true },
+    { id: 2, excuse: "Rossz mappába dolgoztam.", category: "technika", believability: 7, teacherHeardIt: false },
+    { id: 3, excuse: "A feladat nem akart engem.", category: "egzisztenciális", believability: 2, teacherHeardIt: false },
+  ],
+  canteen: { week: 47, school: "Széchenyi", days: [
+    { day: "hétfő", soup: "Húsleves", main: { name: "Rakott krumpli", vegetarian: false, calories: 700 }, dessert: "csiga", queueMinutes: 8, rating: 4 },
+    { day: "kedd", soup: "Gombaleves", main: { name: "Spagetti", vegetarian: true, calories: 610 }, dessert: null, queueMinutes: 3, rating: 3 },
+    { day: "szerda", soup: "Babgulyás", main: { name: "Hal rizzsel", vegetarian: false, calories: 540 }, dessert: "körte", queueMinutes: 6, rating: 2 },
+    { day: "csütörtök", soup: "Lencseleves", main: { name: "Lecsó", vegetarian: true, calories: 480 }, dessert: "kifli", queueMinutes: 5, rating: 3 },
+    { day: "péntek", soup: "Nincs", main: { name: "Hamburger", vegetarian: false, calories: 900 }, dessert: null, queueMinutes: 20, rating: 5 },
+  ] },
+};
+
+let LIVE = null;
+
+function evalExpr(expr, d) {
+  return new Function("cats", "excuses", "canteen", `"use strict"; return (${expr});`)(d.cats, d.excuses, d.canteen);
+}
+
+function judge(q, expr) {
+  if (!expr.trim()) return { cls: "", text: "" };
+  let v;
+  try { v = evalExpr(expr, LIVE); }
+  catch (e) { return { cls: "err", text: `${e.name}: ${e.message}` }; }
+  const shown = `→ ${showTyped(v)} (${typeName(v)})`;
+  if (!sameJson(v, q.want(LIVE)) || typeof v !== typeof q.want(LIVE)) return { cls: "", text: shown };
+  let other;
+  try { other = evalExpr(expr, LIVE_ALT); } catch (e) { other = Symbol("err"); }
+  if (typeof other === "symbol" || !sameJson(other, q.want(LIVE_ALT)))
+    return { cls: "err", text: shown + "\nEz most jó, de beírt válasz: ha holnap más adat jön, már nem lesz jó. Írd le az utat az adathoz." };
+  return { cls: "ok", text: shown + "  ✓", ok: true };
+}
+
+function renderLive() {
+  const $q = document.getElementById("questions");
+  if (!LIVE) { $q.innerHTML = ""; return; }
+  $q.innerHTML = QUESTIONS.map((q, i) => `
+    <div class="q" id="box-${q.id}">
+      <p class="ask">${i + 1}. ${esc(q.ask)} <a href="${API + q.url}" target="_blank" rel="noopener">${q.url}</a></p>
+      <div class="row"><input id="in-${q.id}" spellcheck="false" autocomplete="off" placeholder="pl. cats[0].name"></div>
+      <div class="val" id="val-${q.id}"></div>
+      <details><summary>Tipp</summary>${q.hint}</details>
+    </div>`).join("");
+  QUESTIONS.forEach(q => {
+    const $i = document.getElementById("in-" + q.id);
+    $i.value = state.live[q.id] || "";
+    const upd = () => {
+      state.live[q.id] = $i.value; save();
+      const r = judge(q, $i.value);
+      const $v = document.getElementById("val-" + q.id);
+      $v.className = "val " + r.cls; $v.textContent = r.text;
+      document.getElementById("box-" + q.id).classList.toggle("ok", !!r.ok);
+      const n = QUESTIONS.filter(x => judge(x, state.live[x.id] || "").ok).length;
+      document.getElementById("liveFinished").innerHTML = n === QUESTIONS.length
+        ? `<div class="finished">Mind a ${QUESTIONS.length} kész: el tudsz igazodni az éles adatban. A következő leckében te írod meg, hogyan jön le az adat.</div>` : "";
+    };
+    $i.addEventListener("input", upd);
+    upd();
+  });
+}
+
+async function loadLive() {
+  const $st = document.getElementById("liveStatus");
+  try {
+    // This is what the next lesson teaches.
+    const [cats, excuses, canteen] = await Promise.all(["cats.json", "excuses.json", "canteen.json"].map(async f => {
+      const r = await fetch(API + f, { cache: "no-store" });
+      if (!r.ok) throw new Error(f + ": " + r.status);
+      return r.json();
+    }));
+    LIVE = { cats, excuses, canteen };
+    $st.className = "live-status";
+    $st.innerHTML = `✓ Letöltve az API-ból: <code>cats</code> (${cats.length} macska), <code>excuses</code> (${excuses.length} kifogás), <code>canteen</code> (a menza). Ezt a három változót használhatod. Már <code>JSON.parse</code> után vannak.`;
+    renderLive();
+  } catch (e) {
+    $st.className = "live-status err";
+    $st.innerHTML = `Nem sikerült letölteni az adatot (${esc(e.message)}). Van internet? Frissítsd az oldalt.`;
+  }
+}
+
+// ======================================================================
+// Tabs
+// ======================================================================
+
+let activeTab = "learn";
+function setTab(tab) {
+  activeTab = tab; state.tab = tab; save();
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
+  for (const name of ["learn", "try", "live"]) document.getElementById("tab-" + name).hidden = name !== tab;
+  if (tab === "learn") renderSlide();
+  if (tab === "try") renderTry();
+  if (tab === "live" && !LIVE) loadLive();
+  window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => setTab(b.dataset.tab));
 document.getElementById("resetAll").addEventListener("click", () => {
-  if (!confirm("Biztosan visszaállítod az összes feladatot?")) return;
-  state = { code: {}, done: {}, current: 0, fails: {}, revealed: {} };
-  save();
-  renderAll();
+  if (!confirm("Biztosan visszaállítod a 2. és 3. részt?")) return;
+  state = { code: {}, done: {}, fails: {}, revealed: {}, cur: 0, live: {}, tab: activeTab };
+  save(); setTab(activeTab);
 });
 
-if (!(state.current >= 0 && state.current < TASKS.length)) state.current = 0;
-renderAll();
+const fromHash = { "#magyarazat": "learn", "#most-te": "try", "#elesben": "live" }[location.hash];
+setTab(fromHash || state.tab || "learn");
 </script>
 </body>
 </html>

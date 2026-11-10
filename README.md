@@ -4,7 +4,7 @@ Public pages for the 13F1 Frontend-Backend class (2026/27): https://korbal.githu
 
 `index.html` is the home page: the class API first, then the tests.
 
-`api/` is a read-only JSON API for `fetch` practice (GitHub Pages serves it with `Access-Control-Allow-Origin: *`). `api/index.html` is the docs page with tasks; `api/index.json` lists the endpoints. `fetch/NN-*.html` is a self-checking practice series that builds up to querying the API (same engine as the walkthroughs). Test folders never move, so old links keep working.
+`api/` is a read-only JSON API for `fetch` practice (GitHub Pages serves it with `Access-Control-Allow-Origin: *`). `api/index.html` is the docs page with tasks; `api/index.json` lists the endpoints. `fetch/NN-*.html` is a lesson series that builds up to querying the API. Each lesson has three tabs: 1. Magyarázat (slides the teacher projects, notes under N), 2. Most te (the same steps, self-checked), 3. Élesben (questions answered from the live API). `fetch/02-json-utvonalak.html` is an older practice page, not linked, to be reworked into lesson format. Test folders never move, so old links keep working.
 
 One folder per test (`testNN/`), linked from `index.html` (newest first):
 
