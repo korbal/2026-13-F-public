@@ -54,12 +54,13 @@
   .goal { font-size:14px; line-height:1.55; background:#f6f8fa; border-radius:10px; padding:10px 12px; }
   .goal pre { background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; overflow-x:auto; margin:8px 0 0; }
   .goal .mono, .fin .mono, .hintbox .mono, .primer-body .mono { background:#eef1f5; border-radius:4px; padding:0 4px; font-size:.92em; }
+  .goal ol.todo { margin:8px 0; padding-left:22px; } .goal ol.todo li { margin:0 0 4px; }
   .turn { margin-top:10px; padding-top:10px; border-top:1px dashed #d3d7dd; }
   .after { margin-top:10px; padding:10px 12px; border-radius:10px; background:#eef6ff; border:1px solid #cfe0fb; font-size:14px; line-height:1.55; }
   .state { margin-top:10px; font-size:13px; line-height:1.5; }
   .state .ok { color:var(--ok); font-weight:700; }
   .state .wait { color:var(--warn); }
-  .hintbox { background:#fff8e6; border:1px solid #f5e2b0; border-radius:8px; padding:8px 10px; font-size:13px; margin-top:10px; }
+  .hintbox { background:#fff8e6; border:1px solid #f5e2b0; border-radius:8px; padding:8px 10px; font-size:13px; margin-top:10px; display:flex; flex-direction:column; gap:4px; }
   .steps { list-style:none; padding-left:4px; margin:10px 0 0; display:flex; flex-direction:column; gap:6px; }
   .steps li { font-size:13px; color:#9aa0a6; display:flex; gap:8px; align-items:center; }
   .steps li.done { color:var(--ok); }
@@ -73,7 +74,7 @@
   .fin ul.loop li em { font-style:normal; color:var(--muted); }
 
   /* editor + console */
-  .ed { background:#15181f; color:#d4d4d4; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .ed { position:relative; background:#15181f; color:#d4d4d4; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
   .ed .bar { display:flex; gap:8px; align-items:center; color:#8b93a1; font-size:12px; flex-wrap:wrap; }
   .ed .bar .file { flex:1; }
   .ed .bar .btn { background:#232833; border-color:#323a48; color:#e5e7eb; padding:5px 10px; font-size:12px; }
@@ -108,6 +109,10 @@
   .modal h3 { margin:0 0 10px; }
   .modal p { font-size:13px; color:var(--muted); margin:6px 0 12px; }
   .modal textarea { width:100%; min-height:150px; font:13px ui-monospace,monospace; border:1px solid #d3d7dd; border-radius:8px; padding:8px; resize:vertical; }
+  .flash { position:absolute; inset:0; z-index:5; background:rgba(15,18,23,.97); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; }
+  .flash pre { flex:1; margin:0; overflow:auto; color:#e5e7eb; font:14px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  .flash .bar2 { height:3px; background:var(--accent); border-radius:2px; animation:shrink 6s linear forwards; }
+  @keyframes shrink { from { width:100%; } to { width:0; } }
   #altframe { position:absolute; left:-9999px; top:0; width:400px; height:300px; border:0; }
 </style>
 </head>
@@ -588,7 +593,12 @@ var LOOP_SOLUTION =
 
 var LESSONS = [
   { title: "Look at the data", page: "cats",
-    goal: "This is the list you will turn into a page. It is already in your script, as <span class=\"mono\">cats</span>, and you can see it in the Data box.<br><br>Press <b>Run</b> first. Then print two things to the Console: <b>how many cats</b> there are, and <b>the third cat's name</b>. Take both from <span class=\"mono\">cats</span>.",
+    goal: "Nothing goes on the page yet. This lesson is only about <b>reading</b> the list. The list is called <span class=\"mono\">cats</span>, it is already in your script, and you can see it in the <b>Data</b> box on the left.<ol class=\"todo\">" +
+      "<li>Press <b>&#9654; Run</b> (top right of the black code box, or Ctrl+Enter). The <b>Console</b> under the code prints the whole list.</li>" +
+      "<li>In the code box, under the <span class=\"mono\">console.log(cats);</span> line, write a new line that prints <b>how many cats</b> there are.</li>" +
+      "<li>Write one more line that prints <b>the name of the third cat</b>.</li>" +
+      "<li>Press Run again. Both answers appear in the Console, and up here you get a green <b>&#10003; Done</b>.</li></ol>" +
+      "Do not type the number or the name yourself: get both out of <span class=\"mono\">cats</span>. The check also runs your code on a different list of cats.",
     start: "// cats is already here. Press Run to see it.\nconsole.log(cats);\n",
     hints: ["How many: <span class=\"mono\">cats.length</span>", "Counting starts at 0. The first cat is <span class=\"mono\">cats[0]</span>, so the third one is...", "<span class=\"mono\">console.log(cats[2].name);</span>"],
     check: function(r, a){
@@ -699,26 +709,40 @@ var LESSONS = [
     } }
 ];
 
+// One working answer per lesson. Only the teacher's secret flash shows these.
+var GRUMPY_SOLUTION = LOOP_SOLUTION.replace('  box.appendChild(card);\n', '  if (cats[i].friendly === false) {\n    card.classList.add("grumpy");\n  }\n  box.appendChild(card);\n');
+var SOLUTIONS = [
+  'console.log(cats);\nconsole.log(cats.length);\nconsole.log(cats[2].name);\n',
+  'const title = document.createElement("h2");\ntitle.textContent = cats[0].name;\n\nconsole.log(title);\n',
+  'const title = document.createElement("h2");\ntitle.textContent = cats[0].name;\n\nconst box = document.getElementById("cats");\nbox.appendChild(title);\n',
+  START_CARD,
+  LOOP_SOLUTION,
+  GRUMPY_SOLUTION,
+  GRUMPY_SOLUTION,
+  'const box = document.getElementById("excuses");\n\nfor (let i = 0; i < excuses.length; i++) {\n  const li = document.createElement("li");\n  li.textContent = excuses[i].text;\n  if (excuses[i].used === true) {\n    li.classList.add("used");\n  }\n  box.appendChild(li);\n}\n'
+];
+
 /* ====================================================================
    State
    ==================================================================== */
 
 var KEY = "data-to-elements-v1";
+var TRIES_PER_HINT = 2;
 var N = LESSONS.length;
-function fresh(){ return { lessonIndex: 0, done: [], code: {}, primerDone: false, reveal: false }; }
+function fresh(){ return { lessonIndex: 0, done: [], code: {}, primerDone: false, reveal: false, tries: {}, lastTried: {}, hintsShown: {} }; }
 function normalize(s){
   var f = fresh();
   if (!s || typeof s !== "object") return f;
   for (var k in f) if (s[k] === undefined) s[k] = f[k];
   s.lessonIndex = Math.max(0, Math.min(N, Number(s.lessonIndex) || 0));
   if (!Array.isArray(s.done)) s.done = [];
-  if (typeof s.code !== "object" || !s.code) s.code = {};
+  ["code", "tries", "lastTried", "hintsShown"].forEach(function(k){ if (typeof s[k] !== "object" || !s[k]) s[k] = {}; });
   return s;
 }
 var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
-var hintIdx = -1, primerIdx = 0, primerOpen = false, showSay = false, last = null;
+var primerIdx = 0, primerOpen = false, showSay = false, last = null;
 
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -805,14 +829,21 @@ function renderLesson(){
   if (!last) st.innerHTML = '<span class="wait">&#9711; Press Run when you are ready.</span>';
   else if (done) st.innerHTML = '<span class="ok">&#10003; Done. That is right.</span>';
   else st.innerHTML = '<span class="wait">&#9711; Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is an error in the Console." : ""));
-  if (!les.noHints && hintIdx >= 0) { hint.style.display = ""; hint.innerHTML = "<b>Hint " + (hintIdx + 1) + "/" + les.hints.length + ":</b> " + les.hints[hintIdx]; }
+  var shown = S.hintsShown[S.lessonIndex] || 0;
+  if (!les.noHints && shown > 0) { hint.style.display = ""; hint.innerHTML = les.hints.slice(0, shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + "/" + les.hints.length + ":</b> " + h + "</div>"; }).join(""); }
   else hint.style.display = "none";
   btns.innerHTML = "";
   var back = document.createElement("button"); back.className = "btn"; back.textContent = "← Back"; back.disabled = S.lessonIndex === 0;
   back.onclick = function(){ gotoLesson(S.lessonIndex - 1); }; btns.appendChild(back);
   if (!les.noHints) {
-    var tip = document.createElement("button"); tip.className = "btn"; tip.textContent = hintIdx < 0 ? "Hint" : "Next hint";
-    tip.onclick = function(){ hintIdx = (hintIdx + 1) % les.hints.length; renderLesson(); }; btns.appendChild(tip);
+    // Hints are earned: hint k unlocks after TRIES_PER_HINT * k real attempts (a Run with changed code that did not pass).
+    var tries = S.tries[S.lessonIndex] || 0, need = (shown + 1) * TRIES_PER_HINT - tries;
+    var tip = document.createElement("button"); tip.className = "btn";
+    if (shown >= les.hints.length) { tip.textContent = "No more hints"; tip.disabled = true; }
+    else if (done) { tip.textContent = shown ? "Next hint" : "Hint"; tip.disabled = true; }
+    else if (need > 0) { tip.textContent = (shown ? "Next hint" : "Hint") + ": " + need + " more " + (need === 1 ? "try" : "tries") + " first"; tip.disabled = true; tip.title = "Change your code and press Run. Each changed attempt counts."; }
+    else { tip.textContent = shown ? "Next hint" : "Hint"; tip.onclick = function(){ S.hintsShown[S.lessonIndex] = shown + 1; save(); renderLesson(); }; }
+    btns.appendChild(tip);
   }
   if (done || S.done[S.lessonIndex]) {
     var nx = document.createElement("button"); nx.className = "btn primary"; nx.textContent = S.lessonIndex === N - 1 ? "Finish" : "Next lesson →";
@@ -908,7 +939,7 @@ function renderAll(){
    ==================================================================== */
 
 var running = false;
-function run(){
+function run(byHand){
   if (running || S.lessonIndex >= N) return;
   running = true;
   var page = pageFor(), src = $("code").value;
@@ -918,22 +949,28 @@ function run(){
     running = false;
     if (idx !== S.lessonIndex) return;
     last = { r: res[0], a: res[1] };
+    if (byHand === true && S.lastTried[idx] !== src && src !== LESSONS[idx].start) {
+      S.lastTried[idx] = src;
+      if (!evaluate(LESSONS[idx], last.r, last.a).done) S.tries[idx] = (S.tries[idx] || 0) + 1;
+      save();
+    }
     renderAll();
   });
 }
 
 function gotoLesson(i){
+  hideFlash();
   S.lessonIndex = Math.max(0, Math.min(N, i));
-  hintIdx = -1; last = null; S.reveal = false;
+  last = null; S.reveal = false;
   save(); loadEditor(); renderAll();
   if (S.lessonIndex < N) run(); else blankPreview();
 }
 function blankPreview(){ $("preview").removeAttribute("srcdoc"); $("preview").srcdoc = buildDoc(PAGES.cats, CATS, LOOP_SOLUTION, 0).html; }
 
-$("btn-run").onclick = run;
+$("btn-run").onclick = function(){ run(true); };
 $("code").addEventListener("keydown", function(e){
   var ta = e.target;
-  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(); return; }
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(true); return; }
   if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); var a = ta.selectionStart; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = a + 2; }
 });
 $("code").addEventListener("input", function(){ S.code[S.lessonIndex] = $("code").value; save(); });
@@ -962,8 +999,23 @@ $("paste-load").onclick = function(){
 };
 [].forEach.call(document.querySelectorAll(".modal-back"), function(m){ m.addEventListener("click", function(e){ if (e.target === m) closeModals(); }); });
 
+// Teacher's secret: Shift+click on "Lesson n / 8" flashes this lesson's solution over the code box for 6 seconds. Click it to hide sooner.
+var flashTimer = null;
+function hideFlash(){ var f = document.querySelector(".flash"); if (f) f.remove(); clearTimeout(flashTimer); }
+function flashSolution(){
+  if (S.lessonIndex >= N) return;
+  hideFlash();
+  var f = document.createElement("div");
+  f.className = "flash";
+  f.innerHTML = '<div class="bar2"></div><pre>' + esc(SOLUTIONS[S.lessonIndex]) + '</pre>';
+  f.onclick = hideFlash;
+  document.querySelector(".ed").appendChild(f);
+  flashTimer = setTimeout(hideFlash, 6000);
+}
+$("lesson-num").addEventListener("click", function(e){ if (e.shiftKey) flashSolution(); });
+
 // Test hook: lets an automated check drive the page without the UI.
-window.__DTE = { LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoLesson: gotoLesson, state: function(){ return S; } };
+window.__DTE = { SOLUTIONS: SOLUTIONS, flashSolution: flashSolution, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoLesson: gotoLesson, state: function(){ return S; } };
 
 primerOpen = !S.primerDone;
 loadEditor();
