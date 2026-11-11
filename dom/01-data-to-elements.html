@@ -5,201 +5,214 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Data to Elements</title>
 <style>
-  :root { --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:#f6f7f9; }
-  .mono { font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; }
-  .app { max-width:1240px; margin:0 auto; padding:16px; }
-  header { display:flex; align-items:center; gap:12px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:12px; }
-  .brand h1 { font-size:20px; margin:0; }
-  .brand .sub { color:var(--muted); font-size:12px; margin-top:2px; }
-  .brand a { color:var(--muted); }
-  .dots { display:flex; gap:6px; align-items:center; flex:1; min-width:120px; }
-  .dot { width:10px; height:10px; border-radius:50%; background:#dfe3e8; cursor:pointer; }
-  .dot.done { background:var(--accent); }
-  .dot.cur { outline:2px solid var(--accent); outline-offset:2px; }
-  .hbtns { display:flex; gap:8px; flex-wrap:wrap; }
-  .btn { border:1px solid #d3d7dd; background:#fff; color:var(--ink); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; font-family:inherit; }
-  .btn:hover { border-color:var(--accent); }
-  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-  .btn:disabled { opacity:.45; cursor:not-allowed; }
-  .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:16px; margin-top:16px; }
-  .lcol, .rcol { display:flex; flex-direction:column; gap:16px; min-width:0; }
-  @media (max-width:1020px){ .grid { grid-template-columns:minmax(0,1fr); } .rcol { order:-1; } }
-  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); min-width:0; }
-  .box-title { font-weight:700; font-size:14px; margin-bottom:8px; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
-  .sub { font-size:12px; color:var(--muted); font-weight:400; }
+:root{
+  --vs-bg:#1f1f1f; --vs-side:#181818; --vs-border:#2b2b2b; --vs-fg:#cccccc; --vs-dim:#9d9d9d; --vs-blue:#0078d4; --vs-sel:#37373d; --vs-ln:#6e7681;
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
 
-  /* data box */
-  .data { font-size:13px; display:flex; flex-direction:column; gap:4px; max-height:230px; overflow:auto; }
-  .drow { display:flex; gap:10px; align-items:baseline; padding:3px 6px; border-radius:6px; background:#f8f9fb; }
-  .drow .ix { color:var(--accent); font-weight:700; flex:none; min-width:58px; }
-  .drow .k { color:#6b7280; }
-  .drow .s { color:#0f7b3f; }
-  .drow .n { color:#b45309; }
-  .drow .b { color:#7c3aed; }
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
 
-  /* preview + structure */
-  .preview-frame { width:100%; height:330px; border:1px solid var(--line); border-radius:8px; background:#fff; display:block; }
-  .note { font-size:11px; color:var(--muted); margin-top:8px; }
-  .tree { font-size:13px; line-height:1.6; max-height:240px; overflow:auto; background:#f8f9fb; border-radius:8px; padding:8px 10px; white-space:pre; }
-  .tree .tg { color:var(--accent); }
-  .tree .cl { color:#b45309; }
-  .tree .tx { color:var(--ink); font-weight:600; }
-  .empty { color:#9aa0a6; font-size:13px; font-style:italic; }
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #000;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px}
 
-  /* lesson */
-  .lesson-top { display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
-  .lesson-title { font-size:17px; font-weight:800; margin:0; flex:1; }
-  .goal { font-size:14px; line-height:1.55; background:#f6f8fa; border-radius:10px; padding:10px 12px; }
-  .goal pre { background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; overflow-x:auto; margin:8px 0 0; }
-  .goal .mono, .fin .mono, .hintbox .mono, .primer-body .mono { background:#eef1f5; border-radius:4px; padding:0 4px; font-size:.92em; }
-  .goal ol.todo { margin:8px 0; padding-left:22px; } .goal ol.todo li { margin:0 0 4px; }
-  .turn { margin-top:10px; padding-top:10px; border-top:1px dashed #d3d7dd; }
-  .after { margin-top:10px; padding:10px 12px; border-radius:10px; background:#eef6ff; border:1px solid #cfe0fb; font-size:14px; line-height:1.55; }
-  .state { margin-top:10px; font-size:13px; line-height:1.5; }
-  .state .ok { color:var(--ok); font-weight:700; }
-  .state .wait { color:var(--warn); }
-  .hintbox { background:#fff8e6; border:1px solid #f5e2b0; border-radius:8px; padding:8px 10px; font-size:13px; margin-top:10px; display:flex; flex-direction:column; gap:4px; }
-  .steps { list-style:none; padding-left:4px; margin:10px 0 0; display:flex; flex-direction:column; gap:6px; }
-  .steps li { font-size:13px; color:#9aa0a6; display:flex; gap:8px; align-items:center; }
-  .steps li.done { color:var(--ok); }
-  .steps .boxx { width:14px; height:14px; border:1px solid #d3d7dd; border-radius:4px; flex:none; display:inline-flex; align-items:center; justify-content:center; font-size:10px; }
-  .steps li.done .boxx { background:var(--ok); border-color:var(--ok); color:#fff; }
-  .buttons { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
-  .fin { font-size:14px; line-height:1.6; }
-  .fin ul.loop { list-style:none; padding:10px 12px; margin:8px 0 12px; background:#f6f8fa; border-radius:10px; display:flex; flex-direction:column; gap:5px; }
-  .fin ul.loop li { display:flex; gap:10px; align-items:baseline; font-size:13px; flex-wrap:wrap; }
-  .fin ul.loop li .mono { color:var(--accent); font-weight:700; background:none; min-width:200px; }
-  .fin ul.loop li em { font-style:normal; color:var(--muted); }
+/* ===== practice: VS Code + browser ===== */
+.work{flex:1;display:grid;grid-template-columns:55fr 45fr;min-height:0}
+.work.split{grid-template-columns:64fr 36fr}
+.vs{background:var(--vs-bg);color:var(--vs-fg);display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid #000;font-size:13px}
+.vs-title{height:34px;flex:none;background:var(--vs-side);border-bottom:1px solid var(--vs-border);display:flex;align-items:center;padding:0 8px;font-size:13px;gap:2px;overflow:hidden}
+.vs-title svg{width:16px;height:16px;margin-right:8px;flex:none}
+.vs-title .menu span{padding:3px 7px;color:var(--vs-fg)}
+.vs-title .cc{margin:0 auto;width:36%;min-width:140px;height:22px;border:1px solid #3c3c3c;background:#2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--vs-dim);font-size:12px}
+.vs-title .win{display:flex;gap:14px;color:var(--vs-dim);padding:0 4px}
+.vs-body{flex:1;display:flex;min-height:0}
+.act{width:48px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.act .ic{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:#868686;border-left:2px solid transparent}
+.act .ic svg{width:24px;height:24px}
+.act .ic.btn-ex{cursor:pointer}
+.act .ic.btn-ex:hover{color:#fff}
+.act .ic.on{color:#fff;border-left-color:var(--vs-blue)}
+.act .bottom{margin-top:auto}
+.side{width:200px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);overflow:auto}
+.side .hdr{height:35px;display:flex;align-items:center;padding:0 20px;font-size:11px;letter-spacing:.04em}
+.side .folder{padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.side .file{display:flex;align-items:center;gap:6px;padding:0 8px 0 22px;height:22px;cursor:pointer;white-space:nowrap}
+.side .file:hover{background:#2a2d2e}
+.side .file.sel{background:var(--vs-sel);outline:1px solid var(--vs-blue);outline-offset:-1px}
+.side .file .m{margin-left:auto;color:#e2c08d;font-size:11px}
+.fi{width:16px;text-align:center;font:700 10px ui-monospace,Consolas,monospace;flex:none}
+.fi.js{color:#cbcb41}.fi.html{color:#e44d26}.fi.css{color:#42a5f5}
+.editors{flex:1;display:flex;min-width:0}
+.group{flex:1;display:flex;flex-direction:column;min-width:0}
+.group+.group{border-left:1px solid var(--vs-border)}
+.tabs{height:35px;flex:none;background:var(--vs-side);display:flex;border-bottom:1px solid var(--vs-border);overflow-x:auto;overflow-y:hidden}
+.tab{display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;border-right:1px solid var(--vs-border);color:var(--vs-dim);white-space:nowrap;cursor:pointer;flex:none}
+.tab.on{background:var(--vs-bg);color:#fff;box-shadow:inset 0 1px 0 var(--vs-blue)}
+.tab .x{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--vs-dim)}
+.tab .x:hover{background:#3c3c3c}
+.tab .lock{font-size:11px}
+.crumbs{height:22px;flex:none;display:flex;align-items:center;padding:0 14px;color:#a9a9a9;font-size:12px}
+.scroller{flex:1;overflow:auto;position:relative;min-height:0}
+.codebox{display:flex;min-width:100%;width:max-content;font:13px/19px ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding-bottom:40vh}
+.gutter{flex:none;width:52px;text-align:right;padding-right:18px;color:var(--vs-ln);user-select:none;position:sticky;left:0;background:var(--vs-bg);z-index:2}
+.gutter div{height:19px;position:relative}
+.gutter .cur{color:#cccccc}
+.gutter .add::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#2ea043}
+.gutter .ok::after{content:"✓";position:absolute;right:-15px;top:0;color:#3fb950;font-size:11px}
+.lines{position:relative;flex:1;min-width:300px}
+.lines pre{margin:0;font:inherit;white-space:pre;color:var(--vs-fg);tab-size:2}
+.lines pre div{height:19px;padding-left:4px}
+.lines pre div.add{background:rgba(46,160,67,.17)}
+.lines pre div.ok{background:rgba(46,160,67,.06)}
+.lines pre div.del{background:rgba(248,81,73,.18)}
+.gutter .del::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#f85149}
+.lines textarea{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 0 0 4px;border:0;outline:0;resize:none;overflow:hidden;background:transparent;color:transparent;caret-color:#aeafad;font:inherit;white-space:pre;tab-size:2;z-index:1}
+.lines textarea::selection{background:rgba(38,79,120,.85);color:transparent}
+.readonly .lines pre{user-select:none}
+.k{color:#569cd6}.c{color:#c586c0}.s{color:#ce9178}.num{color:#b5cea8}.cm{color:#6a9955}.f{color:#dcdcaa}.v{color:#9cdcfe}.tgc{color:#569cd6}.at{color:#9cdcfe}.sel{color:#d7ba7d}.pr{color:#9cdcfe}
+.status{height:22px;flex:none;background:var(--vs-side);border-top:1px solid var(--vs-border);display:flex;align-items:center;font-size:12px;white-space:nowrap;overflow:hidden}
+.status .remote{background:var(--vs-blue);color:#fff;height:100%;padding:0 10px;display:flex;align-items:center}
+.status span{padding:0 8px}
+.status .r{margin-left:auto;display:flex}
+.status .err{color:#f48771}
 
-  /* editor + console */
-  .ed { position:relative; background:#15181f; color:#d4d4d4; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
-  .ed .bar { display:flex; gap:8px; align-items:center; color:#8b93a1; font-size:12px; flex-wrap:wrap; }
-  .ed .bar .file { flex:1; }
-  .ed .bar .btn { background:#232833; border-color:#323a48; color:#e5e7eb; padding:5px 10px; font-size:12px; }
-  .ed .bar .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-  .ed textarea { width:100%; min-height:260px; background:#0f1217; color:#e5e7eb; border:1px solid #262d38; border-radius:8px; padding:10px 12px; font:13.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; resize:vertical; tab-size:2; caret-color:#fff; }
-  .ed textarea:focus { outline:1px solid var(--accent); }
-  .console { background:#0f1217; border:1px solid #262d38; border-radius:8px; padding:8px 10px; font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; min-height:60px; max-height:200px; overflow:auto; }
-  .console .ln { white-space:pre-wrap; word-break:break-word; }
-  .console .ln.err { color:#ff8a80; }
-  .console .ln.explain { color:#ffd479; font-family:system-ui,sans-serif; font-size:13px; margin:2px 0 4px; }
-  .console .ln.dim { color:#6b7280; }
+.br{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0}
+.br-url{flex:none;background:#fff;padding:6px 10px;border-bottom:1px solid #dadce0;display:flex;align-items:center;gap:10px;color:#5f6368;font-size:13px}
+.br-url .bar{flex:1;background:#f1f3f4;border-radius:14px;padding:5px 14px;color:#202124;white-space:nowrap;overflow:hidden}
+.br-url button{background:none;border:0;color:#5f6368;cursor:pointer;font-size:15px;padding:0 4px}
+#preview{flex:1;border:0;width:100%;min-height:0;background:#f5f3ee}
+.devtools{flex:none;max-height:38%;display:flex;flex-direction:column;border-top:1px solid #cbcdd1}
+.dt-head{padding:4px 10px;background:#f1f3f4;border-bottom:1px solid #e0e0e0;color:#5f6368;font-size:12px}
+.dt-out{overflow:auto;font:12px/18px ui-monospace,Consolas,monospace}
+.dt-row{padding:2px 10px;border-bottom:1px solid #f0f0f0;color:#202124;white-space:pre-wrap;word-break:break-word}
+.dt-row.err{background:#fff0f0;color:#d93025;border-bottom-color:#fbd0d0}
+.dt-row.why{background:#fffbe6;color:#7a4b00;font-family:system-ui,sans-serif;border-bottom-color:#f5e2b0}
+.dt-row.dim{color:#9aa0a6}
+#altframe{position:absolute;width:1px;height:1px;left:-9999px;border:0}
 
-  /* primer */
-  .primer-card { max-width:780px; margin:24px auto; }
-  .primer-kicker { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
-  .primer-title { font-size:24px; margin:6px 0 14px; }
-  .primer-art { background:#fbfcfd; border:1px solid var(--line); border-radius:10px; padding:10px; overflow-x:auto; }
-  .primer-art svg { width:100%; min-width:560px; height:auto; display:block; }
-  .primer-scrollhint { display:none; font-size:11px; color:var(--muted); margin-top:6px; }
-  @media (max-width:620px){ .primer-scrollhint { display:block; } }
-  .primer-body { font-size:15px; line-height:1.65; margin:14px 0 0; }
-  .primer-say { font-size:13px; color:var(--muted); border-top:1px dashed var(--line); margin-top:14px; padding-top:8px; }
-  .primer-nav { display:flex; gap:8px; align-items:center; margin-top:18px; flex-wrap:wrap; }
-  .pdots { display:flex; gap:6px; flex:1; }
-  .pdot { width:9px; height:9px; border-radius:50%; background:#dfe3e8; cursor:pointer; }
-  .pdot.cur { background:var(--accent); }
-
-  /* modals */
-  .modal-back { position:fixed; inset:0; background:rgba(15,18,24,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
-  .modal-back.open { display:flex; }
-  .modal { background:#fff; border-radius:12px; padding:18px; width:min(680px,94vw); max-height:90vh; overflow:auto; }
-  .modal h3 { margin:0 0 10px; }
-  .modal p { font-size:13px; color:var(--muted); margin:6px 0 12px; }
-  .modal textarea { width:100%; min-height:150px; font:13px ui-monospace,monospace; border:1px solid #d3d7dd; border-radius:8px; padding:8px; resize:vertical; }
-  .flash { position:absolute; inset:0; z-index:5; background:rgba(15,18,23,.97); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; }
-  .flash pre { flex:1; margin:0; overflow:auto; color:#e5e7eb; font:14px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; }
-  .flash .bar2 { height:3px; background:var(--accent); border-radius:2px; animation:shrink 6s linear forwards; }
-  @keyframes shrink { from { width:100%; } to { width:0; } }
-  #altframe { position:absolute; left:-9999px; top:0; width:400px; height:300px; border:0; }
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work,.work.split{grid-template-columns:1fr;grid-auto-rows:minmax(460px,auto)}
+  .vs{border-right:0;border-bottom:1px solid #000}
+  .side{width:150px}
+  .vs-title .menu,.vs-title .win{display:none}
+  .br{min-height:460px}
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <div class="brand">
-      <h1>Data to Elements</h1>
-      <div class="sub">turn a list into a page · <a href="../">home</a></div>
-    </div>
-    <div class="dots" id="dots"></div>
-    <div class="hbtns">
-      <button class="btn" id="btn-why">Why?</button>
-      <button class="btn" id="btn-code">Copy progress</button>
-      <button class="btn" id="btn-paste">Paste code</button>
-      <button class="btn" id="btn-reset">&#8635; Reset</button>
-    </div>
-  </header>
+<div id="primer" class="hidden"></div>
 
-  <div id="primer" style="display:none;"></div>
-
-  <div class="grid" id="main-grid">
-    <div class="lcol">
-      <div class="card">
-        <div class="box-title">The data <span class="mono sub" id="data-name"></span></div>
-        <div class="data mono" id="data"></div>
-        <div class="note">Already in your script. You never type these values in: you take them from the list.</div>
-      </div>
-      <div class="card">
-        <div class="box-title">Live page <span class="sub">(index.html, with your script run on it)</span></div>
-        <iframe class="preview-frame" id="preview" sandbox="allow-scripts" title="The page your script builds"></iframe>
-      </div>
-      <div class="card">
-        <div class="box-title">What your script put in the box <span class="mono sub" id="tree-name"></span></div>
-        <div class="tree mono" id="tree"></div>
-      </div>
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
     </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
 
-    <div class="rcol">
-      <div class="card">
-        <div class="lesson-top">
-          <h2 class="lesson-title" id="lesson-title"></h2>
-          <span class="mono sub" id="lesson-num"></span>
+  <div class="work" id="work">
+    <div class="vs">
+      <div class="vs-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0078d4" d="M17 2 8 10.5 3.5 7 2 7.8v8.4l1.5.8L8 13.5 17 22l5-2.4V4.4zM4 14.4V9.6L6.5 12zm13 2.4L11.3 12 17 7.2z"/></svg>
+        <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+        <div class="cc" id="cc">data-to-elements</div>
+        <div class="win"><span>—</span><span>☐</span><span>✕</span></div>
+      </div>
+      <div class="vs-body">
+        <div class="act">
+          <div class="ic btn-ex" id="act-ex" title="Explorer (Ctrl+B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H7a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/><path d="M6 7H4v13a1 1 0 0 0 1 1h10v-2"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 5-8 3-11 7"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4l12 8-12 8z"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="7" height="7"/><rect x="11" y="11" width="7" height="7"/><rect x="3" y="3" width="7" height="7"/><rect x="14" y="2" width="7" height="7" transform="rotate(10 17 5)"/></svg></div>
+          <div class="bottom"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div></div>
         </div>
-        <div id="lesson-body"></div>
-        <div class="state" id="lesson-state"></div>
-        <div class="hintbox" id="lesson-hint" style="display:none;"></div>
-        <div class="buttons" id="lesson-buttons"></div>
-      </div>
-
-      <div class="ed">
-        <div class="bar">
-          <span class="file mono">script.js</span>
-          <span>Ctrl+Enter runs it</span>
-          <button class="btn" id="btn-startcode">Start code again</button>
-          <button class="btn primary" id="btn-run">&#9654; Run</button>
+        <div class="side hidden" id="side"></div>
+        <div class="editors">
+          <div class="group" id="g1">
+            <div class="tabs" id="tabs1"></div>
+            <div class="crumbs" id="crumbs1"></div>
+            <div class="scroller" id="sc-edit">
+              <div class="codebox"><div class="gutter" id="gut-edit"></div><div class="lines"><pre id="hl-edit" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-label="script.js"></textarea></div></div>
+            </div>
+            <div class="scroller readonly hidden" id="sc-view">
+              <div class="codebox"><div class="gutter" id="gut-view"></div><div class="lines"><pre id="hl-view"></pre></div></div>
+            </div>
+          </div>
+          <div class="group hidden" id="g2">
+            <div class="tabs" id="tabs2"></div>
+            <div class="crumbs">solution.js › …</div>
+            <div class="scroller readonly" id="sc-sol">
+              <div class="codebox"><div class="gutter" id="gut-sol"></div><div class="lines"><pre id="hl-sol"></pre></div></div>
+            </div>
+          </div>
         </div>
-        <textarea id="code" spellcheck="false" wrap="off" aria-label="script.js"></textarea>
-        <div class="console" id="console" aria-label="Console"></div>
       </div>
+      <div class="status"><span class="remote">⇄</span><span id="st-err">⊗ 0 ⚠ 0</span><div class="r"><span id="st-ln">Ln 1, Col 1</span><span id="st-lang">{} JavaScript</span><span>⦿ Port : 5500</span></div></div>
+    </div>
+
+    <div class="br">
+      <div class="br-url"><button id="br-reload" title="Reload">↻</button><div class="bar">127.0.0.1:5500/index.html</div></div>
+      <iframe id="preview" sandbox="allow-scripts" title="The page, with your script run on it"></iframe>
+      <div class="devtools"><div class="dt-head">Console</div><div class="dt-out" id="console"></div></div>
     </div>
   </div>
 </div>
 <iframe id="altframe" sandbox="allow-scripts" title="Second run with other data" aria-hidden="true" tabindex="-1"></iframe>
-
-<div class="modal-back" id="modal-code">
-  <div class="modal">
-    <h3>Progress code</h3>
-    <p>Copy this code to carry on at another machine. There, press "Paste code", paste it in, and restore.</p>
-    <textarea id="code-text"></textarea>
-    <div class="buttons">
-      <button class="btn" id="code-copy">Copy code</button>
-      <button class="btn" id="code-close">Close</button>
-    </div>
-  </div>
-</div>
-<div class="modal-back" id="modal-paste">
-  <div class="modal">
-    <h3>Restore progress</h3>
-    <p>Paste a code you saved earlier. <b>Careful:</b> it replaces your progress here.</p>
-    <textarea id="paste-text" placeholder="pasted code..."></textarea>
-    <div class="buttons">
-      <button class="btn primary" id="paste-load">Restore</button>
-      <button class="btn" id="paste-close">Cancel</button>
-    </div>
-  </div>
-</div>
 
 <script>
 (function(){
@@ -310,7 +323,8 @@ function buildDoc(page, data, code, id){
     '  if (Array.isArray(v)) return d>1? "[...]" : "[" + v.map(function(x){return fmt(x,d+1);}).join(", ") + "]";\n' +
     '  if (v && typeof v==="object") return d>1? "{...}" : "{" + Object.keys(v).map(function(k){return k+": "+fmt(v[k],d+1);}).join(", ") + "}";\n' +
     '  return String(v); }\n' +
-    'console.log=console.info=console.warn=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'console.log=console.info=console.warn=console.debug=console.dir=console.table=console.error=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'window.alert=function(m){ send({type:"log",text:"alert: "+fmt(m)}); };\n' +
     'window.__made=[];\n' +
     'var ce=document.createElement.bind(document);\n' +
     'document.createElement=function(t){ var el=ce(t); window.__made.push(el); return el; };\n' +
@@ -542,7 +556,7 @@ var PRIMER = [
     body: "Instagram, Spotify, the e-napló: nobody types those cards in by hand. The server sends a <b>list</b>, and a few lines of JavaScript turn every item into something on the page.<br><br>That is today. On the exam, the frontend task is 15 points, and most of it is exactly this.",
     say: "Ask: how many cards on your Instagram feed did a person write in HTML? None. Then the exam point: this loop is the spine of the frontend task." },
   { title: "The data: a list of things", art: "list",
-    body: "The list is an array. Each item is an object: one cat, with a name and an age.<br><br>To get one value, you go in two steps: first <b>which cat</b>, then <b>what about it</b>. <span class=\"mono\">cats.name</span> skips the first step, and gives you nothing at all. That one cost half the class points on the last test.",
+    body: "The list is an array. Each item is an object: one cat, with a name and an age.<br><br>To get one value, you go in two steps: first <b>which cat</b>, then <b>what about it</b>. <span class=\"mono\">cats.name</span> skips the first step, and gives you nothing at all. It is the most common mistake on the tests.",
     say: "Read the four lines at the bottom aloud. Ask before revealing: what does cats.name give? (undefined.) This was the programs.place mistake from the Test 04 redo." },
   { title: "The page: boxes inside boxes", art: "boxes",
     body: "Every element on a page is a box, and boxes sit inside other boxes. The HTML gives you an <b>empty box</b> with an id. Your script's whole job is to fill it.",
@@ -689,7 +703,7 @@ var LESSONS = [
     start: "// excuses is already here. The box is <ul id=\"excuses\">.\n",
     steps: ["#excuses found, and something in it", "An <li> with the first excuse", "An <li> for every excuse, in order", "The used ones crossed out", "Works on any list (checked on other excuses)"],
     flags: function(r, a){
-      var label = function(e){ return e.text.slice(0, 24) + "..."; };
+      var label = function(e){ return e.text.length > 26 ? e.text.slice(0, 24).replace(/[\s.,]+$/, "") + "…" : e.text.replace(/\.$/, ""); };
       var LI = function(e){ return { tag: "li", cls: [], text: e.text }; };
       var LI_USED = function(e){ return { tag: "li", cls: e.used ? ["used"] : [], text: e.text }; };
       var t = r.tree, k = t ? t.kids : [];
@@ -722,134 +736,464 @@ var SOLUTIONS = [
   'const box = document.getElementById("excuses");\n\nfor (let i = 0; i < excuses.length; i++) {\n  const li = document.createElement("li");\n  li.textContent = excuses[i].text;\n  if (excuses[i].used === true) {\n    li.classList.add("used");\n  }\n  box.appendChild(li);\n}\n'
 ];
 
+
+/* ====================================================================
+   VS Code version: what each task says, in one sentence plus where to look.
+   Checks, hints, start code and solutions above are unchanged.
+   ==================================================================== */
+
+PAGES.cats.title = "Cats of 13F";
+PAGES.excuses.title = "Excuses we have heard";
+
+var TEXT = [
+  { title: "Look at the data",
+    do: "Print two things in the Console: <b>how many cats</b> there are, and <b>the name of the third cat</b>.",
+    sub: "The cats are in <code>data.js</code> (open it from the Explorer, the files icon top left). Save with <kbd>Ctrl</kbd>+<kbd>S</kbd>: the Console under the page shows what you printed.",
+    start: "// cats comes from data.js\nconsole.log(cats);\n" },
+  { title: "Make one",
+    do: "Make an <code>&lt;h2&gt;</code> with the first cat's name in it, and print it to the Console.",
+    sub: "Then look at the page." },
+  { title: "Put it in the box",
+    do: "Put your <code>&lt;h2&gt;</code> into the empty box on the page.",
+    sub: "The box is <code>&lt;div id=\"cats\"&gt;</code> in <code>index.html</code>." },
+  { title: "One card",
+    do: "Finish the first cat's card: its age under the name, like <b>7 years old</b>, and then the card in the box.",
+    sub: "The ages are in <code>data.js</code>. The comments in <code>script.js</code> show where each part goes." },
+  { title: "All of them",
+    do: "Make a card for <b>every</b> cat, not just the first one.",
+    sub: "The check also runs your code on a different list of cats, so the number of cats can change." },
+  { title: "The grumpy ones",
+    do: "Cats that are not friendly get a second class on their card: <code>grumpy</code>.",
+    sub: "Which cats are friendly is in <code>data.js</code>. <code>style.css</code> already knows what grumpy looks like." },
+  { title: "A teammate's code",
+    do: "Your teammate says this is finished. Make the page show every cat properly: name, age, grumpy ones marked.",
+    sub: "Look at the page and the Console first." },
+  { title: "Your turn, no hints",
+    do: "Put one <code>&lt;li&gt;</code> in the list on the page for every excuse. Excuses with <code>used: true</code> also get the class <code>used</code>.",
+    sub: "The excuses are in <code>data.js</code>, the list is in <code>index.html</code>. No hints in this one." }
+];
+TEXT.forEach(function(t, i){ LESSONS[i].title = t.title; LESSONS[i].do = t.do; LESSONS[i].sub = t.sub; if (t.start) LESSONS[i].start = t.start; });
+LESSONS[2].hints[2] = "Save, then look at the page on the right.";
+LESSONS[3].after = "Look at the page: one card, with the name and the age inside it. Now there are four more cats waiting.";
+function logHas(run, v){
+  var re = new RegExp("(^|[^\\w])" + String(v).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^\\w]|$)");
+  return run.logs.some(function(l){ return !/^[\[{]/.test(l) && re.test(l); });
+}
+LESSONS[0].check = function(r, a){
+  var nameOk = logHas(r, CATS[2].name), lenOk = logHas(r, CATS.length);
+  if (!nameOk) {
+    if (logHas(r, CATS[3].name)) return CATS[3].name + " is the fourth cat. Counting starts at 0: the first is cats[0].";
+    if (r.logs.some(function(l){ return /^\{/.test(l) && l.indexOf('"' + CATS[2].name + '"') >= 0; })) return "You printed the whole third cat. Print only its name: add <code>.name</code>.";
+    if (r.logs.some(function(l){ return l === "undefined"; })) return "Something printed undefined. cats.name? The list has no name, one cat does: cats[2].name.";
+    return "The third cat's name is not in the Console yet.";
+  }
+  if (!lenOk) return "The name is there. Now the number of cats.";
+  if (!logHas(a, ALT_CATS[2].name) || !logHas(a, ALT_CATS.length)) return NOT_TYPED;
+  return "";
+};
+var check2 = LESSONS[1].check;
+LESSONS[1].check = function(r, a){
+  var m = check2(r, a); if (m) return m;
+  if (!r.logs.some(function(l){ return /<h2[\s>]/.test(l); })) return "The <code>&lt;h2&gt;</code> is made. Now print it: <code>console.log( )</code> with your h2 inside.";
+  return "";
+};
+var explain0 = explain;
+explain = function(err){
+  var m = err.msg || "", x = /^(\w+) is not defined/.exec(m);
+  if (x && ["h2", "p", "article", "li", "div", "ul", "grumpy", "used"].indexOf(x[1]) >= 0) return "Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".";
+  if (x && (x[1] === "box" || x[1] === "list")) return x[1] + " was never made. Find it first: const " + x[1] + " = document.getElementById(\"...\"), with the id from index.html.";
+  if (/HTML space characters/.test(m)) return "classList.add takes one class at a time, without spaces: add(\"card\"), then add(\"grumpy\").";
+  return explain0(err);
+};
+LESSONS[7].noHints = false;
+LESSONS[7].hints = [];
+LESSONS[7].sub = "The excuses are in <code>data.js</code>, the list is in <code>index.html</code>. No hints in this one.";
+LESSONS[7].after = "That is the whole lesson. Find the box, go through the list, and for each item: make it, fill it, put it in. Next, the list comes from a server instead of data.js (fetch), and everything after that is what you did today.";
+PRIMER[PRIMER.length - 1].body = "You do not have to learn this slide. You will type every line of it in the next half hour, and after that it sticks.<br><br>The practice looks like VS Code, with the page open next to it, the way Live Server shows it. Save with <b>Ctrl+S</b> and the page reloads with your script run on it.";
+
+/* ====================================================================
+   Small helpers
+   ==================================================================== */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* ---- syntax colours, VS Code Dark Modern ---- */
+var KW = { const:"k", let:"k", var:"k", true:"k", false:"k", null:"k", undefined:"k", function:"k", new:"k", for:"c", if:"c", else:"c", return:"c", while:"c" };
+function hlJS(line){
+  var re = /(\/\/.*$)|("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\sA-Za-z_$\d"']+)/g, out = "", m, prevDot = false;
+  while ((m = re.exec(line))) {
+    if (m[1]) out += '<span class="cm">' + esc(m[1]) + '</span>';
+    else if (m[2]) out += '<span class="s">' + esc(m[2]) + '</span>';
+    else if (m[3]) out += '<span class="num">' + m[3] + '</span>';
+    else if (m[4]) {
+      var w = m[4], rest = line.slice(re.lastIndex);
+      if (KW[w] && !prevDot) out += '<span class="' + KW[w] + '">' + w + '</span>';
+      else if (/^\s*\(/.test(rest)) out += '<span class="f">' + w + '</span>';
+      else out += '<span class="v">' + w + '</span>';
+    }
+    else if (m[5]) out += m[5];
+    else out += esc(m[6]);
+    if (!m[5]) prevDot = !!(m[6] && /\.$/.test(m[6]));
+  }
+  return out;
+}
+function hlHTML(line){
+  return esc(line).replace(/(&lt;\/?)([\w!-]+)([^&]*?)(\/?&gt;)/g, function(_, a, t, attrs, b){
+    return '<span class="tgc">' + a + t + '</span>' + attrs.replace(/([\w-]+)(=)("[^"]*")/g, '<span class="at">$1</span>$2<span class="s">$3</span>') + '<span class="tgc">' + b + '</span>';
+  });
+}
+function hlCSS(line){
+  if (/^\s+[\w-]+\s*:/.test(line)) return line.replace(/^(\s+)([\w-]+)(\s*:)(.*)$/, function(_, sp, p, c, v){ return sp + '<span class="pr">' + p + '</span>' + c + '<span class="s">' + esc(v) + '</span>'; });
+  if (/\{\s*$/.test(line)) return '<span class="sel">' + esc(line.replace(/\s*\{\s*$/, "")) + '</span> {';
+  return esc(line);
+}
+function hlFor(name){ return /\.html$/.test(name) ? hlHTML : /\.css$/.test(name) ? hlCSS : hlJS; }
+
+/* ---- the project's other files, shown read-only ---- */
+function dataJs(page){
+  var keys = Object.keys(page.data[0]);
+  var rows = page.data.map(function(o){ return "  { " + keys.map(function(k){ return k + ": " + JSON.stringify(o[k]); }).join(", ") + " }"; });
+  return "// data.js: the list your script uses\nconst " + page.name + " = [\n" + rows.join(",\n") + "\n];\n";
+}
+function indexHtml(page){
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>' + page.title + '</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n' +
+    page.body.split("\n").map(function(l){ return "  " + l; }).join("\n") +
+    '\n\n  <script src="data.js"><\/script>\n  <script src="script.js"><\/script>\n</body>\n</html>\n';
+}
+function styleCss(page){
+  return page.css.split("}").filter(function(r){ return r.trim(); }).map(function(r){
+    var p = r.split("{"), decls = p.slice(1).join("{").split(";").filter(function(d){ return d.trim(); });
+    return p[0].trim().replace(/,/g, ", ") + " {\n" + decls.map(function(d){ return "  " + d.trim().replace(/:/, ": ") + ";"; }).join("\n") + "\n}";
+  }).join("\n\n") + "\n";
+}
+function fileText(name){
+  var page = pageFor();
+  if (name === "script.js") return editor.value;
+  if (name === "data.js") return dataJs(page);
+  if (name === "index.html") return indexHtml(page);
+  if (name === "style.css") return styleCss(page);
+  if (name === "solution.js") return SOLUTIONS[S.i];
+  return "";
+}
+var FILES = ["data.js", "index.html", "script.js", "style.css"];
+function ext(n){ return n.split(".").pop(); }
+function fi(n){ var e = ext(n); return '<span class="fi ' + e + '">' + (e === "js" ? "JS" : e === "html" ? "&lt;&gt;" : "#") + '</span>'; }
+
 /* ====================================================================
    State
    ==================================================================== */
 
-var KEY = "data-to-elements-v1";
+var KEY = "data-to-elements-vscode-v1";
 var TRIES_PER_HINT = 2;
 var N = LESSONS.length;
-function fresh(){ return { lessonIndex: 0, done: [], code: {}, primerDone: false, reveal: false, tries: {}, lastTried: {}, hintsShown: {} }; }
+function fresh(){ return { i: 0, done: [], code: {}, buf: {}, primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, saved: {}, side: false }; }
 function normalize(s){
   var f = fresh();
   if (!s || typeof s !== "object") return f;
-  for (var k in f) if (s[k] === undefined) s[k] = f[k];
-  s.lessonIndex = Math.max(0, Math.min(N, Number(s.lessonIndex) || 0));
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
   if (!Array.isArray(s.done)) s.done = [];
-  ["code", "tries", "lastTried", "hintsShown"].forEach(function(k){ if (typeof s[k] !== "object" || !s[k]) s[k] = {}; });
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
   return s;
 }
 var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
-var primerIdx = 0, primerOpen = false, showSay = false, last = null;
+var editor = $("code");
+var UI = { open: ["script.js"], active: "script.js", note: "" };
+var last = null, running = false, primerIdx = 0, showSay = false;
 
-function $(id){ return document.getElementById(id); }
-function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-function L(){ return S.lessonIndex < N ? LESSONS[S.lessonIndex] : null; }
-function codeOf(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+function L(){ return LESSONS[S.i]; }
+function pageFor(){ return PAGES[L().page]; }
+function savedCode(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+function bufferCode(i){ return S.buf[i] !== undefined ? S.buf[i] : savedCode(i); }
+function dirty(){ return editor.value !== savedCode(S.i); }
 
 /* ====================================================================
-   Rendering
+   Editor
+   ==================================================================== */
+
+function linesHtml(text, hl, marks){
+  marks = marks || {};
+  return text.split("\n").map(function(l, n){ return '<div' + (marks[n + 1] ? ' class="' + marks[n + 1] + '"' : "") + '>' + (hl(l) || " ") + '</div>'; }).join("");
+}
+function gutterHtml(count, cur, marks){
+  marks = marks || {};
+  var h = "";
+  for (var n = 1; n <= count; n++) h += '<div class="' + (n === cur ? "cur " : "") + (marks[n] || "") + '">' + n + '</div>';
+  return h;
+}
+function caretPos(){
+  var before = editor.value.slice(0, editor.selectionStart).split("\n");
+  return { ln: before.length, col: before[before.length - 1].length + 1 };
+}
+function sizeEditor(){
+  var lines = editor.value.split("\n");
+  var longest = lines.reduce(function(m, l){ return Math.max(m, l.length); }, 0);
+  editor.style.width = "calc(" + (longest + 4) + "ch + 4px)";
+  editor.parentNode.style.minWidth = "calc(" + (longest + 4) + "ch + 4px)";
+}
+function paintEditor(){
+  var marks = solutionMarks().mine;
+  $("hl-edit").innerHTML = linesHtml(editor.value, hlJS, marks);
+  var p = caretPos();
+  $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, marks);
+  sizeEditor();
+  if (UI.active === "script.js") $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col;
+}
+
+// Line diff (LCS) on normalised lines: trimmed, no trailing ;, comments and blanks ignored.
+function norm(l){ return l.trim().replace(/;\s*$/, "").replace(/\s+/g, " "); }
+function codeLines(text){ var out = []; text.split("\n").forEach(function(l, n){ var t = norm(l); if (t && t.indexOf("//") !== 0) out.push({ t: t, n: n + 1 }); }); return out; }
+function lcs(A, B){
+  var n = A.length, m = B.length, d = [], i, j;
+  for (i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); }
+  for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) d[i][j] = A[i].t === B[j].t ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  var pairs = []; i = 0; j = 0;
+  while (i < n && j < m) { if (A[i].t === B[j].t) { pairs.push([i, j]); i++; j++; } else if (d[i + 1][j] > d[i][j + 1]) i++; else j++; }
+  return pairs;
+}
+// Which solution lines are new (green), which of them the student has typed (✓), which of the student's lines are in the way (red).
+function solutionMarks(){
+  var res = { sol: {}, mine: {}, todo: 0, typed: 0, del: 0 };
+  if (!S.sol[S.i]) return res;
+  var st = codeLines(LESSONS[S.i].start), so = codeLines(SOLUTIONS[S.i]), mi = codeLines(editor.value);
+  var keep = {}; lcs(st, so).forEach(function(p){ keep[p[1]] = true; });
+  var solHit = {}, mineHit = {}; lcs(mi, so).forEach(function(p){ solHit[p[1]] = true; mineHit[p[0]] = p[1]; });
+  so.forEach(function(l, j){
+    if (keep[j]) return;
+    res.todo++;
+    if (solHit[j]) { res.typed++; res.sol[l.n] = "ok"; } else res.sol[l.n] = "add";
+  });
+  mi.forEach(function(l, k){
+    if (mineHit[k] === undefined) { res.mine[l.n] = "del"; res.del++; }
+    else if (!keep[mineHit[k]]) res.mine[l.n] = "ok";
+  });
+  return res;
+}
+function solutionSub(){
+  var m = solutionMarks();
+  return "Type the green lines from <code>solution.js</code> into your <code>script.js</code>" + (m.del ? ", and delete or move your red lines" : "") + ", then save. Pasting is off. (" + m.typed + " of " + m.todo + " typed" + (m.del ? ", " + m.del + " red" : "") + ")";
+}
+
+editor.addEventListener("input", function(){
+  S.buf[S.i] = editor.value; save();
+  paintEditor(); renderTabs(); renderSolution(); renderStripNote();
+});
+["click", "keyup", "focus"].forEach(function(ev){ editor.addEventListener(ev, function(){ var p = caretPos(); $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, solutionMarks().mine); $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col; }); });
+editor.addEventListener("keydown", function(e){
+  var v = editor.value, a = editor.selectionStart, b = editor.selectionEnd;
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S" || e.key === "Enter")) { e.preventDefault(); saveAndRun(); return; }
+  if (e.key === "Tab" && e.shiftKey) { e.preventDefault(); eachLine(function(l){ return l.replace(/^ {1,2}/, ""); }); return; }
+  if (e.key === "Tab" && a !== b && v.slice(a, b).indexOf("\n") >= 0) { e.preventDefault(); eachLine(function(l){ return "  " + l; }); return; }
+  if (e.key === "Tab") { e.preventDefault(); insert("  "); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "/") { e.preventDefault(); var all = selLines().every(function(l){ return !l.trim() || /^\s*\/\//.test(l); }); eachLine(function(l){ return all ? l.replace(/^(\s*)\/\/ ?/, "$1") : (l.trim() ? l.replace(/^(\s*)/, "$1// ") : l); }); return; }
+  if (e.key === "}" && a === b) { var ls = v.lastIndexOf("\n", a - 1) + 1; if (/^\s{2,}$/.test(v.slice(ls, a))) { e.preventDefault(); editor.selectionStart = a - 2; insert("}"); return; } }
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    var lineStart = v.lastIndexOf("\n", a - 1) + 1, indent = /^\s*/.exec(v.slice(lineStart, a))[0];
+    if (/[{[(]\s*$/.test(v.slice(lineStart, a))) {
+      if (/^\s*[}\])]/.test(v.slice(b))) { insert("\n" + indent + "  " + "\n" + indent, indent.length + 3); return; }
+      indent += "  ";
+    }
+    insert("\n" + indent);
+  }
+});
+function selLines(){ var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length; return v.slice(s, e).split("\n"); }
+function eachLine(fn){
+  var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length;
+  var block = v.slice(s, e).split("\n").map(fn).join("\n");
+  editor.selectionStart = s; editor.selectionEnd = e; insert(block);
+  editor.selectionStart = s; editor.selectionEnd = s + block.length;
+}
+function insert(text, caretAt){
+  // execCommand keeps Ctrl+Z working.
+  editor.focus();
+  if (!document.execCommand("insertText", false, text)) {
+    var a = editor.selectionStart; editor.value = editor.value.slice(0, a) + text + editor.value.slice(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = a + text.length;
+    editor.dispatchEvent(new Event("input"));
+  }
+  if (caretAt !== undefined) { var p = editor.selectionStart - text.length + caretAt; editor.selectionStart = editor.selectionEnd = p; }
+}
+function blockIfSolution(e){
+  if (!S.sol[S.i]) return;
+  e.preventDefault();
+  UI.note = "Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.";
+  renderStripNote();
+}
+editor.addEventListener("paste", blockIfSolution);
+editor.addEventListener("drop", blockIfSolution);
+$("sc-sol").addEventListener("copy", function(e){ e.preventDefault(); });
+$("sc-view").setAttribute("tabindex", "0");
+$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + " is read-only in this lesson. Your code goes in script.js."; renderStripNote(); } });
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
+});
+
+/* ====================================================================
+   VS Code: Explorer, tabs, read-only views
+   ==================================================================== */
+
+function toggleSide(){ S.side = !S.side; save(); renderSide(); }
+$("act-ex").onclick = toggleSide;
+function renderSide(){
+  $("side").classList.toggle("hidden", !S.side);
+  $("act-ex").classList.toggle("on", S.side);
+  $("side").innerHTML = '<div class="hdr">EXPLORER</div><div class="folder">⌄ ' + (L().page === "cats" ? "DATA-TO-ELEMENTS" : "DATA-TO-ELEMENTS") + '</div>' +
+    FILES.map(function(f){ return '<div class="file' + (f === UI.active ? " sel" : "") + '" data-file="' + f + '">' + fi(f) + '<span>' + f + '</span>' + (f === "script.js" && dirty() ? '<span class="m">●</span>' : "") + '</div>'; }).join("");
+}
+$("side").addEventListener("click", function(e){ var f = e.target.closest("[data-file]"); if (f) openFile(f.dataset.file); });
+
+function openFile(name){
+  if (UI.open.indexOf(name) < 0) UI.open.push(name);
+  UI.active = name;
+  renderEditorArea();
+  if (name === "script.js") editor.focus();
+}
+function closeFile(name){
+  UI.open = UI.open.filter(function(n){ return n !== name; });
+  if (!UI.open.length) UI.open = ["script.js"];
+  if (UI.active === name) UI.active = UI.open[UI.open.length - 1];
+  renderEditorArea();
+}
+function renderTabs(){
+  $("tabs1").innerHTML = UI.open.map(function(n){
+    var mod = n === "script.js" && dirty(), ro = n !== "script.js";
+    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? " (read-only in this lesson)" : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
+      '<span class="x" data-close="' + n + '">' + (mod ? "●" : "×") + '</span></div>';
+  }).join("");
+  renderSide();
+}
+$("tabs1").addEventListener("click", function(e){
+  var x = e.target.closest("[data-close]");
+  if (x) { if (x.dataset.close === "script.js" && dirty()) { UI.note = "script.js has unsaved changes. Save with Ctrl+S first."; renderStripNote(); return; } closeFile(x.dataset.close); return; }
+  var t = e.target.closest("[data-tab]"); if (t) openFile(t.dataset.tab);
+});
+function renderEditorArea(){
+  var isScript = UI.active === "script.js";
+  $("sc-edit").classList.toggle("hidden", !isScript);
+  $("sc-view").classList.toggle("hidden", isScript);
+  $("crumbs1").textContent = UI.active + " › …";
+  $("st-lang").textContent = { js: "{} JavaScript", html: "<> HTML", css: "# CSS" }[ext(UI.active)];
+  if (!isScript) {
+    var t = fileText(UI.active);
+    $("hl-view").innerHTML = linesHtml(t, hlFor(UI.active));
+    $("gut-view").innerHTML = gutterHtml(t.split("\n").length, 0);
+    $("st-ln").textContent = "Ln 1, Col 1";
+  } else paintEditor();
+  renderTabs();
+}
+function renderSolution(){
+  var open = !!S.sol[S.i];
+  $("g2").classList.toggle("hidden", !open);
+  $("work").classList.toggle("split", open);
+  if (!open) return;
+  var m = solutionMarks(), t = SOLUTIONS[S.i];
+  $("tabs2").innerHTML = '<div class="tab on" title="solution.js (read-only)">' + fi("solution.js") + '<span>solution.js</span><span class="lock">🔒</span></div>';
+  $("hl-sol").innerHTML = linesHtml(t, hlJS, m.sol);
+  $("gut-sol").innerHTML = gutterHtml(t.split("\n").length, 0, m.sol);
+}
+
+/* ====================================================================
+   Browser: the page and its Console
+   ==================================================================== */
+
+function renderConsole(r){
+  var c = $("console"), h = "";
+  if (!r) { c.innerHTML = '<div class="dt-row dim">Loading…</div>'; return; }
+  r.logs.forEach(function(l){ h += '<div class="dt-row">' + esc(l) + '</div>'; });
+  r.errors.forEach(function(e){
+    var msg = /__ENDLESS__/.test(e.msg) ? "The loop ran 20000 times and was stopped." : e.msg;
+    h += '<div class="dt-row err">✖ Uncaught ' + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "   script.js:" + e.line : "") + '</div>';
+    var x = explain(e);
+    if (x) h += '<div class="dt-row why">' + esc(x) + '</div>';
+  });
+  if (r.timeout) h += '<div class="dt-row err">✖ Your code did not finish. An endless loop?</div>';
+  c.innerHTML = h || '<div class="dt-row dim">Nothing printed.</div>';
+  c.scrollTop = c.scrollHeight;
+  var n = r.errors.length + (r.timeout ? 1 : 0);
+  $("st-err").textContent = "⊗ " + n + " ⚠ 0";
+  $("st-err").classList.toggle("err", n > 0);
+}
+
+/* ====================================================================
+   Task strip
    ==================================================================== */
 
 function renderDots(){
-  var d = $("dots"); d.innerHTML = "";
-  for (var i = 0; i < N; i++) {
-    var el = document.createElement("span");
-    el.className = "dot" + (S.done[i] ? " done" : "") + (S.lessonIndex === i ? " cur" : "");
-    el.title = "Lesson " + (i + 1) + ": " + LESSONS[i].title;
-    el.dataset.i = i;
-    d.appendChild(el);
-  }
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
 }
-$("dots").onclick = function(e){ var d = e.target.closest(".dot"); if (d) gotoLesson(Number(d.dataset.i)); };
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
 
-function valHtml(v){
-  if (typeof v === "string") return '<span class="s">"' + esc(v) + '"</span>';
-  if (typeof v === "number") return '<span class="n">' + v + '</span>';
-  if (typeof v === "boolean") return '<span class="b">' + v + '</span>';
-  return esc(String(v));
-}
-function renderData(page){
-  $("data-name").textContent = page.name + "  (" + page.data.length + " items)";
-  $("data").innerHTML = page.data.map(function(o, i){
-    return '<div class="drow"><span class="ix">' + page.name + "[" + i + ']</span><span>{ ' +
-      Object.keys(o).map(function(k){ return '<span class="k">' + k + ':</span> ' + valHtml(o[k]); }).join(", ") + ' }</span></div>';
-  }).join("");
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints ? les.hints.length : 0;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
 }
 
-function treeHtml(n, depth){
-  var pad = new Array(depth + 1).join("  ");
-  var open = '<span class="tg">&lt;' + n.tag + '</span>' + (n.id ? ' id="' + esc(n.id) + '"' : "") + (n.cls.length ? ' <span class="cl">class="' + esc(n.cls.join(" ")) + '"</span>' : "") + '<span class="tg">&gt;</span>';
-  var close = '<span class="tg">&lt;/' + n.tag + '&gt;</span>';
-  if (!n.kids.length) return pad + open + (n.text ? '<span class="tx">' + esc(n.text) + '</span>' : "") + close;
-  return pad + open + "\n" + n.kids.map(function(k){ return treeHtml(k, depth + 1); }).join("\n") + "\n" + pad + close;
+function renderStrip(){
+  var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a) : null, done = !!S.done[S.i];
+  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N;
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  var sub = les.sub;
+  if (S.sol[S.i] && !done) {
+    var m = solutionMarks();
+    sub = solutionSub();
+  }
+  $("t-sub").innerHTML = sub;
+  var r = "";
+  if (!S.saved[S.i] && !done) r = '<span class="dim">Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run your code and check it.</span>';
+  if (res && !res.done && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + " Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.";
+  if (done && (!res || res.done)) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
+  else if (res && !res.done) r = '<span class="no">✗ Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is a red error in the Console." : ""));
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (!les.noHints && hs.shown) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (done) {
+    if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (!les.noHints && !S.sol[S.i]) {
+    act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
+  }
+  renderStripNote();
 }
-function renderTree(page, r){
-  $("tree-name").textContent = "#" + page.box;
-  var el = $("tree");
-  if (!r) { el.innerHTML = '<span class="empty">Press Run.</span>'; return; }
-  if (!r.tree) { el.innerHTML = '<span class="empty">The #' + esc(page.box) + ' box is gone.</span>'; return; }
-  el.innerHTML = r.tree.kids.length ? treeHtml(r.tree, 0) : treeHtml(r.tree, 0) + '\n<span class="empty">empty: nothing has been put in yet</span>';
+function renderStripNote(){
+  var n = $("t-note");
+  n.classList.toggle("hidden", !UI.note);
+  n.textContent = UI.note;
+  if (S.sol[S.i] && !S.done[S.i]) {
+    var m = solutionMarks();
+    $("t-sub").innerHTML = solutionSub();
+  }
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
 }
 
-function renderConsole(r){
-  var c = $("console");
-  if (!r) { c.innerHTML = '<div class="ln dim">Console: press Run (or Ctrl+Enter).</div>'; return; }
-  var h = r.logs.map(function(l){ return '<div class="ln">' + esc(l) + '</div>'; }).join("");
-  r.errors.forEach(function(e){
-    var msg = /__ENDLESS__/.test(e.msg) ? "The loop ran 20000 times and was stopped." : e.msg;
-    h += '<div class="ln err">&#10006; ' + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "  (line " + e.line + ")" : "") + '</div>';
-    var x = explain(e);
-    if (x) h += '<div class="ln explain">' + esc(x) + '</div>';
-  });
-  if (r.timeout) h += '<div class="ln err">&#10006; Your code did not finish. An endless loop?</div>';
-  c.innerHTML = h || '<div class="ln dim">(nothing printed)</div>';
-  c.scrollTop = c.scrollHeight;
-}
-
-function renderLesson(){
-  var les = L(), body = $("lesson-body"), st = $("lesson-state"), hint = $("lesson-hint"), btns = $("lesson-buttons");
-  if (!les) { renderFinish(); return; }
-  $("lesson-title").textContent = les.title;
-  $("lesson-num").textContent = "Lesson " + (S.lessonIndex + 1) + " / " + N;
-  var res = last ? evaluate(les, last.r, last.a) : null;
-  var done = !!(res && res.done);
-  if (done && !S.done[S.lessonIndex]) { S.done[S.lessonIndex] = true; save(); renderDots(); }
-  var h = '<div class="goal">' + les.goal;
-  if (les.goal2 && (S.reveal || (res && res.reveal))) { if (res && res.reveal) { S.reveal = true; save(); } h += '<div class="turn">' + les.goal2 + '</div>'; }
-  h += '</div>';
-  if (les.steps) {
-    var fl = res ? res.flags : [];
-    h += '<ul class="steps">' + les.steps.map(function(s, i){ return '<li class="' + (fl[i] ? "done" : "") + '"><span class="boxx">' + (fl[i] ? "&#10003;" : "") + '</span>' + esc(s) + '</li>'; }).join("") + '</ul>';
-  }
-  if (done && les.after) h += '<div class="after">' + les.after + '</div>';
-  body.innerHTML = h;
-  if (!last) st.innerHTML = '<span class="wait">&#9711; Press Run when you are ready.</span>';
-  else if (done) st.innerHTML = '<span class="ok">&#10003; Done. That is right.</span>';
-  else st.innerHTML = '<span class="wait">&#9711; Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is an error in the Console." : ""));
-  var shown = S.hintsShown[S.lessonIndex] || 0;
-  if (!les.noHints && shown > 0) { hint.style.display = ""; hint.innerHTML = les.hints.slice(0, shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + "/" + les.hints.length + ":</b> " + h + "</div>"; }).join(""); }
-  else hint.style.display = "none";
-  btns.innerHTML = "";
-  var back = document.createElement("button"); back.className = "btn"; back.textContent = "← Back"; back.disabled = S.lessonIndex === 0;
-  back.onclick = function(){ gotoLesson(S.lessonIndex - 1); }; btns.appendChild(back);
-  if (!les.noHints) {
-    // Hints are earned: hint k unlocks after TRIES_PER_HINT * k real attempts (a Run with changed code that did not pass).
-    var tries = S.tries[S.lessonIndex] || 0, need = (shown + 1) * TRIES_PER_HINT - tries;
-    var tip = document.createElement("button"); tip.className = "btn";
-    if (shown >= les.hints.length) { tip.textContent = "No more hints"; tip.disabled = true; }
-    else if (done) { tip.textContent = shown ? "Next hint" : "Hint"; tip.disabled = true; }
-    else if (need > 0) { tip.textContent = (shown ? "Next hint" : "Hint") + ": " + need + " more " + (need === 1 ? "try" : "tries") + " first"; tip.disabled = true; tip.title = "Change your code and press Run. Each changed attempt counts."; }
-    else { tip.textContent = shown ? "Next hint" : "Hint"; tip.onclick = function(){ S.hintsShown[S.lessonIndex] = shown + 1; save(); renderLesson(); }; }
-    btns.appendChild(tip);
-  }
-  if (done || S.done[S.lessonIndex]) {
-    var nx = document.createElement("button"); nx.className = "btn primary"; nx.textContent = S.lessonIndex === N - 1 ? "Finish" : "Next lesson →";
-    nx.onclick = function(){ gotoLesson(S.lessonIndex + 1); }; btns.appendChild(nx);
-  }
-}
+/* ====================================================================
+   Running: Ctrl+S saves and Live Server reloads the page
+   ==================================================================== */
 
 var RED_LEFT = "The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.";
 function evaluate(les, r, a){
@@ -857,7 +1201,7 @@ function evaluate(les, r, a){
   if (les.flags) {
     var f = les.flags(r, a), fl = f.flags.slice(), msg = endless ? "Your loop never stops." : f.msg;
     if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT; }
-    return { done: fl.every(Boolean), flags: fl, msg: msg, reveal: f.reveal };
+    return { done: fl.every(Boolean), msg: msg };
   }
   if (endless) return { done: false, msg: "Your loop never stops." };
   var m = les.check(r, a);
@@ -865,162 +1209,99 @@ function evaluate(les, r, a){
   return { done: !m, msg: m };
 }
 
-function renderFinish(){
-  $("lesson-title").textContent = "Done";
-  $("lesson-num").textContent = "";
-  $("lesson-state").innerHTML = "";
-  $("lesson-hint").style.display = "none";
-  $("lesson-body").innerHTML = '<div class="fin"><p><b>You turned a list into a page, twice, and fixed someone else\'s code on the way.</b> This is the recipe, and it does not change:</p>' +
-    '<ul class="loop">' +
-    '<li><span class="mono">getElementById("...")</span><em>find the box, once, before the loop</em></li>' +
-    '<li><span class="mono">for (let i = 0; i &lt; list.length; i++)</span><em>for every item, and inside always list[i]</em></li>' +
-    '<li><span class="mono">createElement("...")</span><em>make it</em></li>' +
-    '<li><span class="mono">textContent, classList.add</span><em>fill it from the data</em></li>' +
-    '<li><span class="mono">appendChild(...)</span><em>put it in, inside the loop</em></li>' +
-    '</ul>' +
-    '<p>Next, the list stops living in your script and comes from a server. That is <span class="mono">fetch</span>, and everything after the data arrives is exactly what you did here.</p>' +
-    '<p>Press Reset and do it again without the hints. It should get boring. <b>Boring is the goal.</b></p></div>';
-  var btns = $("lesson-buttons"); btns.innerHTML = "";
-  var b = document.createElement("button"); b.className = "btn"; b.textContent = "← Back to the last lesson"; b.onclick = function(){ gotoLesson(N - 1); }; btns.appendChild(b);
+function saveAndRun(){
+  var idx = S.i, src = editor.value;
+  S.code[idx] = src; delete S.buf[idx]; S.saved[idx] = true; save();
+  UI.note = "";
+  renderTabs();
+  run(true, idx, src);
 }
-
-function renderPrimer(){
-  var wrap = $("primer"), grid = $("main-grid");
-  if (!primerOpen) { wrap.style.display = "none"; grid.style.display = ""; return; }
-  wrap.style.display = ""; grid.style.display = "none";
-  var P = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
-  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
-  wrap.innerHTML = '<div class="card primer-card">' +
-    '<div class="primer-kicker">Before the code: what this is for</div>' +
-    '<h2 class="primer-title">' + esc(P.title) + '</h2>' +
-    '<div class="primer-art">' + ART[P.art]() + '</div>' +
-    '<div class="primer-scrollhint">Drag the drawing sideways to see the rest of it.</div>' +
-    '<p class="primer-body">' + P.body + '</p>' +
-    (showSay ? '<div class="primer-say"><b>Teacher:</b> ' + esc(P.say) + '</div>' : "") +
-    '<div class="primer-nav"><div class="pdots" id="pdots">' + dots + '</div>' +
-    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>&larr; Back</button>' +
-    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go &rarr;" : "Next &rarr;") + '</button>' +
-    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div></div>';
-  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
-  $("p-next").onclick = function(){
-    if (!lastP) { primerIdx++; renderPrimer(); return; }
-    S.primerDone = true; primerOpen = false; save(); renderAll();
-  };
-  if ($("p-close")) $("p-close").onclick = function(){ primerOpen = false; renderAll(); };
-  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
-}
-document.addEventListener("keydown", function(e){
-  if (!primerOpen || e.target.tagName === "TEXTAREA") return;
-  if (e.key === "ArrowRight" && primerIdx < PRIMER.length - 1) { primerIdx++; renderPrimer(); }
-  if (e.key === "ArrowLeft" && primerIdx > 0) { primerIdx--; renderPrimer(); }
-  if (e.key === "n" || e.key === "N") { showSay = !showSay; renderPrimer(); }
-});
-
-function pageFor(){ var les = L() || LESSONS[N - 1]; return PAGES[les.page]; }
-
-function loadEditor(){
-  var i = Math.min(S.lessonIndex, N - 1);
-  $("code").value = codeOf(i);
-  $("code").disabled = S.lessonIndex >= N;
-}
-
-function renderAll(){
-  renderPrimer();
-  renderDots();
-  var page = pageFor();
-  renderData(page);
-  renderTree(page, last && last.r);
-  renderConsole(last && last.r);
-  renderLesson();
-}
-
-/* ====================================================================
-   Actions
-   ==================================================================== */
-
-var running = false;
-function run(byHand){
-  if (running || S.lessonIndex >= N) return;
+function run(byHand, idx, src){
+  if (idx === undefined) idx = S.i;
+  if (src === undefined) src = savedCode(idx);
+  var page = PAGES[LESSONS[idx].page];
   running = true;
-  var page = pageFor(), src = $("code").value;
-  S.code[S.lessonIndex] = src; save();
-  var idx = S.lessonIndex;
-  Promise.all([runIn($("preview"), page, page.data, src), runIn($("altframe"), page, page.alt, src)]).then(function(res){
+  return Promise.all([runIn($("preview"), page, page.data, src), runIn($("altframe"), page, page.alt, src)]).then(function(res){
     running = false;
-    if (idx !== S.lessonIndex) return;
+    if (idx !== S.i) return;
     last = { r: res[0], a: res[1] };
-    if (byHand === true && S.lastTried[idx] !== src && src !== LESSONS[idx].start) {
-      S.lastTried[idx] = src;
-      if (!evaluate(LESSONS[idx], last.r, last.a).done) S.tries[idx] = (S.tries[idx] || 0) + 1;
+    var ev = evaluate(LESSONS[idx], last.r, last.a);
+    if (byHand) {
+      if (ev.done) {
+        if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+        S.sol[idx] = false;
+      } else if (S.lastTried[idx] !== src && src !== LESSONS[idx].start) {
+        S.lastTried[idx] = src; S.tries[idx] = (S.tries[idx] || 0) + 1;
+      }
       save();
     }
+    renderConsole(last.r);
     renderAll();
   });
 }
+$("br-reload").onclick = function(){ run(false); };
 
-function gotoLesson(i){
-  hideFlash();
-  S.lessonIndex = Math.max(0, Math.min(N, i));
-  last = null; S.reveal = false;
-  save(); loadEditor(); renderAll();
-  if (S.lessonIndex < N) run(); else blankPreview();
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); save();
+  UI.note = ""; UI.active = "script.js"; if (UI.open.indexOf("script.js") < 0) UI.open.unshift("script.js");
+  last = null;
+  editor.value = bufferCode(S.i);
+  renderConsole(null);
+  renderAll();
+  run(false);
 }
-function blankPreview(){ $("preview").removeAttribute("srcdoc"); $("preview").srcdoc = buildDoc(PAGES.cats, CATS, LOOP_SOLUTION, 0).html; }
-
-$("btn-run").onclick = function(){ run(true); };
-$("code").addEventListener("keydown", function(e){
-  var ta = e.target;
-  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(true); return; }
-  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); var a = ta.selectionStart; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = a + 2; }
-});
-$("code").addEventListener("input", function(){ S.code[S.lessonIndex] = $("code").value; save(); });
-$("btn-startcode").onclick = function(){
-  if (S.lessonIndex >= N) return;
-  if (!confirm("Put back the start code for this lesson? What you wrote here is lost.")) return;
-  delete S.code[S.lessonIndex]; save(); loadEditor(); run();
+$("l-again").onclick = function(){
+  if (!confirm("Put back the start code for this task? What you wrote in this task is lost.")) return;
+  delete S.code[S.i]; delete S.buf[S.i]; S.saved[S.i] = false; save(); gotoTask(S.i);
 };
-$("btn-why").onclick = function(){ primerOpen = true; primerIdx = 0; renderAll(); };
-$("btn-reset").onclick = function(){
-  if (!confirm("Start everything again from lesson 1? Your code and progress are cleared.")) return;
-  S = fresh(); S.primerDone = true; save(); gotoLesson(0);
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your code and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
 };
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
 
-function openModal(id){ $(id).classList.add("open"); }
-function closeModals(){ [].forEach.call(document.querySelectorAll(".modal-back"), function(m){ m.classList.remove("open"); }); }
-$("btn-code").onclick = function(){ $("code-text").value = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); openModal("modal-code"); };
-$("code-copy").onclick = function(){ $("code-text").select(); try { document.execCommand("copy"); } catch (e) {} };
-$("code-close").onclick = closeModals;
-$("btn-paste").onclick = function(){ $("paste-text").value = ""; openModal("modal-paste"); $("paste-text").focus(); };
-$("paste-close").onclick = closeModals;
-$("paste-load").onclick = function(){
-  try { S = normalize(JSON.parse(decodeURIComponent(escape(atob($("paste-text").value.replace(/\s/g, "")))))); }
-  catch (e) { alert("That code could not be read. Copy the whole thing and try again."); return; }
-  save(); closeModals(); gotoLesson(S.lessonIndex);
-};
-[].forEach.call(document.querySelectorAll(".modal-back"), function(m){ m.addEventListener("click", function(e){ if (e.target === m) closeModals(); }); });
-
-// Teacher's secret: Shift+click on "Lesson n / 8" flashes this lesson's solution over the code box for 6 seconds. Click it to hide sooner.
-var flashTimer = null;
-function hideFlash(){ var f = document.querySelector(".flash"); if (f) f.remove(); clearTimeout(flashTimer); }
-function flashSolution(){
-  if (S.lessonIndex >= N) return;
-  hideFlash();
-  var f = document.createElement("div");
-  f.className = "flash";
-  f.innerHTML = '<div class="bar2"></div><pre>' + esc(SOLUTIONS[S.lessonIndex]) + '</pre>';
-  f.onclick = hideFlash;
-  document.querySelector(".ed").appendChild(f);
-  flashTimer = setTimeout(hideFlash, 6000);
+function renderAll(){
+  renderDots();
+  renderStrip();
+  renderSolution();
+  renderEditorArea();
+  $("cc").textContent = "data-to-elements";
 }
-$("lesson-num").addEventListener("click", function(e){ if (e.shiftKey) flashSolution(); });
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var P = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">Data to Elements · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(P.title) + '</h2>' +
+    '<div class="art">' + ART[P.art]() + '</div>' +
+    '<p>' + P.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(P.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); editor.focus(); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
 
 // Test hook: lets an automated check drive the page without the UI.
-window.__DTE = { SOLUTIONS: SOLUTIONS, flashSolution: flashSolution, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoLesson: gotoLesson, state: function(){ return S; } };
+window.__DTE = { SOLUTIONS: SOLUTIONS, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun, state: function(){ return S; }, last: function(){ return last; } };
 
-primerOpen = !S.primerDone;
-loadEditor();
-renderAll();
-if (S.lessonIndex < N) run(); else blankPreview();
+showPrimer(!S.primerDone);
+gotoTask(S.i);
 })();
 </script>
 </body>
