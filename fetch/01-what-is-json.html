@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is JSON?</title>
+<style>
+:root{
+  --vs-bg:#1f1f1f; --vs-side:#181818; --vs-border:#2b2b2b; --vs-fg:#cccccc; --vs-dim:#9d9d9d; --vs-blue:#0078d4; --vs-sel:#37373d; --vs-ln:#6e7681;
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #000;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px}
+
+/* ===== practice: VS Code + browser ===== */
+.work{flex:1;display:grid;grid-template-columns:55fr 45fr;min-height:0}
+.work.split{grid-template-columns:64fr 36fr}
+.vs{background:var(--vs-bg);color:var(--vs-fg);display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid #000;font-size:13px}
+.vs-title{height:34px;flex:none;background:var(--vs-side);border-bottom:1px solid var(--vs-border);display:flex;align-items:center;padding:0 8px;font-size:13px;gap:2px;overflow:hidden}
+.vs-title svg{width:16px;height:16px;margin-right:8px;flex:none}
+.vs-title .menu span{padding:3px 7px;color:var(--vs-fg)}
+.vs-title .cc{margin:0 auto;width:36%;min-width:140px;height:22px;border:1px solid #3c3c3c;background:#2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--vs-dim);font-size:12px}
+.vs-title .win{display:flex;gap:14px;color:var(--vs-dim);padding:0 4px}
+.vs-body{flex:1;display:flex;min-height:0}
+.act{width:48px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.act .ic{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:#868686;border-left:2px solid transparent}
+.act .ic svg{width:24px;height:24px}
+.act .ic.btn-ex{cursor:pointer}
+.act .ic.btn-ex:hover{color:#fff}
+.act .ic.on{color:#fff;border-left-color:var(--vs-blue)}
+.act .bottom{margin-top:auto}
+.side{width:200px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);overflow:auto}
+.side .hdr{height:35px;display:flex;align-items:center;padding:0 20px;font-size:11px;letter-spacing:.04em}
+.side .folder{padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.side .file{display:flex;align-items:center;gap:6px;padding:0 8px 0 22px;height:22px;cursor:pointer;white-space:nowrap}
+.side .file:hover{background:#2a2d2e}
+.side .file.sel{background:var(--vs-sel);outline:1px solid var(--vs-blue);outline-offset:-1px}
+.side .file .m{margin-left:auto;color:#e2c08d;font-size:11px}
+.fi{width:16px;text-align:center;font:700 10px ui-monospace,Consolas,monospace;flex:none}
+.fi.js{color:#cbcb41}.fi.json{color:#f5de19}.fi.html{color:#e44d26}.fi.css{color:#42a5f5}
+.editors{flex:1;display:flex;min-width:0}
+.group{flex:1;display:flex;flex-direction:column;min-width:0}
+.group+.group{border-left:1px solid var(--vs-border)}
+.tabs{height:35px;flex:none;background:var(--vs-side);display:flex;border-bottom:1px solid var(--vs-border);overflow-x:auto;overflow-y:hidden}
+.tab{display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;border-right:1px solid var(--vs-border);color:var(--vs-dim);white-space:nowrap;cursor:pointer;flex:none}
+.tab.on{background:var(--vs-bg);color:#fff;box-shadow:inset 0 1px 0 var(--vs-blue)}
+.tab .x{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--vs-dim)}
+.tab .x:hover{background:#3c3c3c}
+.tab .lock{font-size:11px}
+.crumbs{height:22px;flex:none;display:flex;align-items:center;padding:0 14px;color:#a9a9a9;font-size:12px}
+.scroller{flex:1;overflow:auto;position:relative;min-height:0}
+.codebox{display:flex;min-width:100%;width:max-content;font:13px/19px ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding-bottom:40vh}
+.gutter{flex:none;width:52px;text-align:right;padding-right:18px;color:var(--vs-ln);user-select:none;position:sticky;left:0;background:var(--vs-bg);z-index:2}
+.gutter div{height:19px;position:relative}
+.gutter .cur{color:#cccccc}
+.gutter .add::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#2ea043}
+.gutter .ok::after{content:"✓";position:absolute;right:-15px;top:0;color:#3fb950;font-size:11px}
+.lines{position:relative;flex:1;min-width:300px}
+.lines pre{margin:0;font:inherit;white-space:pre;color:var(--vs-fg);tab-size:2}
+.lines pre div{height:19px;padding-left:4px}
+.lines pre div.add{background:rgba(46,160,67,.17)}
+.lines pre div.ok{background:rgba(46,160,67,.06)}
+.lines pre div.del{background:rgba(248,81,73,.18)}
+.gutter .del::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#f85149}
+.lines textarea{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 0 0 4px;border:0;outline:0;resize:none;overflow:hidden;background:transparent;color:transparent;caret-color:#aeafad;font:inherit;white-space:pre;tab-size:2;z-index:1}
+.lines textarea::selection{background:rgba(38,79,120,.85);color:transparent}
+.readonly .lines pre{user-select:none}
+.k{color:#569cd6}.c{color:#c586c0}.s{color:#ce9178}.num{color:#b5cea8}.cm{color:#6a9955}.f{color:#dcdcaa}.v{color:#9cdcfe}.tgc{color:#569cd6}.at{color:#9cdcfe}.sel{color:#d7ba7d}.pr{color:#9cdcfe}
+.status{height:22px;flex:none;background:var(--vs-side);border-top:1px solid var(--vs-border);display:flex;align-items:center;font-size:12px;white-space:nowrap;overflow:hidden}
+.status .remote{background:var(--vs-blue);color:#fff;height:100%;padding:0 10px;display:flex;align-items:center}
+.status span{padding:0 8px}
+.status .r{margin-left:auto;display:flex}
+.status .err{color:#f48771}
+
+.br{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0}
+.br-url{flex:none;background:#fff;padding:6px 10px;border-bottom:1px solid #dadce0;display:flex;align-items:center;gap:10px;color:#5f6368;font-size:13px}
+.br-url .bar{flex:1;background:#f1f3f4;border-radius:14px;padding:5px 14px;color:#202124;white-space:nowrap;overflow:hidden}
+.br-url button{background:none;border:0;color:#5f6368;cursor:pointer;font-size:15px;padding:0 4px}
+#preview{flex:1;border:0;width:100%;min-height:0;background:#f5f3ee}
+.devtools{flex:none;max-height:38%;display:flex;flex-direction:column;border-top:1px solid #cbcdd1}
+.dt-head{padding:4px 10px;background:#f1f3f4;border-bottom:1px solid #e0e0e0;color:#5f6368;font-size:12px}
+.dt-out{overflow:auto;font:12px/18px ui-monospace,Consolas,monospace}
+.dt-row{padding:2px 10px;border-bottom:1px solid #f0f0f0;color:#202124;white-space:pre-wrap;word-break:break-word}
+.dt-row.err{background:#fff0f0;color:#d93025;border-bottom-color:#fbd0d0}
+.dt-row.why{background:#fffbe6;color:#7a4b00;font-family:system-ui,sans-serif;border-bottom-color:#f5e2b0}
+.dt-row.dim{color:#9aa0a6}
+#altframe{position:absolute;width:1px;height:1px;left:-9999px;border:0}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work,.work.split{grid-template-columns:1fr;grid-auto-rows:minmax(460px,auto)}
+  .vs{border-right:0;border-bottom:1px solid #000}
+  .side{width:150px}
+  .vs-title .menu,.vs-title .win{display:none}
+  .br{min-height:460px}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+
+  <div class="work" id="work">
+    <div class="vs">
+      <div class="vs-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0078d4" d="M17 2 8 10.5 3.5 7 2 7.8v8.4l1.5.8L8 13.5 17 22l5-2.4V4.4zM4 14.4V9.6L6.5 12zm13 2.4L11.3 12 17 7.2z"/></svg>
+        <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+        <div class="cc" id="cc">what-is-json</div>
+        <div class="win"><span>—</span><span>☐</span><span>✕</span></div>
+      </div>
+      <div class="vs-body">
+        <div class="act">
+          <div class="ic btn-ex" id="act-ex" title="Explorer (Ctrl+B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H7a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/><path d="M6 7H4v13a1 1 0 0 0 1 1h10v-2"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 5-8 3-11 7"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4l12 8-12 8z"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="7" height="7"/><rect x="11" y="11" width="7" height="7"/><rect x="3" y="3" width="7" height="7"/><rect x="14" y="2" width="7" height="7" transform="rotate(10 17 5)"/></svg></div>
+          <div class="bottom"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div></div>
+        </div>
+        <div class="side hidden" id="side"></div>
+        <div class="editors">
+          <div class="group" id="g1">
+            <div class="tabs" id="tabs1"></div>
+            <div class="crumbs" id="crumbs1"></div>
+            <div class="scroller" id="sc-edit">
+              <div class="codebox"><div class="gutter" id="gut-edit"></div><div class="lines"><pre id="hl-edit" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-label="script.js"></textarea></div></div>
+            </div>
+            <div class="scroller readonly hidden" id="sc-view">
+              <div class="codebox"><div class="gutter" id="gut-view"></div><div class="lines"><pre id="hl-view"></pre></div></div>
+            </div>
+          </div>
+          <div class="group hidden" id="g2">
+            <div class="tabs" id="tabs2"></div>
+            <div class="crumbs">solution.js › …</div>
+            <div class="scroller readonly" id="sc-sol">
+              <div class="codebox"><div class="gutter" id="gut-sol"></div><div class="lines"><pre id="hl-sol"></pre></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status"><span class="remote">⇄</span><span id="st-err">⊗ 0 ⚠ 0</span><div class="r"><span id="st-ln">Ln 1, Col 1</span><span id="st-lang">{} JavaScript</span><span>⦿ Port : 5500</span></div></div>
+    </div>
+
+    <div class="br">
+      <div class="br-url"><button id="br-reload" title="Reload">↻</button><div class="bar">127.0.0.1:5500/index.html</div></div>
+      <iframe id="preview" sandbox="allow-scripts" title="The page, with your script run on it"></iframe>
+      <div class="devtools"><div class="dt-head">Console</div><div class="dt-out" id="console"></div></div>
+    </div>
+  </div>
+</div>
+<iframe id="altframe" sandbox="allow-scripts" title="Second run with other data" aria-hidden="true" tabindex="-1"></iframe>
+
+
+<script>
+(function(){
+"use strict";
+
+/* ====================================================================
+   Data. Tasks in script.js get it as text (catsText, menuText), the way
+   a server sends it. Every check runs the student's code twice: on the
+   text they see, and on other text of the same shape, so typed-in values fail.
+   ==================================================================== */
+
+var CATS = [
+  { name: "Mirci", age: 7, friendly: true },
+  { name: "Bundás", age: 2, friendly: false },
+  { name: "Pixel", age: 4, friendly: true },
+  { name: "Null", age: 11, friendly: false },
+  { name: "Szotyi", age: 1, friendly: true }
+];
+var ALT_CATS = [
+  { name: "Tigris", age: 3, friendly: false },
+  { name: "Morzsa", age: 9, friendly: true },
+  { name: "Bug", age: 5, friendly: true },
+  { name: "Cirmi", age: 6, friendly: false },
+  { name: "Vacak", age: 12, friendly: true },
+  { name: "Lego", age: 2, friendly: false },
+  { name: "Foci", age: 8, friendly: true }
+];
+var MENU = { week: 46, days: [
+  { day: "Monday", soup: "Tomato soup (the letters spell HELP)", main: { name: "Rántott sajt", vegetarian: true }, dessert: null },
+  { day: "Tuesday", soup: "Gulyásleves", main: { name: "Mákos tészta", vegetarian: true }, dessert: "alma" },
+  { day: "Wednesday", soup: "Zöldborsóleves", main: { name: "Csirkepaprikás", vegetarian: false }, dessert: "puding" },
+  { day: "Thursday", soup: "Cream soup, ingredients unknown", main: { name: "Főzelék", vegetarian: false }, dessert: null },
+  { day: "Friday", soup: "No soup, it is Friday", main: { name: "Pizza", vegetarian: false }, dessert: "fánk" }
+] };
+var ALT_MENU = { week: 47, days: [
+  { day: "Monday", soup: "Húsleves", main: { name: "Rakott krumpli", vegetarian: false }, dessert: "csiga" },
+  { day: "Tuesday", soup: "Gombaleves", main: { name: "Spagetti", vegetarian: true }, dessert: null },
+  { day: "Wednesday", soup: "Babgulyás", main: { name: "Lecsó", vegetarian: true }, dessert: "kifli" }
+] };
+
+var BASE_CSS = 'body{font-family:Arial,sans-serif;background:#f5f3ee;margin:0;padding:16px;color:#1f2328}h1{margin:0 0 12px;font-size:24px}';
+var EMPTY = function(id){ return '#' + id + ':empty{display:block;border:2px dashed #c9cfd6;border-radius:10px;padding:18px;text-align:center;background:none}#' + id + ':empty::before{content:"#' + id + ' is empty";color:#9aa0a6;font-style:italic}'; };
+var CARD_CSS =
+  '#cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}' + EMPTY("cats") +
+  '.card{background:#fff;border:2px solid #e3e6ea;border-radius:10px;padding:8px 12px}' +
+  '.card h2{margin:0 0 4px;font-size:17px}.card p{margin:0;color:#6b7280;font-size:14px}' +
+  '.card.grumpy{border-color:#dc2626;background:#fef2f2}' +
+  '.card.grumpy::after{content:"grumpy";display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#fff;background:#dc2626;border-radius:8px;padding:1px 7px}';
+var PANEL_CSS = function(id){ return '#' + id + '{background:#fff;border:2px solid #e3e6ea;border-radius:12px;padding:12px 16px;max-width:340px}' + EMPTY(id) +
+  '#' + id + ' h2{margin:0 0 6px;font-size:20px}#' + id + ' p{margin:4px 0;color:#374151}'; };
+var LIST_CSS = function(id){ return '#' + id + '{background:#fff;border-radius:10px;padding:10px 10px 10px 34px;margin:0}' + EMPTY(id) +
+  '#' + id + ' li{padding:4px 0}#' + id + ' li.none{color:#9aa0a6;font-style:italic}'; };
+
+var PAGES = {
+  cats: { title: "Cats of 13F", box: "cats",
+    body: '<main>\n  <h1>Cats of 13F</h1>\n  <div id="cats"></div>\n</main>', css: BASE_CSS + CARD_CSS },
+  student: { title: "New student", box: "profile",
+    body: '<main>\n  <h1>New student</h1>\n  <div id="profile"></div>\n</main>', css: BASE_CSS + PANEL_CSS("profile") },
+  special: { title: "Canteen: today's special", box: "special",
+    body: '<main>\n  <h1>Canteen: today\'s special</h1>\n  <div id="special"></div>\n</main>',
+    css: BASE_CSS + PANEL_CSS("special") + '#special .veg{color:#15803d;font-weight:700}#special .combo{font-weight:700;color:#1f2328}' },
+  menu: { title: "Canteen, this week", box: "menu",
+    body: '<main>\n  <h1>Canteen, this week</h1>\n  <ul id="menu"></ul>\n</main>', css: BASE_CSS + LIST_CSS("menu") },
+  desserts: { title: "Desserts this week", box: "desserts",
+    body: '<main>\n  <h1>Desserts this week</h1>\n  <ul id="desserts"></ul>\n</main>', css: BASE_CSS + LIST_CSS("desserts") }
+};
+
+/* JSON written the way a person would lay it out: flat objects on one line. */
+function isFlat(v){ return Object.keys(v).every(function(k){ return v[k] === null || typeof v[k] !== "object"; }); }
+function fmtJSON(v, ind){
+  ind = ind || "";
+  if (v === null || typeof v !== "object") return JSON.stringify(v);
+  var inner = ind + "  ";
+  if (Array.isArray(v)) return v.length ? "[\n" + v.map(function(x){ return inner + fmtJSON(x, inner); }).join(",\n") + "\n" + ind + "]" : "[]";
+  if (isFlat(v)) return "{ " + Object.keys(v).map(function(k){ return JSON.stringify(k) + ": " + JSON.stringify(v[k]); }).join(", ") + " }";
+  return "{\n" + Object.keys(v).map(function(k){ return inner + JSON.stringify(k) + ": " + fmtJSON(v[k], inner); }).join(",\n") + "\n" + ind + "}";
+}
+
+/* ====================================================================
+   Running student code: a sandboxed iframe (scripts on, no same-origin),
+   console.log and errors posted back, then the box serialised.
+   ==================================================================== */
+
+var runSeq = 0, waiting = {};
+window.addEventListener("message", function(e){
+  var d = e.data;
+  if (!d || typeof d !== "object" || !d.__dte || !waiting[d.__dte]) return;
+  var w = waiting[d.__dte];
+  if (d.type === "log") w.logs.push(d.text);
+  if (d.type === "error") w.errors.push(d.err);
+  if (d.type === "done") { w.tree = d.tree; w.created = d.created; finishRun(d.__dte); }
+});
+function finishRun(id){
+  var w = waiting[id];
+  if (!w) return;
+  delete waiting[id];
+  clearTimeout(w.timer);
+  w.resolve({ logs: w.logs, errors: w.errors, tree: w.tree, created: w.created || [], timeout: !!w.timedOut });
+}
+
+// for (...) { and while (...) { get a counter, so an endless loop throws instead of freezing the tab. Same line, so line numbers hold.
+function guard(code){
+  return code
+    .replace(/\bfor\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; })
+    .replace(/\bwhile\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; });
+}
+
+function buildDoc(page, dataLine, code, id){
+  var pre =
+    '<!doctype html><html><head><meta charset="utf-8"><style>' + page.css + '</style></head><body>\n' + page.body + '\n' +
+    '<script>\n' +
+    '(function(){\n' +
+    'var ID=' + id + ';\n' +
+    'function send(o){ o.__dte=ID; parent.postMessage(o,"*"); }\n' +
+    'function fmt(v,d){ d=d||0;\n' +
+    '  if (typeof v==="string") return d? JSON.stringify(v) : v;\n' +
+    '  if (v instanceof Element){ var h=v.outerHTML; return h.length>160? h.slice(0,157)+"...": h; }\n' +
+    '  if (Array.isArray(v)) return d>1? "[...]" : "[" + v.map(function(x){return fmt(x,d+1);}).join(", ") + "]";\n' +
+    '  if (v && typeof v==="object") return d>1? "{...}" : "{" + Object.keys(v).map(function(k){return k+": "+fmt(v[k],d+1);}).join(", ") + "}";\n' +
+    '  return String(v); }\n' +
+    'console.log=console.info=console.warn=console.debug=console.dir=console.table=console.error=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'window.alert=function(m){ send({type:"log",text:"alert: "+fmt(m)}); };\n' +
+    'window.__made=[];\n' +
+    'var ce=document.createElement.bind(document);\n' +
+    'document.createElement=function(t){ var el=ce(t); window.__made.push(el); return el; };\n' +
+    'window.addEventListener("error",function(e){ var m=e.error&&e.error.message||e.message||""; send({type:"error",err:{msg:String(m).replace(/^Uncaught /,""),name:e.error&&e.error.name||"",line:e.lineno||0}}); e.preventDefault(); });\n' +
+    'window.__loops=0;\n' +
+    '})();\n' +
+    dataLine + '\n' +
+    '<\/script>\n<script>\n';
+  var offset = pre.split("\n").length - 1;
+  var post =
+    '\n<\/script>\n<script>\n' +
+    '(function(){\n' +
+    'function ser(el,d){ var o={tag:el.tagName.toLowerCase(),id:el.id||"",cls:[].slice.call(el.classList),' +
+    'text:[].filter.call(el.childNodes,function(n){return n.nodeType===3;}).map(function(n){return n.textContent;}).join("").trim(),' +
+    'all:el.textContent.trim(),kids:[]};' +
+    ' if(d<4) o.kids=[].map.call(el.children,function(c){return ser(c,d+1);}); return o; }\n' +
+    'var box=document.getElementById(' + JSON.stringify(page.box) + ');\n' +
+    'parent.postMessage({__dte:' + id + ',type:"done",tree: box? ser(box,0) : null,' +
+    'created: window.__made.map(function(e){return {tag:e.tagName.toLowerCase(),text:e.textContent.trim(),cls:[].slice.call(e.classList),onPage:document.body.contains(e)};})},"*");\n' +
+    '})();\n<\/script>\n</body></html>';
+  return { html: pre + guard(code) + post, offset: offset };
+}
+
+function runIn(frame, page, dataLine, code){
+  var id = ++runSeq;
+  var doc = buildDoc(page, dataLine, code, id);
+  return new Promise(function(resolve){
+    waiting[id] = { logs: [], errors: [], resolve: resolve, offset: doc.offset,
+      timer: setTimeout(function(){ if (waiting[id]) { waiting[id].timedOut = true; finishRun(id); } }, 2500) };
+    // Clear first: Chrome does not always repaint a srcdoc iframe that is simply overwritten.
+    frame.removeAttribute("srcdoc");
+    frame.srcdoc = doc.html;
+  }).then(function(r){
+    r.errors.forEach(function(e){ e.line = e.line ? e.line - doc.offset : 0; });
+    return r;
+  });
+}
+
+// What a task runs: script.js tasks run the student's code after data.js; .json tasks run the given script.js on the student's file.
+function runPlan(les, src){
+  if (les.edit === "script.js") {
+    var v = les.vars;
+    return { code: src,
+      main: "const " + v.name + " = " + JSON.stringify(fmtJSON(v.data)) + ";",
+      alt: "const " + v.name + " = " + JSON.stringify(fmtJSON(v.alt)) + ";" };
+  }
+  var line = "const fileText = " + JSON.stringify(src) + ";";
+  return { code: les.given, main: line, alt: line };
+}
+
+/* ====================================================================
+   Plain-English error messages
+   ==================================================================== */
+
+function explain(err, src){
+  var m = err.msg || "", x;
+  src = src || "";
+  if (/__ENDLESS__/.test(m)) return "Your loop never stops. Check its condition: does it ever become false? In a for loop: i < list.length and i++.";
+  if (/"\[object Object\]" is not valid JSON/.test(m)) return "That is already unpacked. JSON.parse only takes text: parse the text from data.js once, then use what it gives you.";
+  if (/"undefined" is not valid JSON/.test(m)) return "JSON.parse got undefined, not text. Give it the text from data.js: JSON.parse(" + textVar(src) + ").";
+  if (/not valid JSON|in JSON at position|end of JSON input|JSON\.parse/.test(m)) return "JSON.parse could not read that. Give it the whole text from data.js, as it is: JSON.parse(" + textVar(src) + ").";
+  if ((x = /^(\w+) is not defined/.exec(m))) {
+    if (x[1] === "cats" || x[1] === "menu") return x[1] + " does not exist yet. data.js only has " + x[1] + "Text, the packed text. Unpack it first with JSON.parse.";
+    if (x[1] === "cat") return "There is no cat, only cats: the whole list. One cat is cats[0], or cats[i] in a loop.";
+    if (x[1] === "day") return "There is no day, only the list menu.days. One day is menu.days[0], or menu.days[i] in a loop.";
+    if (x[1] === "i") return "i only exists inside the loop's { }. Is this line outside the loop?";
+    if (["h2", "p", "article", "li", "div", "ul", "grumpy", "none"].indexOf(x[1]) >= 0) return "Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".";
+    if (x[1] === "box" || x[1] === "list") return x[1] + " was never made. Find it first: const " + x[1] + " = document.getElementById(\"...\"), with the id from index.html.";
+    if (["card", "title", "age", "item", "li"].indexOf(x[1]) >= 0) return x[1] + " only exists inside the { } where it was made. Is this line outside the loop?";
+    return "Nothing called " + x[1] + " exists here. A typo? Capital letters matter: JSON.parse, getElementById, createElement, textContent.";
+  }
+  if ((x = /Cannot read properties of null \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of null \(setting '(\w+)'\)/.exec(m)))
+    return "You used ." + x[1] + " on null: something you looked for was not found. Usually getElementById: the id must match the HTML exactly, without #.";
+  if ((x = /Cannot read properties of undefined \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of undefined \(setting '(\w+)'\)/.exec(m))) {
+    var tv = /\b(\w+Text)\s*(\.\s*(?!length\b)\w+|\[\s*\w+\s*\]\s*\.)/.exec(src);
+    if (tv) return tv[1] + " is text. Text has no ." + (/\.\s*(\w+)/.exec(tv[2]) || [0, "days"])[1] + ": unpack it with JSON.parse first, and use what that gives you.";
+    var un = /\b(cats|menu)\s*[\[.]/.exec(src);
+    if (un && !new RegExp("\\b(const|let|var)\\s+" + un[1] + "\\b").test(src)) return un[1] + " is not the list here: data.js only has " + un[1] + "Text, the packed text. Unpack it first with JSON.parse.";
+    return "You used ." + x[1] + " on something that does not exist. A step missing in the path, a typo before the dot, or reading past the end of the list (i <= instead of i <)?";
+  }
+  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + " is not a function. Check the spelling: JSON.parse, getElementById, createElement, appendChild, classList.add.";
+  if (/parameter 1 is not of type 'Node'/.test(m)) return "appendChild wants an element made with createElement, not text or a value from the list.";
+  if (/has already been declared/.test(m)) return "That name is already taken. Give each const its own name, and do not declare the same thing twice.";
+  if (/Assignment to constant/.test(m)) return "You gave a const a new value. Make a new const instead, or use let.";
+  if (/HTML space characters/.test(m)) return "classList.add takes one class at a time, without spaces.";
+  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return "JavaScript could not read the code at all, so nothing ran. Look for a missing ) } or quote near that line.";
+  if (/is not a valid tag name|InvalidCharacterError/.test(m)) return "createElement wants a bare tag name: \"li\", not \"<li>\".";
+  return "";
+}
+function textVar(src){ var m = /\b(\w+Text)\b/.exec(src || ""); return m ? m[1] : "catsText"; }
+
+// Where a .json file breaks, in plain words. JSON.parse's own messages often have no position, so look at the lines.
+function jsonWhy(src, fname){
+  if (!src.trim()) return fname + " is empty.";
+  var msg;
+  try { JSON.parse(src); return ""; } catch (e) { msg = e.message; }
+  var lines = src.split("\n");
+  if (/^\s*(const|let|var)\b/.test(src)) return fname + ", line 1: JSON is only the data. No <code>const ... =</code> at the start and no <code>;</code> at the end: the file starts with <code>{</code> or <code>[</code>.";
+  function nextReal(i){ for (var j = i + 1; j < lines.length; j++) if (lines[j].trim()) return j; return -1; }
+  for (var i = 0; i < lines.length; i++) {
+    var L = lines[i], t = L.trim(), n = i + 1, nx = nextReal(i), nt = nx >= 0 ? lines[nx].trim() : "";
+    if (!t) continue;
+    if (/\/\/|\/\*/.test(t)) return fname + ", line " + n + ": a comment. JSON cannot have comments: delete it.";
+    if (/'/.test(t.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) return fname + ", line " + n + ": single quotes. JSON only takes double quotes: <code>\"like this\"</code>.";
+    if (/(^|[{,])\s*[A-Za-z_$][\w$]*\s*:/.test(t)) return fname + ", line " + n + ": a key without quotes. In JSON every key is in double quotes: <code>\"name\":</code>.";
+    if (/;\s*$/.test(t)) return fname + ", line " + n + ": a <code>;</code> at the end. JSON has no <code>;</code>.";
+    if (/,\s*[}\]]/.test(t)) return fname + ", line " + n + ": a comma after the last item. The last one has no comma.";
+    if (/,\s*$/.test(t) && /^[}\]]/.test(nt)) return fname + ", line " + n + ": a comma after the last item. The last one has no comma.";
+    if (/[}\]"\d el]\s*$/.test(t) && !/[,{[]\s*$/.test(t) && /^["{[]/.test(nt)) return fname + ", line " + n + ": a comma is missing at the end of this line. Items are separated by commas.";
+    if (/}\s*{/.test(t)) return fname + ", line " + n + ": a comma is missing between <code>}</code> and <code>{</code>. Items are separated by commas.";
+    if (/:\s*(True|False|Null|TRUE|FALSE|NULL)\b/.test(t)) return fname + ", line " + n + ": <code>true</code>, <code>false</code> and <code>null</code> are written in small letters.";
+    var bare = /:\s*([A-Za-zÀ-ſ][^,}\]]*)/.exec(t);
+    if (bare && !/^(true|false|null)\s*$/.test(bare[1].trim())) return fname + ", line " + n + ": <code>" + esc(bare[1].trim()) + "</code> is text without quotes. Text values need double quotes too.";
+  }
+  if (/^\s*\{/.test(src) && /}\s*,\s*\{/.test(src)) return fname + ": there is more than one object, so it is a list. A list needs <code>[</code> at the start and <code>]</code> at the end.";
+  if (/end of JSON input/.test(msg)) return fname + " ends too early: a <code>{</code> or <code>[</code> is never closed.";
+  var p = /line (\d+)/.exec(msg) || null;
+  return fname + " is not valid JSON" + (p ? ": JSON.parse got stuck on line " + p[1] + ", or just before it." : ". Check the brackets: every <code>{</code> and <code>[</code> needs its closing pair.");
+}
+
+/* ====================================================================
+   Checks
+   ==================================================================== */
+
+function tg(t){ return '<span class="mono">&lt;' + t + '&gt;</span>'; }
+function code(s){ return '<code>' + esc(s) + '</code>'; }
+function desc(n){ return '<span class="mono">&lt;' + n.tag + (n.cls.length ? ' class="' + esc(n.cls.join(" ")) + '"' : "") + '&gt;</span>'; }
+
+// spec(item) -> { tag, cls: [...], text } or { tag, cls, parts: [[tag, text], ...] }. Returns the first problem, or "".
+function listProblem(tree, items, spec, boxName, label){
+  if (!tree) return "The " + code("#" + boxName) + " box is gone from the page.";
+  var kids = tree.kids, want = items.map(spec);
+  if (!kids.length) return "The " + code("#" + boxName) + " box is still empty.";
+  if (kids.length !== want.length) {
+    var s = "The box has " + kids.length + " element" + (kids.length === 1 ? "" : "s") + ", it should have " + want.length + ".";
+    if (kids.length === 1 && want.length > 1) s += " Only one? Is the appendChild inside the loop?";
+    if (kids.length > want.length && kids.length % want.length === 0) s += " Did the code run twice, or is something put in twice?";
+    return s;
+  }
+  for (var i = 0; i < want.length; i++) {
+    var el = kids[i], w = want[i], where = "Element " + (i + 1) + " (" + esc(label(items[i])) + ")";
+    if (el.tag !== w.tag) return where + " is " + desc(el) + ", it should be " + tg(w.tag) + ".";
+    for (var c = 0; c < w.cls.length; c++) if (el.cls.indexOf(w.cls[c]) < 0) return where + " is missing the class " + code(w.cls[c]) + ".";
+    for (c = 0; c < el.cls.length; c++) if (w.cls.indexOf(el.cls[c]) < 0) return where + " has the class " + code(el.cls[c]) + ", and should not.";
+    if (w.text !== undefined) {
+      if (el.all !== w.text) return where + ": its text is " + (el.all ? code(el.all) : "empty") + ", it should be " + code(w.text) + ".";
+      continue;
+    }
+    if (el.kids.length !== w.parts.length) return where + ": the card has " + el.kids.length + " part" + (el.kids.length === 1 ? "" : "s") + " inside (" + (el.kids.map(desc).join(", ") || "nothing") + "), it needs " + w.parts.map(function(p){ return tg(p[0]); }).join(" and ") + ".";
+    for (var j = 0; j < w.parts.length; j++) {
+      var p = el.kids[j];
+      if (p.tag !== w.parts[j][0]) return where + ": part " + (j + 1) + " of the card is " + desc(p) + ", it should be " + tg(w.parts[j][0]) + ".";
+      if (p.all !== w.parts[j][1]) return where + ": the " + tg(p.tag) + " says " + (p.all ? code(p.all) : "nothing") + ", it should say " + code(w.parts[j][1]) + ".";
+    }
+  }
+  return "";
+}
+var CARD_GRUMPY = function(c){ return { tag: "article", cls: c.friendly ? ["card"] : ["card", "grumpy"], parts: [["h2", c.name], ["p", c.age + " years old"]] }; };
+var catName = function(c){ return c.name; };
+var dayName = function(d){ return d.day; };
+var NOT_TYPED = "It works for this text only. The check also ran your code on different text from the server, and there it was wrong. Take every value out of the data instead of typing it in.";
+
+function logHas(run, v){
+  var re = new RegExp("(^|[^\\w])" + String(v).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^\\w]|$)");
+  return run.logs.some(function(l){ return !/^[\[{]/.test(l) && re.test(l); });
+}
+
+function typeOf(v){ return v === null ? "null" : Array.isArray(v) ? "a list" : typeof v === "string" ? "text" : typeof v === "number" ? "a number" : typeof v === "boolean" ? "true/false" : typeof v === "object" ? "an object" : typeof v; }
+function shown(v){ return code(JSON.stringify(v)); }
+// The parsed file against the object it should be. First problem, or "".
+function objProblem(v, want, fname){
+  if (v === null || typeof v !== "object" || Array.isArray(v)) return fname + " should be one object: it starts with <code>{</code>, not " + (Array.isArray(v) ? "<code>[</code>" : "this") + ".";
+  var keys = Object.keys(want);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i], w = want[k];
+    if (!(k in v)) return "The key " + code('"' + k + '"') + " is missing. Keys must be spelled exactly the same.";
+    if (JSON.stringify(v[k]) === JSON.stringify(w)) continue;
+    if (w === null) return code('"' + k + '"') + " is " + shown(v[k]) + ", " + typeOf(v[k]) + ". It should be <code>null</code> without quotes: no value.";
+    if (typeOf(v[k]) !== typeOf(w)) return code('"' + k + '"') + " is " + shown(v[k]) + ", " + typeOf(v[k]) + ". It should be " + shown(w) + ", " + typeOf(w) + "." + (typeof v[k] === "string" ? " The quotes make it text." : "");
+    return code('"' + k + '"') + " is " + shown(v[k]) + ", it should be " + shown(w) + ". Keep the data the same.";
+  }
+  for (var x in v) if (!(x in want)) return "There is an extra key: " + code('"' + x + '"') + ".";
+  return "";
+}
+function parsed(src, fname){ try { return { v: JSON.parse(src) }; } catch (e) { return { err: jsonWhy(src, fname) }; } }
+
+/* ====================================================================
+   The slides: why, before any code. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+// Mono text in coloured pieces: parts = [[text, colour], ...]
+function TS(x, y, parts, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" font-family="ui-monospace,Consolas,monospace" xml:space="preserve">' + parts.map(function(p){ return '<tspan fill="' + (p[1] || "#e5e7eb") + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + label + '">' + inner + '</svg>'; }
+function miniCard(x, y, name, sub){ return R(x, y, 150, 40, { stroke: "#d3d7dd", sw: 1.5 }) + T(x + 12, y + 18, name, { bold: true, size: 13 }) + T(x + 12, y + 33, sub, { fill: MUT, size: 11 }); }
+var DARK = "#15181f", KEYC = "#9cdcfe", STRC = "#ce9178", NUMC = "#b5cea8", KWC = "#569cd6", DIM = "#9aa0a6";
+
+var ART = {
+  wire: function(){
+    var s = R(8, 30, 170, 150, { fill: "#f6f8fa", stroke: "#cfd6df" }) + T(93, 58, "Server", { bold: true, anchor: "middle", size: 15 });
+    s += T(93, 80, "another computer", { anchor: "middle", fill: MUT, size: 11 });
+    ["cats", "menu", "excuses"].forEach(function(n, i){ s += R(38, 94 + i * 26, 110, 20, { rx: 4, fill: "#fff" }) + T(93, 108 + i * 26, n, { mono: true, anchor: "middle", size: 11, fill: A }); });
+    s += '<line x1="186" y1="105" x2="438" y2="105" stroke="' + A + '" stroke-width="2" stroke-dasharray="6 5"/>' + ARROW(420, 105, 446, 105, A);
+    s += R(196, 84, 232, 42, { rx: 6, fill: DARK, stroke: DARK }) + TS(206, 110, [['[{"name":"Mirci","age":7,…', "#e5e7eb"]], 12);
+    s += T(312, 70, "only text travels", { anchor: "middle", bold: true, fill: A, size: 13 });
+    s += T(312, 148, "the list is packed into text", { anchor: "middle", fill: MUT, size: 11 });
+    s += R(456, 8, 176, 210, { rx: 16, stroke: "#9aa0a6", sw: 2 }) + T(544, 32, "Your page", { bold: true, anchor: "middle", size: 13 });
+    s += miniCard(469, 44, "Mirci", "7 years old") + miniCard(469, 92, "Bundás", "2 years old") + miniCard(469, 140, "Pixel", "4 years old");
+    s += T(544, 204, "your script unpacks it", { anchor: "middle", fill: MUT, size: 11 });
+    return svg(226, "A server on the left sends the cats as one line of text over a wire to your page on the right, which shows them as cards", s);
+  },
+  text: function(){
+    var chars = ["[", "{", '"', "n", "a", "m", "e", '"', ":", '"', "M", "i", "r", "c"], s = "";
+    s += T(16, 20, "catsText", { mono: true, bold: true, fill: A, size: 13 }) + T(90, 20, "one long piece of text, character by character", { fill: MUT, size: 11 });
+    chars.forEach(function(c, i){ var x = 16 + i * 40; s += R(x, 30, 34, 34, { rx: 4, stroke: i === 0 ? A : "#d3d7dd", sw: i === 0 ? 2 : 1, fill: "#fbfcfd" }) + T(x + 17, 53, esc(c), { mono: true, anchor: "middle", size: 15 }); });
+    s += T(588, 53, "…", { size: 18, fill: MUT });
+    s += T(16, 86, 'catsText[0]', { mono: true, bold: true, fill: RED, size: 12.5 }) + T(108, 86, '"[": one character, not a cat', { fill: RED, size: 12 });
+    s += T(330, 86, 'catsText.length', { mono: true, bold: true, fill: RED, size: 12.5 }) + T(452, 86, "counts characters", { fill: RED, size: 12 });
+    s += ARROW(320, 98, 320, 138, A) + T(334, 124, "JSON.parse(catsText)", { mono: true, bold: true, fill: A, size: 13 });
+    s += R(8, 146, 624, 74, { fill: "#f6f8fa", stroke: "#cfd6df", dash: true });
+    ["Mirci", "Bundás", "Pixel", "Null", "Szotyi"].forEach(function(n, i){ var x = 18 + i * 122; s += R(x, 156, 112, 54, { stroke: i === 0 ? A : "#d3d7dd", sw: i === 0 ? 2 : 1 }) + T(x + 8, 174, "cats[" + i + "]", { mono: true, bold: true, fill: A, size: 11 }) + T(x + 8, 196, 'name: "' + n + '"', { mono: true, size: 10.5 }); });
+    s += T(16, 244, "cats[0].name", { mono: true, bold: true, fill: GRN, size: 12.5 }) + T(112, 244, '"Mirci"', { mono: true, fill: GRN, size: 12.5 });
+    s += T(330, 244, "cats.length", { mono: true, bold: true, fill: GRN, size: 12.5 }) + T(424, 244, "5 cats", { fill: GRN, size: 12.5 });
+    return svg(256, "The text catsText drawn as single characters, so catsText[0] is a bracket; after JSON.parse it becomes a list of five cats where cats[0].name is Mirci", s);
+  },
+  compare: function(){
+    var s = T(16, 18, "JavaScript, in your code", { bold: true, fill: MUT }) + T(336, 18, "JSON, what the server sends", { bold: true, fill: MUT });
+    s += R(8, 26, 304, 150, { fill: DARK, stroke: DARK }) + R(328, 26, 304, 150, { fill: DARK, stroke: DARK });
+    var L1 = [[["const cat = ", "#fbbf24", 1], ["{", DIM]], [["  "], ["name", "#fbbf24", 1], [": "], ['"Mirci"', STRC], [","]], [["  "], ["age", "#fbbf24", 1], [": "], ["7", NUMC], [","]], [["  "], ["friendly", "#fbbf24", 1], [": "], ["true", KWC]], [["}", DIM], [";", "#fbbf24", 1]]];
+    var L2 = [[["{", DIM]], [["  "], ['"name"', "#4ade80", 1], [": "], ['"Mirci"', STRC], [","]], [["  "], ['"age"', "#4ade80", 1], [": "], ["7", NUMC], [","]], [["  "], ['"friendly"', "#4ade80", 1], [": "], ["true", KWC]], [["}", DIM]]];
+    L1.forEach(function(p, i){ s += TS(24, 54 + i * 26, p, 14); });
+    L2.forEach(function(p, i){ s += TS(344, 54 + i * 26, p, 14); });
+    s += T(16, 200, "a name for it, keys bare, a ;", { fill: AMB, size: 12, bold: true }) + T(336, 200, "only the data, every key in double quotes", { fill: GRN, size: 12, bold: true });
+    return svg(212, "The same cat as a JavaScript object and as JSON side by side: JSON has no const, no semicolon, and every key in double quotes", s);
+  },
+  strict: function(){
+    var rows = [["single quotes", "'Mirci'", '"Mirci"'], ["a key without quotes", 'name: "Mirci"', '"name": "Mirci"'], ["a comma after the last item", '"age": 7, }', '"age": 7 }'], ["a comment", "// my cats", "(delete it)"]];
+    var s = T(16, 18, "JavaScript lets it go", { bold: true, fill: MUT }) + T(250, 18, "JSON.parse stops on", { bold: true, fill: RED }) + T(450, 18, "JSON wants", { bold: true, fill: GRN });
+    rows.forEach(function(r, i){
+      var y = 30 + i * 40;
+      s += T(16, y + 22, r[0], { size: 13 });
+      s += R(244, y + 4, 186, 28, { rx: 6, fill: "#fef2f2", stroke: "#fecaca" }) + T(254, y + 23, esc(r[1]), { mono: true, fill: RED, size: 12.5 });
+      s += R(444, y + 4, 186, 28, { rx: 6, fill: "#f0fdf4", stroke: "#bbf7d0" }) + T(454, y + 23, esc(r[2]), { mono: true, fill: GRN, size: 12.5 });
+    });
+    s += R(8, 198, 624, 34, { rx: 6, fill: "#fff0f0", stroke: "#fbd0d0" }) + T(20, 220, "✖ Uncaught SyntaxError: … is not valid JSON", { mono: true, fill: "#d93025", size: 12.5 }) + T(620, 220, "and nothing after it runs", { anchor: "end", fill: RED, size: 12, bold: true });
+    return svg(240, "Four things JavaScript allows and JSON does not: single quotes, keys without quotes, a comma after the last item, comments; one of them is enough for a SyntaxError", s);
+  },
+  types: function(){
+    var rows = [['"Mirci"', "text, always in double quotes"], ["7   4.5", "a number, no quotes"], ["true  false", "true/false, no quotes"], ["null", "no value (no dessert today)"], ["{ … }", "one object"], ["[ … ]", "a list"]];
+    var s = "";
+    rows.forEach(function(r, i){ var y = 10 + i * 32; s += R(8, y, 110, 26, { rx: 5, fill: "#f6f8fa" }) + T(18, y + 18, esc(r[0]), { mono: true, bold: true, fill: A, size: 13 }) + T(128, y + 18, r[1], { size: 12.5 }); });
+    s += R(352, 10, 280, 180, { fill: DARK, stroke: DARK });
+    s += TS(366, 36, [['"990" + 250', STRC]]) + TS(366, 56, [['→ "990250"', "#f87171", 1]]);
+    s += TS(366, 88, [["990 + 250", NUMC]]) + TS(366, 108, [["→ 1240", "#4ade80", 1]]);
+    s += TS(366, 140, [["if (", "#c586c0"], ['"false"', STRC], [") { … }", "#c586c0"]]) + TS(366, 160, [["→ runs! Text that is not", "#f87171", 1]]) + TS(366, 178, [["  empty counts as true", "#f87171", 1]]);
+    s += T(320, 214, "No red error for either one. The page is just wrong.", { anchor: "middle", fill: RED, size: 13, bold: true });
+    return svg(224, "The six kinds of value in JSON, and two traps: text 990 plus 250 sticks together into 990250, and the text false counts as true in an if", s);
+  },
+  path: function(){
+    var s = R(8, 8, 300, 230, { fill: DARK, stroke: DARK });
+    var L = [[["{", DIM]], [['  "week"', KEYC], [": "], ["46", NUMC], [","]], [['  "days"', KEYC], [": "], ["[", "#fbbf24", 1]], [["    { ", DIM], ['"day"', KEYC], [": "], ['"Monday"', STRC], [", … },"]], [["    {", "#4ade80", 1]], [['      "day"', KEYC], [": "], ['"Tuesday"', STRC], [","]], [['      "main"', KEYC], [": "], ["{ ", "#f472b6", 1], ['"name"', KEYC], [": "], ['"Mákos…"', STRC]], [["    },", "#4ade80", 1]], [["    …"]], [["  ]", "#fbbf24", 1]], [["}", DIM]]];
+    L.forEach(function(p, i){ s += TS(20, 30 + i * 19.5, p, 12); });
+    var steps = [["menu", "an object", DIM], ["menu.days", "a list, [ ]", "#d97706"], ["menu.days[1]", "an object: Tuesday", GRN], ["menu.days[1].main", "an object: its main course", "#db2777"], ["menu.days[1].main.name", '"Mákos tészta"', A]];
+    steps.forEach(function(st, i){ var y = 22 + i * 44; s += T(328, y + 4, st[0], { mono: true, bold: true, size: 13, fill: st[2] }) + T(328, y + 22, "what is this now? " + st[1], { size: 11.5, fill: MUT }); if (i < 4) s += ARROW(318, y + 10, 318, y + 36, "#c9cfd6"); });
+    return svg(246, "The canteen JSON on the left; on the right, one step at a time from menu to menu.days[1].main.name, asking what each step is", s);
+  },
+  words: function(){
+    var rows = [["unpack the text", "JSON.parse(catsText)"], ["one key and value", '"name": "Mirci"'], ["a list of objects", '[ { … }, { … } ]'], ["no value", "null"], ["go in, step by step", "menu.days[1].main.name"], ["then, as last lesson", "createElement, appendChild, for"]];
+    var s = T(236, 16, "What you would call it", { bold: true, fill: MUT, anchor: "end" }) + T(286, 16, "What you type", { bold: true, fill: A });
+    rows.forEach(function(r, i){
+      var y = 32 + i * 32;
+      s += T(236, y + 16, r[0], { anchor: "end", size: 13 });
+      s += ARROW(246, y + 12, 274, y + 12, "#c9cfd6");
+      s += T(286, y + 16, esc(r[1]), { mono: true, bold: true, fill: A, size: 12.5 });
+      if (i < rows.length - 1) s += '<line x1="8" y1="' + (y + 29) + '" x2="632" y2="' + (y + 29) + '" stroke="#f1f3f5"/>';
+    });
+    return svg(232, "Everyday words matched to what you type: unpack, key and value, list, no value, the path in, and the DOM words from last lesson", s);
+  }
+};
+
+var PRIMER = [
+  { title: "The data lives on another computer", art: "wire",
+    body: "Last lesson the cats sat in <span class=\"mono\">data.js</span>. On a real site they come from a <b>server</b>, over the network. And only <b>text</b> travels down the wire: a list cannot.<br><br>So the server packs the list into text, and your script has to unpack it before it can make a single card.",
+    say: "Ask: where does the canteen site's menu come from? Who types it in? The goal: the data is on another computer and arrives as text. Do not go into networking." },
+  { title: "Text is not a list", art: "text",
+    body: "<span class=\"mono\">catsText</span> looks like a list, but it is one long piece of text. <span class=\"mono\">catsText[0]</span> is its first character, and <span class=\"mono\">catsText.length</span> counts characters, not cats.<br><br><span class=\"mono\">JSON.parse(catsText)</span> unpacks it. What comes out is a real list again, and everything from last lesson works on it.",
+    say: "Ask before revealing: what is catsText[0]? (The [ character.) Task 1 makes them hit this before they fix it." },
+  { title: "The packing format is called JSON", art: "compare",
+    body: "The text has a format: <b>JSON</b> (JavaScript Object Notation). It looks almost like the objects you already write. Two differences: every key is in <b>double quotes</b>, and there is only the data. No <span class=\"mono\">const</span>, no name, no <span class=\"mono\">;</span>.",
+    say: "Ask: why is there no variable name? (The server does not know what you will call it.) What stayed the same? (The values.)" },
+  { title: "JSON is strict", art: "strict",
+    body: "JavaScript lets a lot go. JSON lets nothing go. One wrong character and <span class=\"mono\">JSON.parse</span> stops with a red SyntaxError, and nothing after it runs.<br><br>When that happens, the Console says which file and which line. Read it before you change anything.",
+    say: "Task 3 is a file someone copied out of JavaScript. Task 5 is where they will make the comma mistake themselves." },
+  { title: "7 is not \"7\"", art: "types",
+    body: "The quotes decide the type. A number in quotes is text, and text + 250 just sticks them together. <span class=\"mono\">\"false\"</span> in quotes is text too, and any text that is not empty counts as true.<br><br>Neither one is red. The page simply shows something wrong, so you have to look at the page.",
+    say: "Ask: what is \"7\" + 1? (\"71\".) Task 4 is exactly this, with no error to help." },
+  { title: "{ or [, and the way in", art: "path",
+    body: "The first character tells you what you got: <span class=\"mono\">[</span> is a list, <span class=\"mono\">{</span> is one object. Inside, they nest: an object holds a list, the list holds objects, and those hold more objects.<br><br>Go in from left to right, and at every step ask: <b>what is this now?</b>",
+    say: "Read the right side aloud, one step at a time. Ask: how do we get Tuesday's dessert? (menu.days[1].dessert.)" },
+  { title: "The words you are about to type", art: "words",
+    body: "The practice looks like VS Code, with the page open next to it. Some tasks are in <span class=\"mono\">script.js</span>, some are in a <span class=\"mono\">.json</span> file. Save with <b>Ctrl+S</b> and the page reloads.<br><br>Next lesson the text comes from the real server with fetch. The unpacking is what you learn today.",
+    say: "Then: everyone presses Let's go. Walk round. The ones who finish early do the last task without hints." }
+];
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+var CATS_VARS = { name: "catsText", data: CATS, alt: ALT_CATS };
+var MENU_VARS = { name: "menuText", data: MENU, alt: ALT_MENU };
+
+var LAST_LESSON =
+  'const box = document.getElementById("cats");\n\n' +
+  'for (let i = 0; i < cats.length; i++) {\n' +
+  '  const card = document.createElement("article");\n' +
+  '  card.classList.add("card");\n\n' +
+  '  const title = document.createElement("h2");\n' +
+  '  title.textContent = cats[i].name;\n\n' +
+  '  const age = document.createElement("p");\n' +
+  '  age.textContent = cats[i].age + " years old";\n\n' +
+  '  card.appendChild(title);\n' +
+  '  card.appendChild(age);\n' +
+  '  if (cats[i].friendly === false) {\n' +
+  '    card.classList.add("grumpy");\n' +
+  '  }\n' +
+  '  box.appendChild(card);\n' +
+  '}\n';
+
+var LOADED = "// fileText holds the text of {F}. The page loads it for you.\n// (In the fetch lesson you will load it yourself.)\n";
+
+var STUDENT_WANT = { name: "Kiss Anna", className: "13F", age: 18, hasLaptop: false };
+var SPECIAL_WANT = { name: "Csirkepaprikás nokedlivel", price: 990, vegetarian: false, dessert: null };
+
+var LESSONS = [
+  { title: "Text, not a list", page: "cats", edit: "script.js", vars: CATS_VARS,
+    do: "Print <b>the first cat's name</b> and <b>how many cats</b> there are.",
+    sub: "The cats came from the server as text: <code>catsText</code> in <code>data.js</code>. The start code tries it: look at what it printed in the Console.",
+    start: "// catsText comes from data.js\nconsole.log(catsText[0].name);\nconsole.log(catsText.length);\n",
+    hints: ["<code>catsText</code> is text. <code>catsText[0]</code> is its first character, <code>[</code>, and a character has no name.", "Unpack it first, on a line of its own: <code>const cats = JSON.parse(catsText);</code>", "Then use <code>cats</code>, not <code>catsText</code>: <code>cats[0].name</code> and <code>cats.length</code>."],
+    solution: "// catsText comes from data.js\nconst cats = JSON.parse(catsText);\nconsole.log(cats[0].name);\nconsole.log(cats.length);\n",
+    check: function(r, a, src){
+      var nameOk = logHas(r, CATS[0].name), lenOk = logHas(r, CATS.length);
+      var chars = fmtJSON(CATS).length;
+      if (!nameOk) {
+        if (r.logs.some(function(l){ return l === "undefined"; })) return /JSON\.parse/.test(src) ? "Something printed <code>undefined</code>. The unpacked cats are a list: ask for one cat first, like <code>cats[0].name</code>." : "Something printed <code>undefined</code>. <code>catsText[0]</code> is one character of the text, and a character has no <code>.name</code>.";
+        if (r.logs.some(function(l){ return l === "["; })) return "<code>[</code> is the first character of the text, not the first cat.";
+        if (r.logs.some(function(l){ return /^\{/.test(l) && l.indexOf(CATS[0].name) >= 0; })) return "You printed the whole first cat. Print only its name: add <code>.name</code>.";
+        return "The first cat's name is not in the Console yet.";
+      }
+      if (!lenOk && r.errors.length) return "There is a red error in the Console. Read it first: it says which line.";
+      if (!lenOk) return logHas(r, chars) ? chars + " is how many characters the text has. You need how many cats: the length of the unpacked list." : "The name is there. Now the number of cats.";
+      if (!logHas(a, ALT_CATS[0].name) || !logHas(a, ALT_CATS.length)) return NOT_TYPED;
+      return "";
+    },
+    after: "<code>catsText[0]</code> was one character, and <code>catsText.length</code> counted characters. After <code>JSON.parse</code> it is a list again, just like last lesson." },
+
+  { title: "Cards again", page: "cats", edit: "script.js", vars: CATS_VARS,
+    do: "This is last lesson's card code. Make it show every cat again.",
+    sub: "This time <code>data.js</code> has only <code>catsText</code>, the text from the server. Save first and look at the page.",
+    start: "// last lesson's code. catsText comes from data.js\n" + LAST_LESSON,
+    hints: ["Nothing is red, and the box is empty: the loop never ran. What does it go through? Is that in data.js?", "Unpack the text before the loop: <code>const cats = JSON.parse(catsText);</code>", "That one line goes at the top. The rest of the code can stay as it is."],
+    solution: "// last lesson's code. catsText comes from data.js\nconst cats = JSON.parse(catsText);\n" + LAST_LESSON,
+    check: function(r, a, src){
+      if (r.tree && !r.tree.kids.length && !/JSON\.parse/.test(src)) return "The box is still empty, and nothing is red. The loop goes through <code>cats</code>, but <code>data.js</code> only has <code>catsText</code> now.";
+      var p = listProblem(r.tree, CATS, CARD_GRUMPY, "cats", catName);
+      if (p) return p;
+      if (listProblem(a.tree, ALT_CATS, CARD_GRUMPY, "cats", catName)) return NOT_TYPED;
+      return "";
+    },
+    after: "One line was missing. Every list from a server starts like this: unpack it, then the same loop as always." },
+
+  { title: "Pack it as JSON", page: "student", edit: "student.json",
+    do: "Someone copied <code>student.json</code> out of a JavaScript file, and now the page cannot read it. Make it JSON, with the same data.",
+    sub: "Change only <code>student.json</code>. Save, and the Console says where <code>JSON.parse</code> got stuck.",
+    start: 'const student = {\n  name: "Kiss Anna",\n  className: "13F",\n  age: 18,\n  hasLaptop: false\n};\n',
+    given: LOADED.replace("{F}", "student.json") +
+      'const student = JSON.parse(fileText);\n\n' +
+      'const box = document.getElementById("profile");\n\n' +
+      'const name = document.createElement("h2");\nname.textContent = student.name;\n\n' +
+      'const info = document.createElement("p");\ninfo.textContent = student.className + ", " + student.age + " years old";\n\n' +
+      'const laptop = document.createElement("p");\n' +
+      'if (student.hasLaptop) {\n  laptop.textContent = "Has a laptop";\n} else {\n  laptop.textContent = "No laptop";\n}\n\n' +
+      'box.appendChild(name);\nbox.appendChild(info);\nbox.appendChild(laptop);\n',
+    hints: ["JSON is only the data: no <code>const student =</code> at the start and no <code>;</code> at the end. The file starts with <code>{</code>.", "Every key goes in double quotes: <code>\"name\": \"Kiss Anna\",</code>", "Numbers and <code>false</code> stay without quotes."],
+    solution: '{\n  "name": "Kiss Anna",\n  "className": "13F",\n  "age": 18,\n  "hasLaptop": false\n}\n',
+    check: function(r, a, src){
+      var p = parsed(src, "student.json");
+      if (p.err) return p.err;
+      return objProblem(p.v, STUDENT_WANT, "student.json");
+    },
+    after: "Same data, stricter writing: every key in double quotes, nothing around it. That is all JSON is." },
+
+  { title: "Two bugs, no red", page: "special", edit: "special.json",
+    do: "The page gets two things wrong about today's special, and nothing is red. Fix <code>special.json</code>, not the script.",
+    sub: "Look at the page first: two of its lines are wrong. What would the canteen lady say?",
+    start: '{\n  "name": "Csirkepaprikás nokedlivel",\n  "price": "990",\n  "vegetarian": "false",\n  "dessert": null\n}\n',
+    given: LOADED.replace("{F}", "special.json") +
+      'const item = JSON.parse(fileText);\n\n' +
+      'const box = document.getElementById("special");\n\n' +
+      'const name = document.createElement("h2");\nname.textContent = item.name;\n\n' +
+      'const price = document.createElement("p");\nprice.textContent = "Price: " + item.price + " Ft";\n\n' +
+      'const combo = document.createElement("p");\ncombo.classList.add("combo");\ncombo.textContent = "With a drink (+250 Ft): " + (item.price + 250) + " Ft";\n\n' +
+      'const veg = document.createElement("p");\n' +
+      'if (item.vegetarian) {\n  veg.textContent = "Vegetarian";\n  veg.classList.add("veg");\n} else {\n  veg.textContent = "Not vegetarian";\n}\n\n' +
+      'const dessert = document.createElement("p");\n' +
+      'if (item.dessert === null) {\n  dessert.textContent = "Dessert: none today";\n} else {\n  dessert.textContent = "Dessert: " + item.dessert;\n}\n\n' +
+      'box.appendChild(name);\nbox.appendChild(price);\nbox.appendChild(combo);\nbox.appendChild(veg);\nbox.appendChild(dessert);\n',
+    hints: ["990 + 250 is not 990250. A number in quotes is text, and text + 250 sticks them together.", "Chicken is not vegetarian. <code>\"false\"</code> in quotes is text, and text that is not empty counts as true.", "<code>\"price\": 990</code> and <code>\"vegetarian\": false</code>, both without quotes."],
+    solution: '{\n  "name": "Csirkepaprikás nokedlivel",\n  "price": 990,\n  "vegetarian": false,\n  "dessert": null\n}\n',
+    check: function(r, a, src){
+      var p = parsed(src, "special.json");
+      if (p.err) return p.err;
+      var v = p.v;
+      if (v && typeof v === "object" && v.price === "990") return "Look at the price with a drink on the page. Is that what 990 + 250 makes?";
+      if (v && typeof v === "object" && v.price === 990 && v.vegetarian === "false") return "The price is right now. One more thing on the page is wrong: chicken is not vegetarian.";
+      return objProblem(v, SPECIAL_WANT, "special.json");
+    },
+    after: "No red error, and still wrong. <code>\"990\"</code> and <code>990</code> look almost the same in the file. The quotes decide what JavaScript gets." },
+
+  { title: "Your own cats", page: "cats", edit: "cats.json",
+    do: "Add <b>two cats of your own</b> to <code>cats.json</code>, after Mirci, each with a name, an age and friendly. At least one of your two is grumpy.",
+    sub: "Copy the shape of Mirci's line. The page shows a card for every cat in the file.",
+    start: '[\n  { "name": "Mirci", "age": 7, "friendly": true }\n]\n',
+    given: LOADED.replace("{F}", "cats.json") +
+      'const cats = JSON.parse(fileText);\n\n' + LAST_LESSON,
+    hints: ["Each cat is one <code>{ }</code>. Between two cats there is a comma; after the last one there is none.", "For example: <code>{ \"name\": \"Bug\", \"age\": 3, \"friendly\": false }</code>", "Names in double quotes. The age and <code>true</code>/<code>false</code> without quotes."],
+    solution: '[\n  { "name": "Mirci", "age": 7, "friendly": true },\n  { "name": "Bug", "age": 3, "friendly": false },\n  { "name": "Morzsa", "age": 5, "friendly": true }\n]\n',
+    check: function(r, a, src){
+      var p = parsed(src, "cats.json");
+      if (p.err) return p.err;
+      var v = p.v;
+      if (!Array.isArray(v)) return "cats.json has to be a list: <code>[</code> at the start, <code>]</code> at the end, the cats inside.";
+      if (v.length < 3) return v.length + " cat" + (v.length === 1 ? "" : "s") + " in the file. Mirci and two of your own makes 3.";
+      if (v.length > 3) return v.length + " cats in the file. Mirci and two of your own makes 3.";
+      for (var i = 0; i < v.length; i++) {
+        var c = v[i], w = "Cat " + (i + 1);
+        if (!c || typeof c !== "object" || Array.isArray(c)) return w + " is not an object: each cat is <code>{ ... }</code>.";
+        if (typeof c.name !== "string" || !c.name.trim()) return w + (c.name === undefined ? " has no <code>\"name\"</code>." : ": the name should be text, in double quotes.");
+        if (typeof c.age !== "number") return w + (c.age === undefined ? " has no <code>\"age\"</code>." : ": the age is " + shown(c.age) + ", " + typeOf(c.age) + ". Numbers go without quotes.");
+        if (typeof c.friendly !== "boolean") return w + (c.friendly === undefined ? " has no <code>\"friendly\"</code>." : ": friendly is " + shown(c.friendly) + ", " + typeOf(c.friendly) + ". <code>true</code> and <code>false</code> go without quotes.");
+        for (var k in c) if (["name", "age", "friendly"].indexOf(k) < 0) return w + " has an extra key: " + code('"' + k + '"') + ". Only name, age and friendly.";
+      }
+      if (JSON.stringify(v[0]) !== JSON.stringify(CATS[0])) return "Leave Mirci as it is, first in the list. Your two cats come after it.";
+      if (!v.some(function(c){ return c.friendly === false; })) return "Every cat is friendly. Make at least one grumpy: <code>\"friendly\": false</code>.";
+      var cp = listProblem(r.tree, v, CARD_GRUMPY, "cats", catName);
+      if (cp) return cp;
+      return "";
+    },
+    after: "A list in JSON: <code>[ ]</code> around it, objects inside, commas between them. That is exactly what a server sends." },
+
+  { title: "Find the way in", page: "menu", edit: "script.js", vars: MENU_VARS,
+    do: "Print <b>the week number</b>, and <b>Tuesday's main course</b> (just its name).",
+    sub: "The canteen menu is in <code>data.js</code>, as text in <code>menuText</code>.",
+    start: "// menuText comes from data.js\nconst menu = JSON.parse(menuText);\n\n",
+    hints: ["The week is right inside: <code>menu.week</code>", "The days are a list, <code>menu.days</code>. Monday is <code>[0]</code>, so Tuesday is...", "<code>menu.days[1]</code> is Tuesday. Its <code>main</code> is an object, and you want its <code>name</code>."],
+    solution: "// menuText comes from data.js\nconst menu = JSON.parse(menuText);\n\nconsole.log(menu.week);\nconsole.log(menu.days[1].main.name);\n",
+    check: function(r, a){
+      var want = MENU.days[1].main.name, wk = logHas(r, MENU.week), mn = logHas(r, want);
+      if (!mn) {
+        if (r.logs.some(function(l){ return /^\{/.test(l) && l.indexOf(want) >= 0; })) return "That is a whole object. Go one step further in: <code>.name</code>.";
+        if (logHas(r, MENU.days[2].main.name)) return "That is Wednesday's. Counting starts at 0: Monday is <code>days[0]</code>.";
+        if (logHas(r, MENU.days[0].main.name)) return "That is Monday's. Tuesday is the second day.";
+        if (logHas(r, MENU.days[1].soup)) return "That is Tuesday's soup. The main course is under <code>main</code>.";
+        if (r.logs.some(function(l){ return l === "undefined"; })) return "Something printed <code>undefined</code>: one step of the path is wrong. Go one at a time: <code>menu</code>, <code>.days</code>, <code>[1]</code>, <code>.main</code>, <code>.name</code>.";
+        return "Tuesday's main course is not in the Console yet.";
+      }
+      if (!wk) return "The main course is there. Now the week number.";
+      if (!logHas(a, ALT_MENU.week) || !logHas(a, ALT_MENU.days[1].main.name)) return NOT_TYPED;
+      return "";
+    },
+    after: "Five steps, and at each one you knew what you were holding. That is how you read any JSON a server sends." },
+
+  { title: "A teammate's code", page: "menu", edit: "script.js", vars: MENU_VARS,
+    do: "Your teammate says this is finished. Make the page list every day with its main course, like <b>Monday: Rántott sajt</b>.",
+    sub: "Look at the page and the Console first. The menu is in <code>data.js</code>.",
+    start:
+      '// menuText comes from data.js\n' +
+      'const box = document.getElementById("menu");\n\n' +
+      'for (let i = 0; i < menuText.days.length; i++) {\n' +
+      '  const li = document.createElement("li");\n' +
+      '  li.textContent = menu.days[i].day + ": " + menu.days[i].main;\n' +
+      '  box.appendChild(li);\n' +
+      '}\n',
+    hints: ["Read the red line. <code>menuText</code> is text, and text has no <code>.days</code>.", "Unpack it once, before the loop: <code>const menu = JSON.parse(menuText);</code> Then loop over <code>menu.days</code>.", "<code>[object Object]</code> on the page means a whole object was turned into text. <code>main</code> is an object: you want <code>main.name</code>."],
+    solution:
+      '// menuText comes from data.js\n' +
+      'const menu = JSON.parse(menuText);\n' +
+      'const box = document.getElementById("menu");\n\n' +
+      'for (let i = 0; i < menu.days.length; i++) {\n' +
+      '  const li = document.createElement("li");\n' +
+      '  li.textContent = menu.days[i].day + ": " + menu.days[i].main.name;\n' +
+      '  box.appendChild(li);\n' +
+      '}\n',
+    check: function(r, a){
+      var spec = function(d){ return { tag: "li", cls: [], text: d.day + ": " + d.main.name }; };
+      if (r.tree && r.tree.kids.some(function(k){ return /\[object Object\]/.test(k.all); })) return "The page says <code>[object Object]</code>: a whole object turned into text. <code>main</code> is an object. Which value inside it do you want?";
+      var p = listProblem(r.tree, MENU.days, spec, "menu", dayName);
+      if (p) return p;
+      if (listProblem(a.tree, ALT_MENU.days, spec, "menu", dayName)) return NOT_TYPED;
+      return "";
+    },
+    after: "Two bugs: one red, one silent. The silent <code>[object Object]</code> is why you always look at the page, not just the Console." },
+
+  { title: "Your turn, no hints", page: "desserts", edit: "script.js", vars: MENU_VARS,
+    do: "Put one <code>&lt;li&gt;</code> in the list for every day: the day and its dessert, like <b>Tuesday: alma</b>. If the dessert is <code>null</code>, write <b>Monday: no dessert</b> and give the <code>&lt;li&gt;</code> the class <code>none</code>.",
+    sub: "The menu is in <code>data.js</code> as <code>menuText</code>, the list is in <code>index.html</code>. No hints in this one.",
+    start: "// menuText comes from data.js. The list is <ul id=\"desserts\">.\n",
+    hints: [],
+    solution:
+      'const menu = JSON.parse(menuText);\n' +
+      'const box = document.getElementById("desserts");\n\n' +
+      'for (let i = 0; i < menu.days.length; i++) {\n' +
+      '  const li = document.createElement("li");\n' +
+      '  if (menu.days[i].dessert === null) {\n' +
+      '    li.textContent = menu.days[i].day + ": no dessert";\n' +
+      '    li.classList.add("none");\n' +
+      '  } else {\n' +
+      '    li.textContent = menu.days[i].day + ": " + menu.days[i].dessert;\n' +
+      '  }\n' +
+      '  box.appendChild(li);\n' +
+      '}\n',
+    flags: function(r, a){
+      var SPEC = function(d){ return { tag: "li", cls: d.dessert === null ? ["none"] : [], text: d.day + ": " + (d.dessert === null ? "no dessert" : d.dessert) }; };
+      var TEXT_ONLY = function(d){ return { tag: "li", cls: [], text: d.day + ": " + (d.dessert === null ? "no dessert" : d.dessert) }; };
+      var t = r.tree, k = t ? t.kids : [];
+      var f1 = !!t && k.length > 0;
+      var f2 = f1 && k.length === MENU.days.length && k.every(function(n){ return n.tag === "li"; });
+      var f3 = f2 && k.every(function(n, i){ return n.all === TEXT_ONLY(MENU.days[i]).text; });
+      var f4 = f3 && !listProblem(t, MENU.days, SPEC, "desserts", dayName);
+      var f5 = f4 && !listProblem(a.tree, ALT_MENU.days, SPEC, "desserts", dayName);
+      var msg = "";
+      if (!f1) msg = t ? "The list is still empty." : "The " + code("#desserts") + " list is gone.";
+      else if (!f2) msg = listProblem(t, MENU.days, SPEC, "desserts", dayName);
+      else if (!f3) {
+        var bad = 0; while (bad < k.length && k[bad].all === TEXT_ONLY(MENU.days[bad]).text) bad++;
+        msg = /: null$/.test(k[bad].all) ? "The page says <b>" + esc(k[bad].all) + "</b>. When the dessert is null, the task wants the words <b>no dessert</b> instead."
+          : "Element " + (bad + 1) + " (" + esc(MENU.days[bad].day) + "): its text is " + (k[bad].all ? code(k[bad].all) : "empty") + ", it should be " + code(TEXT_ONLY(MENU.days[bad]).text) + ".";
+      }
+      else if (!f4) msg = listProblem(t, MENU.days, SPEC, "desserts", dayName);
+      else if (!f5) msg = "Right for this week. On another week's menu it was wrong: is anything typed in?";
+      return { flags: [f1, f2, f3, f4, f5], msg: msg };
+    },
+    after: "That is the whole lesson. Unpack the text, find your way in, then make it, fill it, put it in. Next lesson the text comes from the real server, with fetch." }
+];
+
+/* ====================================================================
+   Small helpers
+   ==================================================================== */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* ---- syntax colours, VS Code Dark Modern ---- */
+var KW = { const:"k", let:"k", var:"k", true:"k", false:"k", null:"k", undefined:"k", function:"k", new:"k", for:"c", if:"c", else:"c", return:"c", while:"c" };
+function hlJS(line){
+  var re = /(\/\/.*$)|("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\sA-Za-z_$\d"']+)/g, out = "", m, prevDot = false;
+  while ((m = re.exec(line))) {
+    if (m[1]) out += '<span class="cm">' + esc(m[1]) + '</span>';
+    else if (m[2]) out += '<span class="s">' + esc(m[2]) + '</span>';
+    else if (m[3]) out += '<span class="num">' + m[3] + '</span>';
+    else if (m[4]) {
+      var w = m[4], rest = line.slice(re.lastIndex);
+      if (KW[w] && !prevDot) out += '<span class="' + KW[w] + '">' + w + '</span>';
+      else if (/^\s*\(/.test(rest)) out += '<span class="f">' + w + '</span>';
+      else out += '<span class="v">' + w + '</span>';
+    }
+    else if (m[5]) out += m[5];
+    else out += esc(m[6]);
+    if (!m[5]) prevDot = !!(m[6] && /\.$/.test(m[6]));
+  }
+  return out;
+}
+// JSON: keys blue, string values orange.
+function hlJSON(line){
+  return hlJS(line).replace(/<span class="s">("(?:[^"\\<]|\\.)*")<\/span>(\s*:)/g, '<span class="v">$1</span>$2');
+}
+function hlHTML(line){
+  return esc(line).replace(/(&lt;\/?)([\w!-]+)([^&]*?)(\/?&gt;)/g, function(_, a, t, attrs, b){
+    return '<span class="tgc">' + a + t + '</span>' + attrs.replace(/([\w-]+)(=)("[^"]*")/g, '<span class="at">$1</span>$2<span class="s">$3</span>') + '<span class="tgc">' + b + '</span>';
+  });
+}
+function hlCSS(line){
+  if (/^\s+[\w-]+\s*:/.test(line)) return line.replace(/^(\s+)([\w-]+)(\s*:)(.*)$/, function(_, sp, p, c, v){ return sp + '<span class="pr">' + p + '</span>' + c + '<span class="s">' + esc(v) + '</span>'; });
+  if (/\{\s*$/.test(line)) return '<span class="sel">' + esc(line.replace(/\s*\{\s*$/, "")) + '</span> {';
+  return esc(line);
+}
+function hlFor(name){ return /\.html$/.test(name) ? hlHTML : /\.css$/.test(name) ? hlCSS : /\.json$/.test(name) ? hlJSON : hlJS; }
+
+/* ---- the project's other files, shown read-only ---- */
+function dataJs(les){
+  var v = les.vars;
+  return "// data.js: what the server sent.\n// The ` marks around it make it one long piece of text.\nconst " + v.name + " = `" + fmtJSON(v.data) + "`;\n";
+}
+function indexHtml(les){
+  var page = PAGES[les.page];
+  var scripts = les.edit === "script.js" ? '  <script src="data.js"><\/script>\n  <script src="script.js"><\/script>\n' : '  <script src="script.js"><\/script>\n';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>' + page.title + '</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n' +
+    page.body.split("\n").map(function(l){ return "  " + l; }).join("\n") + '\n\n' + scripts + '</body>\n</html>\n';
+}
+function styleCss(page){
+  return page.css.split("}").filter(function(r){ return r.trim(); }).map(function(r){
+    var p = r.split("{"), decls = p.slice(1).join("{").split(";").filter(function(d){ return d.trim(); });
+    return p[0].trim().replace(/,/g, ", ") + " {\n" + decls.map(function(d){ return "  " + d.trim().replace(/:/, ": ") + ";"; }).join("\n") + "\n}";
+  }).join("\n\n") + "\n";
+}
+function EDIT(){ return L().edit; }
+function fileText(name){
+  var les = L();
+  if (name === les.edit) return editor.value;
+  if (name === "data.js") return dataJs(les);
+  if (name === "index.html") return indexHtml(les);
+  if (name === "style.css") return styleCss(PAGES[les.page]);
+  if (name === "script.js") return les.given;
+  if (name === "solution") return les.solution;
+  return "";
+}
+function filesFor(les){ return (les.edit === "script.js" ? ["data.js", "index.html", "script.js", "style.css"] : ["index.html", les.edit, "script.js", "style.css"]).sort(); }
+function ext(n){ return n.split(".").pop(); }
+function fi(n){ var e = ext(n); return '<span class="fi ' + e + '">' + (e === "js" ? "JS" : e === "html" ? "&lt;&gt;" : e === "json" ? "{}" : "#") + '</span>'; }
+function solName(){ return "solution." + ext(EDIT()); }
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "what-is-json-vscode-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], code: {}, buf: {}, primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, saved: {}, side: false }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var editor = $("code");
+var UI = { open: [], active: "", note: "" };
+var last = null, primerIdx = 0, showSay = false;
+
+function L(){ return LESSONS[S.i]; }
+function savedCode(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+function bufferCode(i){ return S.buf[i] !== undefined ? S.buf[i] : savedCode(i); }
+function dirty(){ return editor.value !== savedCode(S.i); }
+
+/* ====================================================================
+   Editor
+   ==================================================================== */
+
+function linesHtml(text, hl, marks){
+  marks = marks || {};
+  return text.split("\n").map(function(l, n){ return '<div' + (marks[n + 1] ? ' class="' + marks[n + 1] + '"' : "") + '>' + (hl(l) || " ") + '</div>'; }).join("");
+}
+function gutterHtml(count, cur, marks){
+  marks = marks || {};
+  var h = "";
+  for (var n = 1; n <= count; n++) h += '<div class="' + (n === cur ? "cur " : "") + (marks[n] || "") + '">' + n + '</div>';
+  return h;
+}
+function caretPos(){
+  var before = editor.value.slice(0, editor.selectionStart).split("\n");
+  return { ln: before.length, col: before[before.length - 1].length + 1 };
+}
+function sizeEditor(){
+  var lines = editor.value.split("\n");
+  var longest = lines.reduce(function(m, l){ return Math.max(m, l.length); }, 0);
+  editor.style.width = "calc(" + (longest + 4) + "ch + 4px)";
+  editor.parentNode.style.minWidth = "calc(" + (longest + 4) + "ch + 4px)";
+}
+function paintEditor(){
+  var marks = solutionMarks().mine;
+  $("hl-edit").innerHTML = linesHtml(editor.value, hlFor(EDIT()), marks);
+  var p = caretPos();
+  $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, marks);
+  sizeEditor();
+  if (UI.active === EDIT()) $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col;
+}
+
+// Line diff (LCS) on normalised lines: trimmed, no trailing ;, comments and blanks ignored.
+function norm(l){ return l.trim().replace(/;\s*$/, "").replace(/\s+/g, " "); }
+function codeLines(text){ var out = []; text.split("\n").forEach(function(l, n){ var t = norm(l); if (t && t.indexOf("//") !== 0) out.push({ t: t, n: n + 1 }); }); return out; }
+function lcs(A, B){
+  var n = A.length, m = B.length, d = [], i, j;
+  for (i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); }
+  for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) d[i][j] = A[i].t === B[j].t ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  var pairs = []; i = 0; j = 0;
+  while (i < n && j < m) { if (A[i].t === B[j].t) { pairs.push([i, j]); i++; j++; } else if (d[i + 1][j] > d[i][j + 1]) i++; else j++; }
+  return pairs;
+}
+// Which solution lines are new (green), which of them the student has typed (✓), which of the student's lines are in the way (red).
+function solutionMarks(){
+  var res = { sol: {}, mine: {}, todo: 0, typed: 0, del: 0 };
+  if (!S.sol[S.i]) return res;
+  var st = codeLines(L().start), so = codeLines(L().solution), mi = codeLines(editor.value);
+  var keep = {}; lcs(st, so).forEach(function(p){ keep[p[1]] = true; });
+  var solHit = {}, mineHit = {}; lcs(mi, so).forEach(function(p){ solHit[p[1]] = true; mineHit[p[0]] = p[1]; });
+  so.forEach(function(l, j){
+    if (keep[j]) return;
+    res.todo++;
+    if (solHit[j]) { res.typed++; res.sol[l.n] = "ok"; } else res.sol[l.n] = "add";
+  });
+  mi.forEach(function(l, k){
+    if (mineHit[k] === undefined) { res.mine[l.n] = "del"; res.del++; }
+    else if (!keep[mineHit[k]]) res.mine[l.n] = "ok";
+  });
+  return res;
+}
+function solutionSub(){
+  var m = solutionMarks();
+  return "Type the green lines from <code>" + solName() + "</code> into your <code>" + EDIT() + "</code>" + (m.del ? ", and delete or move your red lines" : "") + ", then save. Pasting is off. (" + m.typed + " of " + m.todo + " typed" + (m.del ? ", " + m.del + " red" : "") + ")";
+}
+
+editor.addEventListener("input", function(){
+  S.buf[S.i] = editor.value; save();
+  paintEditor(); renderTabs(); renderSolution(); renderStripNote();
+});
+["click", "keyup", "focus"].forEach(function(ev){ editor.addEventListener(ev, function(){ var p = caretPos(); $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, solutionMarks().mine); $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col; }); });
+editor.addEventListener("keydown", function(e){
+  var v = editor.value, a = editor.selectionStart, b = editor.selectionEnd;
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S" || e.key === "Enter")) { e.preventDefault(); saveAndRun(); return; }
+  if (e.key === "Tab" && e.shiftKey) { e.preventDefault(); eachLine(function(l){ return l.replace(/^ {1,2}/, ""); }); return; }
+  if (e.key === "Tab" && a !== b && v.slice(a, b).indexOf("\n") >= 0) { e.preventDefault(); eachLine(function(l){ return "  " + l; }); return; }
+  if (e.key === "Tab") { e.preventDefault(); insert("  "); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "/") { e.preventDefault(); var all = selLines().every(function(l){ return !l.trim() || /^\s*\/\//.test(l); }); eachLine(function(l){ return all ? l.replace(/^(\s*)\/\/ ?/, "$1") : (l.trim() ? l.replace(/^(\s*)/, "$1// ") : l); }); return; }
+  if ((e.key === "}" || e.key === "]") && a === b) { var ls = v.lastIndexOf("\n", a - 1) + 1; if (/^\s{2,}$/.test(v.slice(ls, a))) { e.preventDefault(); editor.selectionStart = a - 2; insert(e.key); return; } }
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    var lineStart = v.lastIndexOf("\n", a - 1) + 1, indent = /^\s*/.exec(v.slice(lineStart, a))[0];
+    if (/[{[(]\s*$/.test(v.slice(lineStart, a))) {
+      if (/^\s*[}\])]/.test(v.slice(b))) { insert("\n" + indent + "  " + "\n" + indent, indent.length + 3); return; }
+      indent += "  ";
+    }
+    insert("\n" + indent);
+  }
+});
+function selLines(){ var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length; return v.slice(s, e).split("\n"); }
+function eachLine(fn){
+  var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length;
+  var block = v.slice(s, e).split("\n").map(fn).join("\n");
+  editor.selectionStart = s; editor.selectionEnd = e; insert(block);
+  editor.selectionStart = s; editor.selectionEnd = s + block.length;
+}
+function insert(text, caretAt){
+  // execCommand keeps Ctrl+Z working.
+  editor.focus();
+  if (!document.execCommand("insertText", false, text)) {
+    var a = editor.selectionStart; editor.value = editor.value.slice(0, a) + text + editor.value.slice(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = a + text.length;
+    editor.dispatchEvent(new Event("input"));
+  }
+  if (caretAt !== undefined) { var p = editor.selectionStart - text.length + caretAt; editor.selectionStart = editor.selectionEnd = p; }
+}
+function blockIfSolution(e){
+  if (!S.sol[S.i]) return;
+  e.preventDefault();
+  UI.note = "Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.";
+  renderStripNote();
+}
+editor.addEventListener("paste", blockIfSolution);
+editor.addEventListener("drop", blockIfSolution);
+$("sc-sol").addEventListener("copy", function(e){ e.preventDefault(); });
+$("sc-view").setAttribute("tabindex", "0");
+$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + " is read-only in this task. Your work goes in " + EDIT() + "."; renderStripNote(); } });
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
+});
+
+/* ====================================================================
+   VS Code: Explorer, tabs, read-only views
+   ==================================================================== */
+
+function toggleSide(){ S.side = !S.side; save(); renderSide(); }
+$("act-ex").onclick = toggleSide;
+function renderSide(){
+  $("side").classList.toggle("hidden", !S.side);
+  $("act-ex").classList.toggle("on", S.side);
+  $("side").innerHTML = '<div class="hdr">EXPLORER</div><div class="folder">⌄ WHAT-IS-JSON</div>' +
+    filesFor(L()).map(function(f){ return '<div class="file' + (f === UI.active ? " sel" : "") + '" data-file="' + f + '">' + fi(f) + '<span>' + f + '</span>' + (f === EDIT() && dirty() ? '<span class="m">●</span>' : "") + '</div>'; }).join("");
+}
+$("side").addEventListener("click", function(e){ var f = e.target.closest("[data-file]"); if (f) openFile(f.dataset.file); });
+
+function openFile(name){
+  if (UI.open.indexOf(name) < 0) UI.open.push(name);
+  UI.active = name;
+  renderEditorArea();
+  if (name === EDIT()) editor.focus();
+}
+function closeFile(name){
+  UI.open = UI.open.filter(function(n){ return n !== name; });
+  if (!UI.open.length) UI.open = [EDIT()];
+  if (UI.active === name) UI.active = UI.open[UI.open.length - 1];
+  renderEditorArea();
+}
+function renderTabs(){
+  $("tabs1").innerHTML = UI.open.map(function(n){
+    var mod = n === EDIT() && dirty(), ro = n !== EDIT();
+    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? " (read-only in this task)" : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
+      '<span class="x" data-close="' + n + '">' + (mod ? "●" : "×") + '</span></div>';
+  }).join("");
+  renderSide();
+}
+$("tabs1").addEventListener("click", function(e){
+  var x = e.target.closest("[data-close]");
+  if (x) { if (x.dataset.close === EDIT() && dirty()) { UI.note = EDIT() + " has unsaved changes. Save with Ctrl+S first."; renderStripNote(); return; } closeFile(x.dataset.close); return; }
+  var t = e.target.closest("[data-tab]"); if (t) openFile(t.dataset.tab);
+});
+var LANG = { js: "{} JavaScript", json: "{} JSON", html: "<> HTML", css: "# CSS" };
+function renderEditorArea(){
+  var isEdit = UI.active === EDIT();
+  $("sc-edit").classList.toggle("hidden", !isEdit);
+  $("sc-view").classList.toggle("hidden", isEdit);
+  $("crumbs1").textContent = UI.active + " › …";
+  editor.setAttribute("aria-label", EDIT());
+  $("st-lang").textContent = LANG[ext(UI.active)];
+  if (!isEdit) {
+    var t = fileText(UI.active);
+    $("hl-view").innerHTML = linesHtml(t, hlFor(UI.active));
+    $("gut-view").innerHTML = gutterHtml(t.split("\n").length, 0);
+    $("st-ln").textContent = "Ln 1, Col 1";
+  } else paintEditor();
+  renderTabs();
+}
+function renderSolution(){
+  var open = !!S.sol[S.i];
+  $("g2").classList.toggle("hidden", !open);
+  $("work").classList.toggle("split", open);
+  if (!open) return;
+  var m = solutionMarks(), t = L().solution;
+  $("tabs2").innerHTML = '<div class="tab on" title="' + solName() + ' (read-only)">' + fi(solName()) + '<span>' + solName() + '</span><span class="lock">🔒</span></div>';
+  $("g2").querySelector(".crumbs").textContent = solName() + " › …";
+  $("hl-sol").innerHTML = linesHtml(t, hlFor(EDIT()), m.sol);
+  $("gut-sol").innerHTML = gutterHtml(t.split("\n").length, 0, m.sol);
+}
+
+/* ====================================================================
+   Browser: the page and its Console
+   ==================================================================== */
+
+function renderConsole(r, les, src){
+  var c = $("console"), h = "";
+  if (!r) { c.innerHTML = '<div class="dt-row dim">Loading…</div>'; return; }
+  r.logs.forEach(function(l){ h += '<div class="dt-row">' + esc(l) + '</div>'; });
+  r.errors.forEach(function(e){
+    var msg = /__ENDLESS__/.test(e.msg) ? "The loop ran 20000 times and was stopped." : e.msg;
+    h += '<div class="dt-row err">✖ Uncaught ' + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "   script.js:" + e.line : "") + '</div>';
+    var x = les.edit !== "script.js" && /JSON/.test(e.msg) ? jsonWhy(src, les.edit).replace(/<\/?code>/g, "") : explain(e, src);
+    if (x) h += '<div class="dt-row why">' + esc(x) + '</div>';
+  });
+  if (r.timeout) h += '<div class="dt-row err">✖ Your code did not finish. An endless loop?</div>';
+  c.innerHTML = h || '<div class="dt-row dim">Nothing printed.</div>';
+  c.scrollTop = c.scrollHeight;
+  var n = r.errors.length + (r.timeout ? 1 : 0);
+  $("st-err").textContent = "⊗ " + n + " ⚠ 0";
+  $("st-err").classList.toggle("err", n > 0);
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints ? les.hints.length : 0;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+
+function renderStrip(){
+  var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a, last.src) : null, done = !!S.done[S.i];
+  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N;
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? solutionSub() : les.sub;
+  var r = "";
+  if (!S.saved[S.i] && !done) r = '<span class="dim">Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run it and check it.</span>';
+  if (res && !res.done && les.edit === "script.js" && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + " Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.";
+  if (done && (!res || res.done)) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
+  else if (res && !res.done) r = '<span class="no">✗ Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is a red error in the Console." : ""));
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (done) {
+    if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (!S.sol[S.i]) {
+    act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
+  }
+  renderStripNote();
+}
+function renderStripNote(){
+  var n = $("t-note");
+  n.classList.toggle("hidden", !UI.note);
+  n.textContent = UI.note;
+  if (S.sol[S.i] && !S.done[S.i]) $("t-sub").innerHTML = solutionSub();
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+
+/* ====================================================================
+   Running: Ctrl+S saves and Live Server reloads the page
+   ==================================================================== */
+
+var RED_LEFT = "The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.";
+function evaluate(les, r, a, src){
+  var endless = r.timeout || r.errors.some(function(e){ return /__ENDLESS__/.test(e.msg); });
+  if (les.flags) {
+    var f = les.flags(r, a), fl = f.flags.slice(), msg = endless ? "Your loop never stops." : f.msg;
+    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT; }
+    return { done: fl.every(Boolean), msg: msg };
+  }
+  if (endless) return { done: false, msg: "Your loop never stops." };
+  var m = les.check(r, a, src);
+  if (!m && r.errors.length) m = RED_LEFT;
+  return { done: !m, msg: m };
+}
+
+function squash(s){ return String(s).replace(/[ \t]+$/gm, "").trim(); }
+function runBoth(les, src){
+  var plan = runPlan(les, src), page = PAGES[les.page];
+  return Promise.all([runIn($("preview"), page, plan.main, plan.code), runIn($("altframe"), page, plan.alt, plan.code)]);
+}
+function saveAndRun(){
+  var idx = S.i, src = editor.value;
+  S.code[idx] = src; delete S.buf[idx]; S.saved[idx] = true; save();
+  UI.note = "";
+  renderTabs();
+  run(true, idx, src);
+}
+function run(byHand, idx, src){
+  if (idx === undefined) idx = S.i;
+  if (src === undefined) src = savedCode(idx);
+  var les = LESSONS[idx];
+  return runBoth(les, src).then(function(res){
+    if (idx !== S.i) return;
+    last = { r: res[0], a: res[1], src: src };
+    var ev = evaluate(les, last.r, last.a, src);
+    if (byHand) {
+      if (ev.done) {
+        if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+        S.sol[idx] = false;
+      } else if (S.lastTried[idx] !== squash(src) && squash(src) !== squash(les.start)) {
+        S.lastTried[idx] = squash(src); S.tries[idx] = (S.tries[idx] || 0) + 1;
+      }
+      save();
+    }
+    renderConsole(last.r, les, src);
+    renderAll();
+  });
+}
+$("br-reload").onclick = function(){ run(false); };
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); save();
+  UI.note = ""; UI.open = [EDIT()]; UI.active = EDIT();
+  last = null;
+  editor.value = bufferCode(S.i);
+  renderConsole(null);
+  renderAll();
+  run(false);
+}
+$("l-again").onclick = function(){
+  if (!confirm("Put back the start code for this task? What you wrote in this task is lost.")) return;
+  delete S.code[S.i]; delete S.buf[S.i]; S.saved[S.i] = false; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your code and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+function renderAll(){
+  renderDots();
+  renderStrip();
+  renderSolution();
+  renderEditorArea();
+}
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var P = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">What is JSON? · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(P.title) + '</h2>' +
+    '<div class="art">' + ART[P.art]() + '</div>' +
+    '<p>' + P.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(P.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); editor.focus(); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook: lets an automated check run code against a task without the UI.
+window.__JSON = { LESSONS: LESSONS, PRIMER: PRIMER, fmtJSON: fmtJSON, jsonWhy: jsonWhy, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun,
+  state: function(){ return S; }, last: function(){ return last; },
+  check: function(i, src){ var les = LESSONS[i]; return runBoth(les, src).then(function(res){ var ev = evaluate(les, res[0], res[1], src); ev.logs = res[0].logs; ev.errors = res[0].errors; return ev; }); } };
+
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
