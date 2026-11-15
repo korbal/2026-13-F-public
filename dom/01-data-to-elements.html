@@ -1146,7 +1146,7 @@ function hintState(){
 
 function renderStrip(){
   var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a) : null, done = !!S.done[S.i];
-  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N + (PREP ? " · Prep" : "");
+  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
   $("t-title").textContent = les.title;
   $("t-do").innerHTML = les.do;
   var sub = les.sub;
@@ -1168,6 +1168,7 @@ function renderStrip(){
   var act = $("t-actions"); act.innerHTML = "";
   if (PREP) {
     act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
     act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
   } else if (done) {
     if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
@@ -1175,6 +1176,12 @@ function renderStrip(){
     act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
   }
   renderStripNote();
+}
+// ?prep only: flip the editor between the task's start code and its solution.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  editor.value = UI.prepView === "task" ? LESSONS[S.i].start : SOLUTIONS[S.i];
+  saveAndRun();
 }
 function renderStripNote(){
   var n = $("t-note");
@@ -1257,6 +1264,7 @@ function gotoTask(i){
   UI.note = ""; UI.active = "script.js"; if (UI.open.indexOf("script.js") < 0) UI.open.unshift("script.js");
   last = null;
   editor.value = PREP ? SOLUTIONS[S.i] : bufferCode(S.i);
+  if (PREP) UI.prepView = "solution";
   if (PREP) S.saved[S.i] = true;
   renderConsole(null);
   renderAll();
