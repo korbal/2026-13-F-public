@@ -57,6 +57,11 @@ button{font:inherit}
 .hints div+div{margin-top:4px}
 .hints b{color:var(--warn)}
 .note{margin-top:6px;font-size:13px;color:var(--warn)}
+.prep{margin-top:8px;background:#eef3fd;border:1px solid #c9d8f5;border-radius:8px;padding:6px 10px;font-size:13px;max-height:34vh;overflow:auto}
+.prep .ph{font-weight:700;margin-bottom:4px}.prep .ph span{font-weight:400;color:var(--muted)}
+.prep .pm{display:flex;gap:10px;align-items:flex-start;padding:5px 0;border-top:1px solid #dbe5f8}
+.prep .pm.on{background:#dfe9fb}
+.prep .btn.sm{padding:2px 8px;font-size:12px;flex:none}
 .actions{display:flex;gap:8px;align-items:center;padding-top:4px}
 
 /* ===== practice: VS Code + browser ===== */
@@ -160,6 +165,7 @@ button{font:inherit}
       <div class="result" id="t-result"></div>
       <div class="hints hidden" id="t-hints"></div>
       <div class="note hidden" id="t-note"></div>
+      <div class="prep hidden" id="t-prep"></div>
     </div>
     <div class="actions" id="t-actions"></div>
   </div>
@@ -737,6 +743,62 @@ var SOLUTIONS = [
 ];
 
 
+// Prep mode (?prep): the teacher's run-through before class. Per task, the usual
+// ways students get stuck: what they see, why, one question to ask, and the
+// broken code itself, so "Show me" puts the exact mistake on screen.
+function swap(src, a, b){ if (src.indexOf(a) < 0) throw new Error("prep: no " + a); return src.split(a).join(b); }
+var EXCUSE_SOL = SOLUTIONS[7];
+var STUCK = [
+  [ { sees: "<code>Null</code> in the Console instead of <code>Pixel</code>.", why: "Counted from 1: <code>cats[3]</code> is the fourth cat.", ask: "What number does the first cat have?",
+      code: swap(SOLUTIONS[0], "cats[2]", "cats[3]") },
+    { sees: "<code>undefined</code> in the Console.", why: "<code>cats.name</code>: the list has no name, each cat does.", ask: "Which cat's name do you want?",
+      code: swap(SOLUTIONS[0], "cats[2].name", "cats.name") },
+    { sees: "The right answers, but ✗ \"works for this list only\".", why: "They typed <code>5</code> and <code>\"Pixel\"</code> into the code.", ask: "If a cat joins tomorrow, does your code still say 5?",
+      code: 'console.log(cats);\nconsole.log(5);\nconsole.log("Pixel");\n' } ],
+  [ { sees: "Red: <code>h2 is not defined</code>.", why: "No quotes: <code>createElement(h2)</code>.", ask: "Is h2 a variable you made, or the name of a tag?",
+      code: swap(SOLUTIONS[1], 'createElement("h2")', "createElement(h2)") },
+    { sees: "✗ The h2 is made, but not printed.", why: "No <code>console.log(title)</code>.", ask: "How do you see something in the Console?",
+      code: swap(SOLUTIONS[1], "\nconsole.log(title);\n", "\n") },
+    { sees: "\"The page is still empty, it's broken.\"", why: "It is meant to be: nothing is put in until task 3. The task passes.", ask: "You made it. Did you put it anywhere?",
+      code: SOLUTIONS[1] } ],
+  [ { sees: "Red: <code>Cannot read properties of null (reading 'appendChild')</code>.", why: "<code>getElementById(\"#cats\")</code>: the # is CSS, so it finds nothing.", ask: "What did getElementById give you back?",
+      code: swap(SOLUTIONS[2], 'getElementById("cats")', 'getElementById("#cats")') },
+    { sees: "Red: <code>parameter 1 is not of type 'Node'</code>.", why: "<code>appendChild(\"title\")</code>: in quotes it is just the word, not the element.", ask: "Do you want to put in the word title, or the thing called title?",
+      code: swap(SOLUTIONS[2], "box.appendChild(title)", 'box.appendChild("title")') },
+    { sees: "Red: <code>box is not defined</code>.", why: "They never found the box.", ask: "Where does box come from?",
+      code: swap(SOLUTIONS[2], 'const box = document.getElementById("cats");\n', "") } ],
+  [ { sees: "The card says <code>7</code>, not <code>7 years old</code>.", why: "Only <code>cats[0].age</code>, without the text.", ask: "What does the card in the picture say?",
+      code: swap(SOLUTIONS[3], 'cats[0].age + " years old"', "cats[0].age") },
+    { sees: "The age sits outside the card, and ✗ says the box has 2 elements.", why: "<code>box.appendChild(age)</code> instead of <code>card.appendChild(age)</code>.", ask: "Which box should the age go into?",
+      code: swap(SOLUTIONS[3], "card.appendChild(age)", "box.appendChild(age)") },
+    { sees: "Empty page, no error.", why: "The card is built but never put in the box.", ask: "Where is the line that puts the card on the page?",
+      code: swap(SOLUTIONS[3], "box.appendChild(card);\n", "") } ],
+  [ { sees: "Five cards, all Mirci.", why: "The loop is there, but <code>cats[0]</code> is still inside it.", ask: "Which cat does cats[0] mean, every time round?",
+      code: swap(SOLUTIONS[4], "cats[i]", "cats[0]") },
+    { sees: "Five cards and red: <code>Cannot read properties of undefined (reading 'name')</code>.", why: "<code>i &lt;= cats.length</code> goes one too far.", ask: "Five cats: what is the last i?",
+      code: swap(SOLUTIONS[4], "i < cats.length", "i <= cats.length") },
+    { sees: "The page is right, but ✗ \"works for this list only\".", why: "<code>i &lt; 5</code>: the number of cats is typed in.", ask: "What if there were fifty cats?",
+      code: swap(SOLUTIONS[4], "i < cats.length", "i < 5") } ],
+  [ { sees: "No grumpy cards, and a note about <code>===</code>.", why: "<code>friendly = false</code> sets the value instead of checking it.", ask: "What is the difference between = and ===?",
+      code: swap(SOLUTIONS[5], "cats[i].friendly === false", "cats[i].friendly = false") },
+    { sees: "Red, about <code>HTML space characters</code>, and only the first card.", why: "<code>classList.add(\"card grumpy\")</code>: one class at a time.", ask: "How many classes does add() take?",
+      code: swap(SOLUTIONS[5], 'card.classList.add("grumpy")', 'card.classList.add("card grumpy")') },
+    { sees: "No grumpy cards, no error.", why: "<code>cats.friendly</code>: the list has no friendly, each cat does.", ask: "Whose friendliness are you checking?",
+      code: swap(SOLUTIONS[5], "cats[i].friendly", "cats.friendly") } ],
+  [ { sees: "Red: <code>card is not defined</code>, empty page.", why: "The start code: the last line is outside the loop's <code>}</code>. The second bug is silent.", ask: "Where does card exist?",
+      code: LESSONS[6].start },
+    { sees: "Cards with no names, no error. They think they're done.", why: "They fixed the red one only. <code>cats.name</code> is still there.", ask: "Look at the page: is every part there?",
+      code: swap(LESSONS[6].start, "  }\n}\nbox.appendChild(card);\n", "  }\n  box.appendChild(card);\n}\n") },
+    { sees: "Still red and empty after fixing the name.", why: "They fixed the silent one first; the misplaced line is still outside.", ask: "What does the red line say, and which line is it?",
+      code: swap(LESSONS[6].start, "cats.name", "cats[i].name") } ],
+  [ { sees: "Red: <code>Cannot read properties of null (reading 'appendChild')</code>.", why: "<code>getElementById(\"cats\")</code> copied from the cats page. This list is <code>excuses</code>.", ask: "What is the id in this index.html?",
+      code: swap(EXCUSE_SOL, 'getElementById("excuses")', 'getElementById("cats")') },
+    { sees: "Every line on the page says <code>[object Object]</code>. The ✗ message talks about the class <code>used</code> instead, which misleads.", why: "<code>excuses[i]</code> is the whole excuse, not its text.", ask: "Which part of the excuse do you want to show?",
+      code: swap(EXCUSE_SOL, "excuses[i].text", "excuses[i]") },
+    { sees: "All excuses listed, none crossed out.", why: "The <code>used</code> part is missing. The steps list shows it open.", ask: "Read the task again: what happens to the used ones?",
+      code: swap(EXCUSE_SOL, '  if (excuses[i].used === true) {\n    li.classList.add("used");\n  }\n', "") } ]
+];
+
 /* ====================================================================
    VS Code version: what each task says, in one sentence plus where to look.
    Checks, hints, start code and solutions above are unchanged.
@@ -897,11 +959,14 @@ function normalize(s){
   return s;
 }
 var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+// ?prep: start clean every time, never save, open each task with its solution run.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 var editor = $("code");
 var UI = { open: ["script.js"], active: "script.js", note: "" };
-var last = null, running = false, primerIdx = 0, showSay = false;
+var last = null, running = false, primerIdx = 0, showSay = PREP;
 
 function L(){ return LESSONS[S.i]; }
 function pageFor(){ return PAGES[L().page]; }
@@ -1034,6 +1099,7 @@ document.addEventListener("keydown", function(e){
     if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
     return;
   }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
   if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
 });
@@ -1143,7 +1209,7 @@ function hintState(){
 
 function renderStrip(){
   var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a) : null, done = !!S.done[S.i];
-  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N;
+  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N + (PREP ? " · Prep" : "");
   $("t-title").textContent = les.title;
   $("t-do").innerHTML = les.do;
   var sub = les.sub;
@@ -1155,19 +1221,44 @@ function renderStrip(){
   var r = "";
   if (!S.saved[S.i] && !done) r = '<span class="dim">Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run your code and check it.</span>';
   if (res && !res.done && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + " Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.";
+  if (PREP && res && res.done) done = true;
   if (done && (!res || res.done)) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
   else if (res && !res.done) r = '<span class="no">✗ Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is a red error in the Console." : ""));
   $("t-result").innerHTML = r;
   var hs = hintState();
+  if (PREP) hs.shown = les.hints ? les.hints.length : 0;
   if (!les.noHints && hs.shown) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
   else $("t-hints").classList.add("hidden");
   var act = $("t-actions"); act.innerHTML = "";
-  if (done) {
+  renderPrep();
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepShown === "start" ? "Solution" : "Start code", "btn", function(){ showPrepCode(UI.prepShown === "start" ? "solution" : "start"); }));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (done) {
     if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
   } else if (!les.noHints && !S.sol[S.i]) {
     act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
   }
   renderStripNote();
+}
+function showPrepCode(which, k){
+  UI.prepShown = which;
+  editor.value = which === "start" ? LESSONS[S.i].start : which === "mistake" ? STUCK[S.i][k].code : SOLUTIONS[S.i];
+  saveAndRun();
+}
+function renderPrep(){
+  var box = $("t-prep");
+  box.classList.toggle("hidden", !PREP);
+  if (!PREP) return;
+  box.innerHTML = "<div class=\"ph\">Where they get stuck <span>· Alt+← → between tasks · Shift+N teacher notes on the slides</span></div>" +
+    STUCK[S.i].map(function(m, k){
+      return '<div class="pm' + (UI.prepShown === "mistake" && UI.prepK === k ? " on" : "") + '"><button class="btn sm" data-k="' + k + '">Show me</button>' +
+        '<div><b>They see:</b> ' + m.sees + '<br><b>Why:</b> ' + m.why + '<br><b>Ask:</b> ' + m.ask + '</div></div>';
+    }).join("");
+  box.querySelectorAll("[data-k]").forEach(function(b){
+    b.onclick = function(){ UI.prepK = Number(b.dataset.k); showPrepCode("mistake", UI.prepK); };
+  });
 }
 function renderStripNote(){
   var n = $("t-note");
@@ -1249,9 +1340,11 @@ function gotoTask(i){
   S.i = Math.max(0, Math.min(N - 1, i)); save();
   UI.note = ""; UI.active = "script.js"; if (UI.open.indexOf("script.js") < 0) UI.open.unshift("script.js");
   last = null;
-  editor.value = bufferCode(S.i);
+  editor.value = PREP ? SOLUTIONS[S.i] : bufferCode(S.i);
+  if (PREP) { S.saved[S.i] = true; UI.prepShown = "solution"; }
   renderConsole(null);
   renderAll();
+  if (PREP) { saveAndRun(); return; }
   run(false);
 }
 $("l-again").onclick = function(){
@@ -1298,7 +1391,7 @@ function renderPrimer(){
 }
 
 // Test hook: lets an automated check drive the page without the UI.
-window.__DTE = { SOLUTIONS: SOLUTIONS, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun, state: function(){ return S; }, last: function(){ return last; } };
+window.__DTE = { STUCK: STUCK, PREP: PREP, showPrepCode: showPrepCode, SOLUTIONS: SOLUTIONS, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun, state: function(){ return S; }, last: function(){ return last; } };
 
 showPrimer(!S.primerDone);
 gotoTask(S.i);

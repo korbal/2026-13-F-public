@@ -57,6 +57,11 @@ button{font:inherit}
 .hints div+div{margin-top:4px}
 .hints b{color:var(--warn)}
 .note{margin-top:6px;font-size:13px;color:var(--warn)}
+.prep{margin-top:8px;background:#eef3fd;border:1px solid #c9d8f5;border-radius:8px;padding:6px 10px;font-size:13px;max-height:34vh;overflow:auto}
+.prep .ph{font-weight:700;margin-bottom:4px}.prep .ph span{font-weight:400;color:var(--muted)}
+.prep .pm{display:flex;gap:10px;align-items:flex-start;padding:5px 0;border-top:1px solid #dbe5f8}
+.prep .pm.on{background:#dfe9fb}
+.prep .btn.sm{padding:2px 8px;font-size:12px;flex:none}
 .actions{display:flex;gap:8px;align-items:center;padding-top:4px}
 
 /* ===== practice: VS Code + browser ===== */
@@ -160,6 +165,7 @@ button{font:inherit}
       <div class="result" id="t-result"></div>
       <div class="hints hidden" id="t-hints"></div>
       <div class="note hidden" id="t-note"></div>
+      <div class="prep hidden" id="t-prep"></div>
     </div>
     <div class="actions" id="t-actions"></div>
   </div>
@@ -886,6 +892,63 @@ var LESSONS = [
     after: "That is the whole lesson. Unpack the text, find your way in, then make it, fill it, put it in. Next lesson the text comes from the real server, with fetch." }
 ];
 
+
+// Prep mode (?prep): the teacher's run-through before class. Per task, the usual
+// ways students get stuck: what they see, why, one question to ask, and the
+// broken code or file itself, so "Show me" puts the exact mistake on screen.
+function swap(src, a, b){ if (src.indexOf(a) < 0) throw new Error("prep: no " + a); return src.split(a).join(b); }
+function SOL(i){ return LESSONS[i].solution; }
+var STUCK = [
+  [ { sees: "<code>undefined</code> and a big number in the Console.", why: "The start code: <code>catsText</code> is text, so <code>[0]</code> is a character and <code>.length</code> counts characters.", ask: "Is catsText a list, or text that looks like one?",
+      code: LESSONS[0].start },
+    { sees: "Still <code>undefined</code>, even with <code>JSON.parse</code> in.", why: "They unpacked into <code>cats</code> but still read <code>catsText</code>.", ask: "Which one did you unpack into?",
+      code: swap(SOL(0), "console.log(cats[0].name)", "console.log(catsText[0].name)") },
+    { sees: "A whole cat in the Console, ✗ \"print only its name\".", why: "<code>cats[0]</code> without <code>.name</code>.", ask: "Do you want the cat, or its name?",
+      code: swap(SOL(0), "cats[0].name", "cats[0]") } ],
+  [ { sees: "Empty box, nothing red.", why: "The start code: the loop goes through <code>cats</code>, but <code>data.js</code> only has <code>catsText</code>.", ask: "What does the loop go through, and is that in data.js?",
+      code: LESSONS[1].start },
+    { sees: "Red: <code>Cannot access 'cats' before initialization</code>.", why: "The <code>JSON.parse</code> line is at the bottom, after the loop.", ask: "When does the loop need cats?",
+      code: swap(SOL(1), "const cats = JSON.parse(catsText);\n", "") + "const cats = JSON.parse(catsText);\n" },
+    { sees: "Red, a JSON error about an unexpected token.", why: "<code>JSON.parse(\"catsText\")</code>: in quotes it parses the word, not the text.", ask: "Do you want to unpack the word catsText, or what is in it?",
+      code: swap(SOL(1), "JSON.parse(catsText)", 'JSON.parse("catsText")') } ],
+  [ { sees: "Red: the JSON error, on line 1.", why: "The start file is still JavaScript: <code>const student =</code> and the <code>;</code>.", ask: "What does a JSON file start with?",
+      code: LESSONS[2].start },
+    { sees: "Red: the JSON error, line 2.", why: "<code>const</code> is gone, but the keys have no double quotes.", ask: "In JSON, what goes around every key?",
+      code: '{\n  name: "Kiss Anna",\n  className: "13F",\n  age: 18,\n  hasLaptop: false\n}\n' },
+    { sees: "Red: the JSON error, near the end.", why: "A comma after the last line. JavaScript allows it, JSON does not.", ask: "Is anything coming after hasLaptop?",
+      code: swap(SOL(2), '"hasLaptop": false\n', '"hasLaptop": false,\n') } ],
+  [ { sees: "\"With a drink: 990250 Ft\" and \"Vegetarian\", nothing red.", why: "The start file: <code>\"990\"</code> and <code>\"false\"</code> are text.", ask: "What is 990 + 250? What would the canteen lady say about the chicken?",
+      code: LESSONS[3].start },
+    { sees: "The price is right, chicken is still \"Vegetarian\".", why: "Fixed the price only. <code>\"false\"</code> is text that is not empty, so it counts as true.", ask: "Is \"false\" in quotes true or false?",
+      code: swap(LESSONS[3].start, '"price": "990"', '"price": 990') },
+    { sees: "Red: the JSON error.", why: "<code>False</code> with a capital F. JSON knows only <code>false</code>.", ask: "How does JavaScript write false?",
+      code: swap(SOL(3), '"vegetarian": false', '"vegetarian": False') } ],
+  [ { sees: "Red: the JSON error, between two cats.", why: "No comma between two cats.", ask: "What goes between two cats?",
+      code: swap(SOL(4), '"friendly": false },\n', '"friendly": false }\n') },
+    { sees: "Red: the JSON error, at the end.", why: "A comma after the last cat.", ask: "Is another cat coming after the last one?",
+      code: swap(SOL(4), '"friendly": true }\n]', '"friendly": true },\n]') },
+    { sees: "✗ \"the age is \"3\", text\".", why: "The age in quotes: <code>\"age\": \"3\"</code>.", ask: "Is an age a number or text?",
+      code: swap(SOL(4), '"age": 3', '"age": "3"') } ],
+  [ { sees: "<code>Csirkepaprikás</code>, ✗ \"that is Wednesday's\".", why: "<code>days[2]</code>: counted Monday as 1.", ask: "What number is Monday?",
+      code: swap(SOL(5), "days[1]", "days[2]") },
+    { sees: "A whole object in the Console, ✗ \"one step further in\".", why: "<code>menu.days[1].main</code> without <code>.name</code>.", ask: "What is inside main?",
+      code: swap(SOL(5), "main.name", "main") },
+    { sees: "Red: <code>Cannot read properties of undefined (reading '1')</code>.", why: "<code>menu.day</code> instead of <code>menu.days</code>.", ask: "What exactly is the key called in data.js?",
+      code: swap(SOL(5), "menu.days[1]", "menu.day[1]") } ],
+  [ { sees: "Red: <code>Cannot read properties of undefined (reading 'length')</code>, empty list.", why: "The start code: <code>menuText</code> is text, it has no <code>.days</code>.", ask: "What is menuText?",
+      code: LESSONS[6].start },
+    { sees: "Every line says <code>Monday: [object Object]</code>. They think it's done.", why: "Fixed the red one. <code>main</code> is an object; they need <code>main.name</code>.", ask: "Look at the page: is that what the task asks for?",
+      code: swap(SOL(6), "main.name", "main") },
+    { sees: "Still the same red error, with <code>JSON.parse</code> added.", why: "Unpacked into <code>menu</code>, but the loop still says <code>menuText.days</code>.", ask: "Which one does the loop go through?",
+      code: swap(SOL(6), "i < menu.days.length", "i < menuText.days.length") } ],
+  [ { sees: "<code>Monday: null</code> on the page.", why: "No <code>null</code> check at all.", ask: "What does the task want when there is no dessert?",
+      code: 'const menu = JSON.parse(menuText);\nconst box = document.getElementById("desserts");\n\nfor (let i = 0; i < menu.days.length; i++) {\n  const li = document.createElement("li");\n  li.textContent = menu.days[i].day + ": " + menu.days[i].dessert;\n  box.appendChild(li);\n}\n' },
+    { sees: "Still <code>Monday: null</code>, with an <code>if</code> there.", why: "<code>=== \"null\"</code> in quotes compares with text, never true.", ask: "Is null in quotes the same as null?",
+      code: swap(SOL(7), 'dessert === null', 'dessert === "null"') },
+    { sees: "\"no dessert\" shows, but a step stays open.", why: "The class <code>none</code> is missing.", ask: "Read the task again: what else does that li get?",
+      code: swap(SOL(7), '    li.classList.add("none");\n', "") } ]
+];
+
 /* ====================================================================
    Small helpers
    ==================================================================== */
@@ -979,11 +1042,14 @@ function normalize(s){
   return s;
 }
 var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+// ?prep: start clean every time, never save, open each task with its solution run.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 var editor = $("code");
 var UI = { open: [], active: "", note: "" };
-var last = null, primerIdx = 0, showSay = false;
+var last = null, primerIdx = 0, showSay = PREP;
 
 function L(){ return LESSONS[S.i]; }
 function savedCode(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
@@ -1115,6 +1181,7 @@ document.addEventListener("keydown", function(e){
     if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
     return;
   }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
   if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
 });
@@ -1227,26 +1294,51 @@ function hintState(){
 
 function renderStrip(){
   var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a, last.src) : null, done = !!S.done[S.i];
-  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N;
+  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N + (PREP ? " · Prep" : "");
   $("t-title").textContent = les.title;
   $("t-do").innerHTML = les.do;
   $("t-sub").innerHTML = S.sol[S.i] && !done ? solutionSub() : les.sub;
   var r = "";
   if (!S.saved[S.i] && !done) r = '<span class="dim">Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run it and check it.</span>';
   if (res && !res.done && les.edit === "script.js" && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + " Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.";
+  if (PREP && res && res.done) done = true;
   if (done && (!res || res.done)) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
   else if (res && !res.done) r = '<span class="no">✗ Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is a red error in the Console." : ""));
   $("t-result").innerHTML = r;
   var hs = hintState();
+  if (PREP) hs.shown = les.hints.length;
   if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
   else $("t-hints").classList.add("hidden");
   var act = $("t-actions"); act.innerHTML = "";
-  if (done) {
+  renderPrep();
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepShown === "start" ? "Solution" : "Start code", "btn", function(){ showPrepCode(UI.prepShown === "start" ? "solution" : "start"); }));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (done) {
     if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
   } else if (!S.sol[S.i]) {
     act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
   }
   renderStripNote();
+}
+function showPrepCode(which, k){
+  UI.prepShown = which;
+  editor.value = which === "start" ? LESSONS[S.i].start : which === "mistake" ? STUCK[S.i][k].code : LESSONS[S.i].solution;
+  saveAndRun();
+}
+function renderPrep(){
+  var box = $("t-prep");
+  box.classList.toggle("hidden", !PREP);
+  if (!PREP) return;
+  box.innerHTML = "<div class=\"ph\">Where they get stuck <span>· Alt+← → between tasks · Shift+N teacher notes on the slides</span></div>" +
+    STUCK[S.i].map(function(m, k){
+      return '<div class="pm' + (UI.prepShown === "mistake" && UI.prepK === k ? " on" : "") + '"><button class="btn sm" data-k="' + k + '">Show me</button>' +
+        '<div><b>They see:</b> ' + m.sees + '<br><b>Why:</b> ' + m.why + '<br><b>Ask:</b> ' + m.ask + '</div></div>';
+    }).join("");
+  box.querySelectorAll("[data-k]").forEach(function(b){
+    b.onclick = function(){ UI.prepK = Number(b.dataset.k); showPrepCode("mistake", UI.prepK); };
+  });
 }
 function renderStripNote(){
   var n = $("t-note");
@@ -1328,9 +1420,11 @@ function gotoTask(i){
   S.i = Math.max(0, Math.min(N - 1, i)); save();
   UI.note = ""; UI.open = [EDIT()]; UI.active = EDIT();
   last = null;
-  editor.value = bufferCode(S.i);
+  editor.value = PREP ? LESSONS[S.i].solution : bufferCode(S.i);
+  if (PREP) UI.prepShown = "solution";
   renderConsole(null);
   renderAll();
+  if (PREP) { saveAndRun(); return; }
   run(false);
 }
 $("l-again").onclick = function(){
