@@ -59,6 +59,9 @@ button{font:inherit}
 .note{margin-top:6px;font-size:13px;color:var(--warn)}
 .actions{display:flex;gap:8px;align-items:center;padding-top:4px}
 
+.links .langbtn{border:1px solid #cfd4da;background:#fff;color:var(--ink);border-radius:6px;padding:0 8px;font-size:12px;cursor:pointer}
+.links .langbtn:hover{border-color:var(--accent)}
+
 /* ===== practice: VS Code + browser ===== */
 .work{flex:1;display:grid;grid-template-columns:55fr 45fr;min-height:0}
 .work.split{grid-template-columns:64fr 36fr}
@@ -152,7 +155,7 @@ button{font:inherit}
       <div class="kicker" id="t-kicker"></div>
       <div class="ltitle" id="t-title"></div>
       <div class="dots" id="dots"></div>
-      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+      <div class="links"><a href="../" data-hu="Főoldal">Home</a><a id="l-slides" data-hu="Diák">Slides</a><a id="l-again" data-hu="Feladat elölről">Start task again</a><a id="l-reset" data-hu="Az egész elölről">Reset all</a><button class="langbtn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button></div>
     </div>
     <div class="do">
       <div class="sentence" id="t-do"></div>
@@ -217,6 +220,22 @@ button{font:inherit}
 <script>
 (function(){
 "use strict";
+
+// ?prep: the teacher flips through the solutions. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+// Language: ?lang=hu in the URL wins, then the last choice on this browser, then English.
+var LANG_KEY = "data-to-elements-lang";
+function pickLang(){
+  try { var q = new URLSearchParams(location.search).get("lang"); if (q === "hu" || q === "en") return q; } catch (e) {}
+  try { var s = localStorage.getItem(LANG_KEY); if (s === "hu" || s === "en") return s; } catch (e) {}
+  return "en";
+}
+var lang = pickLang();
+if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+function tr(en, hu){ return lang === "hu" ? hu : en; }
+// Hungarian article before a word or a number: az egér, a macska; az 1., a 2., az 5.
+function az(w){ return /^[^a-z0-9]*[aáeéiíoóöőuúüű]/i.test(String(w).replace(/<[^>]*>/g, "")) ? "Az " : "A "; }
+function azN(n){ return (/^(1|5\d*)$/.test(String(n)) ? "Az " : "A ") + n + "."; }
 
 /* ====================================================================
    Data. Every check runs the student's code twice: on the list they see,
@@ -369,23 +388,23 @@ function runIn(frame, page, data, code){
 
 function explain(err){
   var m = err.msg || "", x;
-  if (/__ENDLESS__/.test(m)) return "Your loop never stops. Check the end of the for line: i++ and i < something.length.";
+  if (/__ENDLESS__/.test(m)) return tr("Your loop never stops. Check the end of the for line: i++ and i < something.length.", "A ciklusod sosem áll meg. Nézd meg a for sor végét: i++ és i < valami.length.");
   if ((x = /^(\w+) is not defined/.exec(m))) {
-    if (x[1] === "cat") return "There is no cat, only cats: the whole list. One cat is cats[0], or cats[i] in a loop.";
-    if (x[1] === "i") return "i only exists inside the loop's { }. Is this line outside the loop?";
-    if (x[1] === "card" || x[1] === "title" || x[1] === "age" || x[1] === "item" || x[1] === "li") return x[1] + " only exists inside the { } where it was made. Is this line outside the loop?";
-    return "Nothing called " + x[1] + " exists here. A typo? Capital letters matter: getElementById, createElement, textContent.";
+    if (x[1] === "cat") return tr("There is no cat, only cats: the whole list. One cat is cats[0], or cats[i] in a loop.", "Nincs cat, csak cats: az egész lista. Egy macska a cats[0], ciklusban a cats[i].");
+    if (x[1] === "i") return tr("i only exists inside the loop's { }. Is this line outside the loop?", "Az i csak a ciklus { } részén belül létezik. Ez a sor kívül van a cikluson?");
+    if (x[1] === "card" || x[1] === "title" || x[1] === "age" || x[1] === "item" || x[1] === "li") return x[1] + tr(" only exists inside the { } where it was made. Is this line outside the loop?", " csak abban a { } részben létezik, ahol létrehoztad. Ez a sor kívül van a cikluson?");
+    return tr("Nothing called " + x[1] + " exists here. A typo? Capital letters matter: getElementById, createElement, textContent.", "Itt nincs semmi, aminek " + x[1] + " a neve. Elírás? A kis- és nagybetű számít: getElementById, createElement, textContent.");
   }
   if ((x = /Cannot read properties of null \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of null \(setting '(\w+)'\)/.exec(m)))
-    return "You used ." + x[1] + " on null: something you looked for was not found. Usually getElementById: the id must match the HTML exactly, without #.";
+    return tr("You used ." + x[1] + " on null: something you looked for was not found. Usually getElementById: the id must match the HTML exactly, without #.", "Valaminek a ." + x[1] + " részét kérted, de az null: amit kerestél, nem lett meg. Általában a getElementById a gond: az id-nek pontosan egyeznie kell a HTML-lel, # nélkül.");
   if ((x = /Cannot read properties of undefined \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of undefined \(setting '(\w+)'\)/.exec(m)))
-    return "You used ." + x[1] + " on something that does not exist. Reading past the end of the list? The loop must stop at i < list.length, not <=. Or a typo before the dot.";
-  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + " is not a function. Check the spelling: getElementById, createElement, appendChild, classList.add.";
-  if (/parameter 1 is not of type 'Node'/.test(m)) return "appendChild wants an element made with createElement, not text or a value from the list.";
-  if (/has already been declared/.test(m)) return "That name is already taken. The list is given to you: do not declare it again, and give each const its own name.";
-  if (/Assignment to constant/.test(m)) return "You gave a const a new value. Make a new const instead, or use let.";
-  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return "JavaScript could not read the code at all, so nothing ran. Look for a missing ) } or quote near that line.";
-  if (/is not a valid tag name|InvalidCharacterError/.test(m)) return "createElement wants a bare tag name: \"h2\", not \"<h2>\".";
+    return tr("You used ." + x[1] + " on something that does not exist. Reading past the end of the list? The loop must stop at i < list.length, not <=. Or a typo before the dot.", "Valaminek a ." + x[1] + " részét kérted, de az a valami nem létezik. Túlmentél a lista végén? A ciklusnak i < list.length-nél kell megállnia, nem <=-nél. Vagy elírás van a pont előtt.");
+  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + tr(" is not a function. Check the spelling: getElementById, createElement, appendChild, classList.add.", " nem függvény. Nézd meg, jól írtad-e: getElementById, createElement, appendChild, classList.add.");
+  if (/parameter 1 is not of type 'Node'/.test(m)) return tr("appendChild wants an element made with createElement, not text or a value from the list.", "Az appendChild createElement-tel készült elemet kér, nem szöveget vagy egy értéket a listából.");
+  if (/has already been declared/.test(m)) return tr("That name is already taken. The list is given to you: do not declare it again, and give each const its own name.", "Ez a név már foglalt. A listát készen kapod: ne hozd létre újra, és minden const kapjon saját nevet.");
+  if (/Assignment to constant/.test(m)) return tr("You gave a const a new value. Make a new const instead, or use let.", "Egy const-nak új értéket adtál. Csinálj inkább egy új const-ot, vagy használj let-et.");
+  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return tr("JavaScript could not read the code at all, so nothing ran. Look for a missing ) } or quote near that line.", "A JavaScript el sem tudta olvasni a kódot, úgyhogy semmi nem futott le. Keress egy hiányzó ) } jelet vagy idézőjelet a sor környékén.");
+  if (/is not a valid tag name|InvalidCharacterError/.test(m)) return tr("createElement wants a bare tag name: \"h2\", not \"<h2>\".", "A createElement csak a tag nevét kéri: \"h2\", nem \"<h2>\".");
   return "";
 }
 
@@ -399,29 +418,31 @@ function desc(n){ return '<span class="mono">&lt;' + n.tag + (n.cls.length ? ' c
 
 // spec(item) -> { tag, cls: [...], text } or { tag, cls, parts: [[tag, text], ...] }. Returns the first problem, or "".
 function listProblem(tree, items, spec, boxName, label){
-  if (!tree) return "The " + code("#" + boxName) + " box is gone from the page.";
+  if (!tree) return tr("The " + code("#" + boxName) + " box is gone from the page.", az("#" + boxName) + code("#" + boxName) + " doboz eltűnt az oldalról.");
   var kids = tree.kids, want = items.map(spec);
-  if (!kids.length) return "The " + code("#" + boxName) + " box is still empty.";
+  if (!kids.length) return tr("The " + code("#" + boxName) + " box is still empty.", az("#" + boxName) + code("#" + boxName) + " doboz még üres.");
   if (kids.length !== want.length) {
-    var s = "The box has " + kids.length + " element" + (kids.length === 1 ? "" : "s") + ", it should have " + want.length + ".";
-    if (kids.length === 1 && want.length > 1) s += " Only one? Is the appendChild inside the loop?";
-    if (kids.length > want.length && kids.length % want.length === 0) s += " Did the code run twice, or is something put in twice?";
+    var s = tr("The box has " + kids.length + " element" + (kids.length === 1 ? "" : "s") + ", it should have " + want.length + ".", "A dobozban " + kids.length + " elem van, " + want.length + " kellene.");
+    if (kids.length === 1 && want.length > 1) s += tr(" Only one? Is the appendChild inside the loop?", " Csak egy? Benne van az appendChild a ciklusban?");
+    if (kids.length > want.length && kids.length % want.length === 0) s += tr(" Did the code run twice, or is something put in twice?", " Kétszer futott a kód, vagy valamit kétszer teszel be?");
     return s;
   }
   for (var i = 0; i < want.length; i++) {
-    var el = kids[i], w = want[i], where = "Element " + (i + 1) + " (" + esc(label(items[i])) + ")";
-    if (el.tag !== w.tag) return where + " is " + desc(el) + ", it should be " + tg(w.tag) + ".";
-    for (var c = 0; c < w.cls.length; c++) if (el.cls.indexOf(w.cls[c]) < 0) return where + " is missing the class " + code(w.cls[c]) + ".";
-    for (c = 0; c < el.cls.length; c++) if (w.cls.indexOf(el.cls[c]) < 0) return where + " has the class " + code(el.cls[c]) + ", and should not.";
+    var el = kids[i], w = want[i], where = tr("Element " + (i + 1), azN(i + 1) + " elem") + " (" + esc(label(items[i])) + ")";
+    if (el.tag !== w.tag) return where + tr(" is " + desc(el) + ", it should be " + tg(w.tag) + ".", ": " + desc(el) + ", de " + tg(w.tag) + " kellene.");
+    for (var c = 0; c < w.cls.length; c++) if (el.cls.indexOf(w.cls[c]) < 0) return where + tr(" is missing the class " + code(w.cls[c]) + ".", ": hiányzik róla a" + (az(w.cls[c]) === "Az " ? "z " : " ") + code(w.cls[c]) + " class.");
+    for (c = 0; c < el.cls.length; c++) if (w.cls.indexOf(el.cls[c]) < 0) return where + tr(" has the class " + code(el.cls[c]) + ", and should not.", ": rajta van a" + (az(el.cls[c]) === "Az " ? "z " : " ") + code(el.cls[c]) + " class, pedig nem kellene.");
     if (w.text !== undefined) {
-      if (el.all !== w.text) return where + ": its text is " + (el.all ? code(el.all) : "empty") + ", it should be " + code(w.text) + ".";
+      if (el.all !== w.text) return where + tr(": its text is " + (el.all ? code(el.all) : "empty") + ", it should be " + code(w.text) + ".", ": a szövege " + (el.all ? code(el.all) : "üres") + ", de " + code(w.text) + " kellene.");
       continue;
     }
-    if (el.kids.length !== w.parts.length) return where + ": the card has " + el.kids.length + " part" + (el.kids.length === 1 ? "" : "s") + " inside (" + (el.kids.map(desc).join(", ") || "nothing") + "), it needs " + w.parts.map(function(p){ return tg(p[0]); }).join(" and ") + ".";
+    if (el.kids.length !== w.parts.length) return where + tr(": the card has " + el.kids.length + " part" + (el.kids.length === 1 ? "" : "s") + " inside (" + (el.kids.map(desc).join(", ") || "nothing") + "), it needs " + w.parts.map(function(p){ return tg(p[0]); }).join(" and ") + ".",
+      ": a kártyában " + el.kids.length + " rész van (" + (el.kids.map(desc).join(", ") || "semmi") + "), de " + w.parts.map(function(p){ return tg(p[0]); }).join(" és ") + " kell bele.");
     for (var j = 0; j < w.parts.length; j++) {
       var p = el.kids[j];
-      if (p.tag !== w.parts[j][0]) return where + ": part " + (j + 1) + " of the card is " + desc(p) + ", it should be " + tg(w.parts[j][0]) + ".";
-      if (p.all !== w.parts[j][1]) return where + ": the " + tg(p.tag) + " says " + (p.all ? code(p.all) : "nothing") + ", it should say " + code(w.parts[j][1]) + "." + (!p.all && j === 0 ? " An empty name usually means cats.name instead of cats[i].name." : "");
+      if (p.tag !== w.parts[j][0]) return where + tr(": part " + (j + 1) + " of the card is " + desc(p) + ", it should be " + tg(w.parts[j][0]) + ".", ": a kártya " + (j + 1) + ". része " + desc(p) + ", de " + tg(w.parts[j][0]) + " kellene.");
+      if (p.all !== w.parts[j][1]) return where + tr(": the " + tg(p.tag) + " says " + (p.all ? code(p.all) : "nothing") + ", it should say " + code(w.parts[j][1]) + "." + (!p.all && j === 0 ? " An empty name usually means cats.name instead of cats[i].name." : ""),
+        ": a " + tg(p.tag) + " szövege " + (p.all ? code(p.all) : "üres") + ", de " + code(w.parts[j][1]) + " kellene." + (!p.all && j === 0 ? " Az üres név általában azt jelenti, hogy cats[i].name helyett cats.name van ott." : ""));
     }
   }
   return "";
@@ -429,7 +450,7 @@ function listProblem(tree, items, spec, boxName, label){
 var CARD = function(c){ return { tag: "article", cls: ["card"], parts: [["h2", c.name], ["p", c.age + " years old"]] }; };
 var CARD_GRUMPY = function(c){ return { tag: "article", cls: c.friendly ? ["card"] : ["card", "grumpy"], parts: [["h2", c.name], ["p", c.age + " years old"]] }; };
 var catName = function(c){ return c.name; };
-var NOT_TYPED = "It works for this list only. The check also ran your code on a different list of cats, and there it was wrong. Take every value from the list instead of typing it in.";
+function NOT_TYPED(){ return tr("It works for this list only. The check also ran your code on a different list of cats, and there it was wrong. Take every value from the list instead of typing it in.", "Csak erre a listára működik. Az ellenőrzés egy másik macskalistán is lefuttatta a kódodat, és ott rossz lett. Minden értéket a listából vegyél, ne gépeld be."); }
 
 // r = run on the visible data, a = run on the other list. Return "" when done, or what is still wrong.
 function cardsCheck(spec, needAll){
@@ -437,7 +458,7 @@ function cardsCheck(spec, needAll){
     var items = needAll ? CATS : [CATS[0]], altItems = needAll ? ALT_CATS : [ALT_CATS[0]];
     var p = listProblem(r.tree, items, spec, "cats", catName);
     if (p) return p;
-    if (listProblem(a.tree, altItems, spec, "cats", catName)) return NOT_TYPED + (needAll ? " That list has " + ALT_CATS.length + " cats: does your loop go to cats.length?" : "");
+    if (listProblem(a.tree, altItems, spec, "cats", catName)) return NOT_TYPED() + (needAll ? tr(" That list has " + ALT_CATS.length + " cats: does your loop go to cats.length?", " Abban a listában " + ALT_CATS.length + " macska van: a ciklusod a cats.length-ig megy?") : "");
     return "";
   };
 }
@@ -460,18 +481,18 @@ var ART = {
     var s = R(8, 20, 270, 190, { fill: "#15181f", stroke: "#15181f" });
     var rows = ['[', '  { name: "Mirci", age: 7 },', '  { name: "Bundás", age: 2 },', '  { name: "Pixel", age: 4 },', '  ...', ']'];
     rows.forEach(function(r, i){ s += T(24, 50 + i * 26, r.replace(/</g, "&lt;"), { mono: true, size: 12.5, fill: i === 0 || i === 5 ? "#9aa0a6" : "#e5e7eb" }); });
-    s += T(143, 14, "what the server sends", { fill: MUT, anchor: "middle", size: 11 });
-    s += ARROW(290, 115, 370, 115, A) + T(330, 104, "a loop", { anchor: "middle", size: 11, fill: A, bold: true });
+    s += T(143, 14, tr("what the server sends", "amit a szerver küld"), { fill: MUT, anchor: "middle", size: 11 });
+    s += ARROW(290, 115, 370, 115, A) + T(330, 104, tr("a loop", "egy ciklus"), { anchor: "middle", size: 11, fill: A, bold: true });
     s += R(392, 8, 180, 222, { rx: 18, stroke: "#9aa0a6", sw: 2 });
     s += T(482, 32, "Cats of 13F", { bold: true, anchor: "middle", size: 13 });
     s += miniCard(407, 44, "Mirci", "7 years old") + miniCard(407, 98, "Bundás", "2 years old") + miniCard(407, 152, "Pixel", "4 years old");
-    s += T(482, 216, "what you see", { fill: MUT, anchor: "middle", size: 11 });
-    return svg(240, "A list of data on the left becomes a column of cards on a phone screen on the right", s);
+    s += T(482, 216, tr("what you see", "amit látsz"), { fill: MUT, anchor: "middle", size: 11 });
+    return svg(240, tr("A list of data on the left becomes a column of cards on a phone screen on the right", "Bal oldalt egy adatlista, jobb oldalt egy telefon képernyője, rajta a kártyák, amik belőle lettek"), s);
   },
   list: function(){
     var s = "", names = ["Mirci", "Bundás", "Pixel", "Null", "Szotyi"], ages = [7, 2, 4, 11, 1];
     s += R(8, 30, 624, 96, { fill: "#f6f8fa", stroke: "#cfd6df", dash: true });
-    s += T(16, 22, "cats", { mono: true, bold: true, fill: A, size: 13 }) + T(54, 22, "the whole list", { fill: MUT, size: 11 });
+    s += T(16, 22, "cats", { mono: true, bold: true, fill: A, size: 13 }) + T(54, 22, tr("the whole list", "az egész lista"), { fill: MUT, size: 11 });
     names.forEach(function(n, i){
       var x = 20 + i * 122;
       s += R(x, 44, 110, 70, { stroke: i === 0 ? A : "#d3d7dd", sw: i === 0 ? 2 : 1 });
@@ -480,23 +501,23 @@ var ART = {
       s += T(x + 8, 98, "age: " + ages[i], { mono: true, size: 10.5 });
     });
     s += ARROW(75, 120, 75, 160, A);
-    s += T(20, 178, "cats[0]", { mono: true, bold: true, fill: A, size: 13 }) + T(84, 178, "one cat, the first one. Counting starts at 0.", { size: 12 });
-    s += T(20, 202, "cats[0].name", { mono: true, bold: true, fill: A, size: 13 }) + T(124, 202, '"Mirci": one value, from one cat', { size: 12 });
-    s += T(20, 226, "cats.name", { mono: true, bold: true, fill: "#b91c1c", size: 13 }) + T(100, 226, "nothing. The list has no name, each cat does.", { size: 12, fill: "#b91c1c" });
-    s += T(20, 250, "cats.length", { mono: true, bold: true, fill: A, size: 13 }) + T(112, 250, "5: how many there are", { size: 12 });
-    return svg(262, "An array of five cats drawn as five boxes numbered from zero, and what cats[0], cats[0].name, cats.name and cats.length give", s);
+    s += T(20, 178, "cats[0]", { mono: true, bold: true, fill: A, size: 13 }) + T(84, 178, tr("one cat, the first one. Counting starts at 0.", "egy macska, az első. A számolás 0-tól indul."), { size: 12 });
+    s += T(20, 202, "cats[0].name", { mono: true, bold: true, fill: A, size: 13 }) + T(124, 202, tr("\"Mirci\": one value, from one cat", "\"Mirci\": egy érték, egy macskából"), { size: 12 });
+    s += T(20, 226, "cats.name", { mono: true, bold: true, fill: "#b91c1c", size: 13 }) + T(100, 226, tr("nothing. The list has no name, each cat does.", "semmi. A listának nincs neve, csak a macskáknak."), { size: 12, fill: "#b91c1c" });
+    s += T(20, 250, "cats.length", { mono: true, bold: true, fill: A, size: 13 }) + T(112, 250, tr("5: how many there are", "5: ennyi macska van"), { size: 12 });
+    return svg(262, tr("An array of five cats drawn as five boxes numbered from zero, and what cats[0], cats[0].name, cats.name and cats.length give", "Öt macska tömbje öt dobozként, nullától számozva, és hogy mit ad a cats[0], a cats[0].name, a cats.name és a cats.length"), s);
   },
   boxes: function(){
     var s = R(8, 8, 624, 230, { fill: "#fafafa", stroke: "#cfd6df" }) + T(20, 28, "&lt;body&gt;", { mono: true, fill: MUT });
     s += R(28, 40, 584, 186, { stroke: "#cfd6df" }) + T(40, 60, "&lt;main&gt;", { mono: true, fill: MUT });
     s += R(48, 72, 544, 38, { fill: "#f6f8fa" }) + T(60, 96, "&lt;h1&gt;", { mono: true, fill: MUT }) + T(110, 96, "Cats of 13F", { bold: true, size: 14 });
     s += R(48, 122, 544, 90, { fill: "#fff", stroke: A, sw: 2, dash: true }) + T(60, 142, '&lt;div id="cats"&gt;', { mono: true, fill: A, bold: true });
-    s += T(320, 178, "empty. Your script fills this one.", { anchor: "middle", fill: MUT, size: 13 });
-    return svg(246, "The page as nested boxes: body, inside it main, inside it a heading and an empty div with the id cats", s);
+    s += T(320, 178, tr("empty. Your script fills this one.", "üres. Ezt a scripted tölti meg."), { anchor: "middle", fill: MUT, size: 13 });
+    return svg(246, tr("The page as nested boxes: body, inside it main, inside it a heading and an empty div with the id cats", "Az oldal dobozok egymásban: body, benne main, abban egy főcím és egy üres div, cats id-vel"), s);
   },
   recipe: function(){
     var s = "", xs = [8, 220, 432];
-    var heads = ["1. Make it", "2. Fill it", "3. Put it in"];
+    var heads = lang === "hu" ? ["1. Létrehozod", "2. Feltöltöd", "3. Beteszed"] : ["1. Make it", "2. Fill it", "3. Put it in"];
     var codes = ['createElement("h2")', 'textContent = cats[0].name', 'box.appendChild(title)'];
     xs.forEach(function(x, i){
       s += R(x, 8, 200, 196, { fill: "#fbfcfd" });
@@ -505,23 +526,23 @@ var ART = {
       if (i < 2) s += ARROW(x + 203, 106, x + 217, 106);
     });
     s += R(58, 84, 100, 40, { stroke: "#9aa0a6", dash: true }) + T(108, 109, "&lt;h2&gt;&lt;/h2&gt;", { mono: true, anchor: "middle", fill: MUT });
-    s += T(108, 146, "exists, but not on the page", { anchor: "middle", size: 10.5, fill: MUT });
+    s += T(108, 146, tr("exists, but not on the page", "létezik, de nincs az oldalon"), { anchor: "middle", size: 10.5, fill: MUT });
     s += R(260, 84, 120, 40, { stroke: "#9aa0a6", dash: true }) + T(320, 109, "&lt;h2&gt;Mirci&lt;/h2&gt;", { mono: true, anchor: "middle", size: 11 });
-    s += T(320, 146, "still not on the page", { anchor: "middle", size: 10.5, fill: MUT });
+    s += T(320, 146, tr("still not on the page", "még mindig nincs az oldalon"), { anchor: "middle", size: 10.5, fill: MUT });
     s += R(448, 52, 168, 108, { stroke: A, sw: 2 }) + T(458, 70, '#cats', { mono: true, fill: A, bold: true, size: 11 });
     s += R(472, 84, 120, 40, { stroke: "#d3d7dd" }) + T(532, 109, "&lt;h2&gt;Mirci&lt;/h2&gt;", { mono: true, anchor: "middle", size: 11 });
-    s += T(532, 146, "now you see it", { anchor: "middle", size: 10.5, fill: "#2e9e5b", bold: true });
-    s += T(320, 228, "Forget step 3 and there is no error. Just nothing on the page.", { anchor: "middle", fill: "#b91c1c", size: 12, bold: true });
-    return svg(240, "Three steps: make an empty h2, fill it with a name, put it in the cats box, where it finally shows up", s);
+    s += T(532, 146, tr("now you see it", "most már látszik"), { anchor: "middle", size: 10.5, fill: "#2e9e5b", bold: true });
+    s += T(320, 228, tr("Forget step 3 and there is no error. Just nothing on the page.", "Ha a 3. lépés kimarad, nincs hiba. Csak üres marad az oldal."), { anchor: "middle", fill: "#b91c1c", size: 12, bold: true });
+    return svg(240, tr("Three steps: make an empty h2, fill it with a name, put it in the cats box, where it finally shows up", "Három lépés: egy üres h2, beleírsz egy nevet, beteszed a cats dobozba, és ott végre megjelenik"), s);
   },
   card: function(){
     var s = R(8, 8, 300, 200, { stroke: A, sw: 2 }) + T(20, 28, '#cats', { mono: true, fill: A, bold: true });
     s += R(32, 42, 252, 140, { stroke: "#d3d7dd", sw: 1.5 }) + T(44, 62, '&lt;article class="card"&gt;', { mono: true, size: 11.5, fill: "#b45309" });
     s += R(52, 74, 212, 40, { fill: "#f6f8fa" }) + T(64, 99, "&lt;h2&gt;", { mono: true, fill: MUT, size: 11 }) + T(104, 99, "Mirci", { bold: true });
     s += R(52, 124, 212, 40, { fill: "#f6f8fa" }) + T(64, 149, "&lt;p&gt;", { mono: true, fill: MUT, size: 11 }) + T(96, 149, "7 years old", {});
-    var steps = ["make the card", "make the h2, fill it", "make the p, fill it", "h2 and p into the card", "the card into the box"];
+    var steps = lang === "hu" ? ["kártya létrehozása", "h2 létrehozása, kitöltése", "p létrehozása, kitöltése", "h2 és p a kártyába", "kártya a dobozba"] : ["make the card", "make the h2, fill it", "make the p, fill it", "h2 and p into the card", "the card into the box"];
     steps.forEach(function(t, i){ s += '<circle cx="352" cy="' + (36 + i * 36) + '" r="11" fill="' + A + '"/>' + T(352, 40 + i * 36, String(i + 1), { anchor: "middle", fill: "#fff", bold: true, size: 11 }) + T(372, 40 + i * 36, t, { size: 13 }); });
-    return svg(216, "A card is an article box holding an h2 and a p, and the card goes into the cats box, in five steps", s);
+    return svg(216, tr("A card is an article box holding an h2 and a p, and the card goes into the cats box, in five steps", "A kártya egy article doboz, benne egy h2 és egy p, és a kártya a cats dobozba kerül, öt lépésben"), s);
   },
   loop: function(){
     var s = "", names = ["Mirci", "Bundás", "Pixel", "Null", "Szotyi"];
@@ -531,15 +552,15 @@ var ART = {
       s += R(x, 36, 108, 34, { fill: "#f6f8fa" }) + T(x + 54, 58, "cats[" + i + "]", { mono: true, anchor: "middle", size: 12 });
       s += ARROW(x + 54, 74, x + 54, 108, A);
       s += T(x + 64, 94, "i = " + i, { mono: true, size: 10, fill: MUT });
-      s += R(x, 112, 108, 46, { stroke: "#d3d7dd", sw: 1.5 }) + T(x + 10, 132, n, { bold: true, size: 12.5 }) + T(x + 10, 148, "card", { size: 10.5, fill: MUT });
+      s += R(x, 112, 108, 46, { stroke: "#d3d7dd", sw: 1.5 }) + T(x + 10, 132, n, { bold: true, size: 12.5 }) + T(x + 10, 148, tr("card", "kártya"), { size: 10.5, fill: MUT });
     });
     s += T(320, 186, "}", { mono: true, anchor: "middle", fill: A, bold: true, size: 13 });
-    s += T(320, 212, "The code for one card, with cats[0] changed to cats[i]. Five cats or five hundred: same code.", { anchor: "middle", fill: MUT, size: 12 });
-    return svg(224, "The for loop goes through cats[0] to cats[4] and makes one card for each", s);
+    s += T(320, 212, tr("The code for one card, with cats[0] changed to cats[i]. Five cats or five hundred: same code.", "Egy kártya kódja, cats[0] helyett cats[i]-vel. Öt macska vagy ötszáz: ugyanaz a kód."), { anchor: "middle", fill: MUT, size: 12 });
+    return svg(224, tr("The for loop goes through cats[0] to cats[4] and makes one card for each", "A for ciklus végigmegy a cats[0]-tól a cats[4]-ig, és mindegyiknek csinál egy kártyát"), s);
   },
   words: function(){
-    var rows = [["find the box", 'document.getElementById("cats")'], ["make a new element", 'document.createElement("article")'], ["write in it", "el.textContent = cats[i].name"], ["give it a class", 'el.classList.add("card")'], ["put it in", "box.appendChild(el)"], ["for every item", "for (let i = 0; i < cats.length; i++)"]];
-    var s = T(236, 16, "What you would call it", { bold: true, fill: MUT, anchor: "end" }) + T(286, 16, "What JavaScript calls it", { bold: true, fill: A });
+    var rows = [[tr("find the box", "megkeresed a dobozt"), 'document.getElementById("cats")'], [tr("make a new element", "új elemet csinálsz"), 'document.createElement("article")'], [tr("write in it", "beleírsz"), "el.textContent = cats[i].name"], [tr("give it a class", "class-t adsz neki"), 'el.classList.add("card")'], [tr("put it in", "beteszed"), "box.appendChild(el)"], [tr("for every item", "minden elemre"), "for (let i = 0; i < cats.length; i++)"]];
+    var s = T(236, 16, tr("What you would call it", "Ahogy te mondanád"), { bold: true, fill: MUT, anchor: "end" }) + T(286, 16, tr("What JavaScript calls it", "Ahogy a JavaScript mondja"), { bold: true, fill: A });
     rows.forEach(function(r, i){
       var y = 32 + i * 32;
       s += T(236, y + 16, r[0], { anchor: "end", size: 13 });
@@ -547,7 +568,7 @@ var ART = {
       s += T(286, y + 16, r[1].replace(/</g, "&lt;"), { mono: true, bold: true, fill: A, size: 12.5 });
       if (i < rows.length - 1) s += '<line x1="8" y1="' + (y + 29) + '" x2="632" y2="' + (y + 29) + '" stroke="#f1f3f5"/>';
     });
-    return svg(232, "Everyday words matched to the JavaScript for each: find, make, write, class, put in, loop", s);
+    return svg(232, tr("Everyday words matched to the JavaScript for each: find, make, write, class, put in, loop", "Hétköznapi szavak és a JavaScript megfelelőjük: megkeres, létrehoz, beleír, class, betesz, ciklus"), s);
   }
 };
 
@@ -624,7 +645,7 @@ var LESSONS = [
         return "The third cat's name is not in the Console yet.";
       }
       if (!lenOk) return "The name is there. Now the number of cats.";
-      if (!has(a, ALT_CATS[2].name) || !has(a, ALT_CATS.length)) return NOT_TYPED;
+      if (!has(a, ALT_CATS[2].name) || !has(a, ALT_CATS.length)) return NOT_TYPED();
       return "";
     },
     after: "Two steps to every value: which cat, then what about it. You will do that in every lesson from here." },
@@ -635,9 +656,9 @@ var LESSONS = [
     hints: ["What an element says is its <span class=\"mono\">textContent</span>: <span class=\"mono\">title.textContent = ...</span>", "The first cat is <span class=\"mono\">cats[0]</span>, its name <span class=\"mono\">cats[0].name</span>.", "<span class=\"mono\">title.textContent = cats[0].name;</span>"],
     check: function(r, a){
       var made = function(run, n){ return run.created.some(function(e){ return e.tag === "h2" && e.text === n; }); };
-      if (!r.created.some(function(e){ return e.tag === "h2"; })) return "No <span class=\"mono\">&lt;h2&gt;</span> was made.";
-      if (!made(r, CATS[0].name)) return "There is an <span class=\"mono\">&lt;h2&gt;</span>, but it does not say " + code(CATS[0].name) + ".";
-      if (!made(a, ALT_CATS[0].name)) return NOT_TYPED;
+      if (!r.created.some(function(e){ return e.tag === "h2"; })) return tr("No <span class=\"mono\">&lt;h2&gt;</span> was made.", "Nem készült <span class=\"mono\">&lt;h2&gt;</span>.");
+      if (!made(r, CATS[0].name)) return tr("There is an <span class=\"mono\">&lt;h2&gt;</span>, but it does not say " + code(CATS[0].name) + ".", "Van egy <span class=\"mono\">&lt;h2&gt;</span>, de nem az áll benne, hogy " + code(CATS[0].name) + ".");
+      if (!made(a, ALT_CATS[0].name)) return NOT_TYPED();
       return "";
     },
     after: "<b>Look at the live page.</b> Still empty. The Console shows your <span class=\"mono\">&lt;h2&gt;</span>, so it exists. But it only exists in JavaScript: you made it and filled it, and never <b>put it in</b>. No error, just nothing. That is the next lesson." },
@@ -649,7 +670,7 @@ var LESSONS = [
     check: function(r, a){
       var p = listProblem(r.tree, [CATS[0]], function(c){ return { tag: "h2", cls: [], text: c.name }; }, "cats", catName);
       if (p) return p;
-      if (listProblem(a.tree, [ALT_CATS[0]], function(c){ return { tag: "h2", cls: [], text: c.name }; }, "cats", catName)) return NOT_TYPED;
+      if (listProblem(a.tree, [ALT_CATS[0]], function(c){ return { tag: "h2", cls: [], text: c.name }; }, "cats", catName)) return NOT_TYPED();
       return "";
     },
     after: "Make it, fill it, put it in. That is the whole recipe. Everything from here is the same three steps, more times." },
@@ -715,10 +736,10 @@ var LESSONS = [
       var f5 = f4 && !listProblem(a.tree, ALT_EXCUSES, LI_USED, "excuses", label);
       var flags = [f1, f2, f3, f4, f5];
       var msg = "";
-      if (!f1) msg = t ? "The box is still empty." : "The " + code("#excuses") + " box is gone.";
+      if (!f1) msg = t ? tr("The box is still empty.", "A doboz még üres.") : tr("The " + code("#excuses") + " box is gone.", "Az " + code("#excuses") + " doboz eltűnt.");
       else if (!f3) msg = listProblem(t, EXCUSES, LI, "excuses", label);
       else if (!f4) msg = listProblem(t, EXCUSES, LI_USED, "excuses", label);
-      else if (!f5) msg = "Right for this list. On a different list of excuses it was wrong: is anything typed in?";
+      else if (!f5) msg = tr("Right for this list. On a different list of excuses it was wrong: is anything typed in?", "Erre a listára jó. Egy másik kifogáslistán rossz volt: be van gépelve valami?");
       return { flags: flags, msg: msg, reveal: f3 };
     } }
 ];
@@ -781,33 +802,108 @@ function logHas(run, v){
 LESSONS[0].check = function(r, a){
   var nameOk = logHas(r, CATS[2].name), lenOk = logHas(r, CATS.length);
   if (!nameOk) {
-    if (logHas(r, CATS[3].name)) return CATS[3].name + " is the fourth cat. Counting starts at 0: the first is cats[0].";
-    if (r.logs.some(function(l){ return /^\{/.test(l) && l.indexOf('"' + CATS[2].name + '"') >= 0; })) return "You printed the whole third cat. Print only its name: add <code>.name</code>.";
-    if (r.logs.some(function(l){ return l === "undefined"; })) return "Something printed undefined. cats.name? The list has no name, one cat does: cats[2].name.";
-    return "The third cat's name is not in the Console yet.";
+    if (logHas(r, CATS[3].name)) return CATS[3].name + tr(" is the fourth cat. Counting starts at 0: the first is cats[0].", " a negyedik macska. A számolás 0-tól indul: az első a cats[0].");
+    if (r.logs.some(function(l){ return /^\{/.test(l) && l.indexOf('"' + CATS[2].name + '"') >= 0; })) return tr("You printed the whole third cat. Print only its name: add <code>.name</code>.", "Az egész harmadik macskát kiírtad. Csak a nevét írd ki: tedd mögé, hogy <code>.name</code>.");
+    if (r.logs.some(function(l){ return l === "undefined"; })) return tr("Something printed undefined. cats.name? The list has no name, one cat does: cats[2].name.", "Valami undefined-ot írt ki. cats.name? A listának nincs neve, egy macskának van: cats[2].name.");
+    return tr("The third cat's name is not in the Console yet.", "A harmadik macska neve még nincs a konzolban.");
   }
-  if (!lenOk) return "The name is there. Now the number of cats.";
-  if (!logHas(a, ALT_CATS[2].name) || !logHas(a, ALT_CATS.length)) return NOT_TYPED;
+  if (!lenOk) return tr("The name is there. Now the number of cats.", "A név megvan. Most a macskák száma.");
+  if (!logHas(a, ALT_CATS[2].name) || !logHas(a, ALT_CATS.length)) return NOT_TYPED();
   return "";
 };
 var check2 = LESSONS[1].check;
 LESSONS[1].check = function(r, a){
   var m = check2(r, a); if (m) return m;
-  if (!r.logs.some(function(l){ return /<h2[\s>]/.test(l); })) return "The <code>&lt;h2&gt;</code> is made. Now print it: <code>console.log( )</code> with your h2 inside.";
+  if (!r.logs.some(function(l){ return /<h2[\s>]/.test(l); })) return tr("The <code>&lt;h2&gt;</code> is made. Now print it: <code>console.log( )</code> with your h2 inside.", "A <code>&lt;h2&gt;</code> megvan. Most írd ki: <code>console.log( )</code>, benne a h2-vel.");
   return "";
 };
 var explain0 = explain;
 explain = function(err){
   var m = err.msg || "", x = /^(\w+) is not defined/.exec(m);
-  if (x && ["h2", "p", "article", "li", "div", "ul", "grumpy", "used"].indexOf(x[1]) >= 0) return "Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".";
-  if (x && (x[1] === "box" || x[1] === "list")) return x[1] + " was never made. Find it first: const " + x[1] + " = document.getElementById(\"...\"), with the id from index.html.";
-  if (/HTML space characters/.test(m)) return "classList.add takes one class at a time, without spaces: add(\"card\"), then add(\"grumpy\").";
+  if (x && ["h2", "p", "article", "li", "div", "ul", "grumpy", "used"].indexOf(x[1]) >= 0) return tr("Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".", "Tedd idézőjelbe: \"" + x[1] + "\". Idézőjel nélkül a JavaScript egy " + x[1] + " nevű változót keres.");
+  if (x && (x[1] === "box" || x[1] === "list")) return x[1] + tr(" was never made. Find it first: const " + x[1] + " = document.getElementById(\"...\"), with the id from index.html.", " sosem jött létre. Előbb keresd meg: const " + x[1] + " = document.getElementById(\"...\"), az index.html-ben lévő id-vel.");
+  if (/HTML space characters/.test(m)) return tr("classList.add takes one class at a time, without spaces: add(\"card\"), then add(\"grumpy\").", "A classList.add egyszerre egy class-t kap, szóköz nélkül: add(\"card\"), aztán add(\"grumpy\").");
   return explain0(err);
 };
 LESSONS[7].noHints = false;
 LESSONS[7].hints = [];
 LESSONS[7].sub = "The excuses are in <code>data.js</code>, the list is in <code>index.html</code>. No hints in this one.";
 LESSONS[7].after = "That is the whole lesson. Find the box, go through the list, and for each item: make it, fill it, put it in. Next, the list comes from a server instead of data.js (fetch), and everything after that is what you did today.";
+/* ====================================================================
+   Hungarian (?lang=hu), index for index with PRIMER and LESSONS.
+   Same metaphor (létrehozod, feltöltöd, beteszed). Code, ids and data stay as they are.
+   ==================================================================== */
+
+var PRIMER_HU = [
+  { title: "Minden lista, amit görgetsz, adatból épül",
+    body: "Instagram, Spotify, e-napló: ezeket a kártyákat senki nem gépeli be kézzel. A szerver küld egy <b>listát</b>, és pár sor JavaScript minden eleméből csinál valamit az oldalon.<br><br>Ez a mai óra. A vizsgán a frontend feladat 15 pontot ér, és nagy része pont ez.",
+    say: "Kérdezd meg: az Instagram-feedjükben hány kártyát írt meg valaki HTML-ben? Egyet sem. Aztán a vizsga: ez a ciklus a frontend feladat gerince." },
+  { title: "Az adat: egy lista",
+    body: "A lista egy tömb. Minden eleme egy objektum: egy macska, névvel és életkorral.<br><br>Egy értékhez két lépésben jutsz el: először <b>melyik macska</b>, aztán <b>mi róla</b>. A <span class=\"mono\">cats.name</span> kihagyja az első lépést, és semmit nem ad. Ez a leggyakoribb hiba a tesztekben.",
+    say: "Olvasd fel az alsó négy sort. Mielőtt megmutatod, kérdezd meg: mit ad a cats.name? (undefined.) Ez volt a programs.place hiba a Test 04 javításában." },
+  { title: "Az oldal: dobozok dobozokban",
+    body: "Az oldalon minden elem egy doboz, és a dobozok más dobozokban vannak. A HTML ad egy <b>üres dobozt</b> egy id-vel. A scripted egyetlen dolga, hogy megtöltse.",
+    say: "Mutass a szaggatott dobozra: csak ezt adja a HTML. Minden más az adatból jön." },
+  { title: "Létrehozod, feltöltöd, beteszed",
+    body: "Minden elemnél három lépés. <b>Létrehozol</b> egy üreset. <b>Feltöltöd</b> az adatból. <b>Beteszed</b> egy dobozba, ami már rajta van az oldalon.<br><br>A 3. lépést szokták elfelejteni, és ez alattomos, mert semmi nem lesz piros. Az elem létezik, a JavaScript elégedett, az oldalon meg nincs semmi.",
+    say: "Mondasd ki velük a három szót. A 2. feladatban direkt beleszaladnak a hiányzó 3. lépésbe." },
+  { title: "A kártya: dobozok egy dobozban",
+    body: "A kártya ugyanez a három lépés, párszor. Létrehozod a kártyát, létrehozod a részeit, a részeket beteszed a kártyába, a kártyát a dobozba.<br><br>Semmi új. Csak több belőle.",
+    say: "Kérdezd meg: milyen sorrendben tehetjük be a dolgokat? Bármilyenben, csak semmi ne maradjon ki." },
+  { title: "Mindet: a ciklus",
+    body: "<b>Egy</b> kártya kódját írod meg. Aztán beteszed egy ciklusba, és a <span class=\"mono\">cats[0]</span>-ból <span class=\"mono\">cats[i]</span> lesz. A ciklus minden macskára egyszer lefuttatja.<br><br>Nem mindig öt macska lesz a listában. A kódot ez nem érdekli.",
+    say: "Kérdezd meg: mennyi az i a harmadik körben? (2.) Miért i < cats.length, és miért nem <=? (cats[5] nem létezik.)" },
+  { title: "A szavak, amiket mindjárt begépelsz",
+    body: "Ezt a diát nem kell megtanulnod. A következő fél órában minden sorát begépeled, és utána megmarad.<br><br>A gyakorlás úgy néz ki, mint a VS Code, mellette nyitva az oldal, ahogy a Live Server mutatja. <b>Ctrl+S</b>-sel mentesz, és az oldal újratölt, már a scripteddel.",
+    say: "Utána mindenki megnyomja a Mehet gombot. Járj körbe. Aki hamar végez, megcsinálja az utolsó feladatot tippek nélkül." }
+];
+
+var LESSONS_HU = [
+  { title: "Nézd meg az adatot",
+    do: "Írj ki két dolgot a konzolra: <b>hány macska</b> van, és <b>mi a harmadik macska neve</b>.",
+    sub: "A macskák a <code>data.js</code>-ben vannak (nyisd meg az Explorerből, a bal felső fájl ikonnal). Ments <kbd>Ctrl</kbd>+<kbd>S</kbd>-sel: az oldal alatti konzolban látod, mit írtál ki.",
+    hints: ["Hány darab: <span class=\"mono\">cats.length</span>", "A számolás 0-tól indul. Az első macska a <span class=\"mono\">cats[0]</span>, akkor a harmadik...", "<span class=\"mono\">console.log(cats[2].name);</span>"],
+    after: "Minden értékhez két lépés: melyik macska, aztán mi róla. Innentől minden feladatban ezt csinálod." },
+  { title: "Csinálj egyet",
+    do: "Csinálj egy <code>&lt;h2&gt;</code>-t az első macska nevével, és írd ki a konzolra.",
+    sub: "Aztán nézd meg az oldalt.",
+    hints: ["Amit egy elem kiír, az a <span class=\"mono\">textContent</span>-je: <span class=\"mono\">title.textContent = ...</span>", "Az első macska a <span class=\"mono\">cats[0]</span>, a neve <span class=\"mono\">cats[0].name</span>.", "<span class=\"mono\">title.textContent = cats[0].name;</span>"],
+    after: "<b>Nézd meg az oldalt.</b> Még mindig üres. A konzol mutatja a <span class=\"mono\">&lt;h2&gt;</span>-t, tehát létezik. De csak a JavaScriptben: létrehoztad, feltöltötted, és sosem <b>tetted be</b>. Nincs hiba, csak nincs semmi. Ez a következő feladat." },
+  { title: "Tedd be a dobozba",
+    do: "Tedd be a <code>&lt;h2&gt;</code>-t az oldalon lévő üres dobozba.",
+    sub: "A doboz a <code>&lt;div id=\"cats\"&gt;</code> az <code>index.html</code>-ben.",
+    hints: ["Keresd meg: <span class=\"mono\">const box = document.getElementById(\"cats\");</span> Itt nincs #.", "Tedd bele: <span class=\"mono\">box.appendChild(title);</span>", "Ments, aztán nézd meg a jobb oldali oldalt."],
+    after: "Létrehozod, feltöltöd, beteszed. Ez az egész recept. Innentől minden ugyanez a három lépés, csak többször." },
+  { title: "Egy kártya",
+    do: "Fejezd be az első macska kártyáját: a név alá az életkora, így: <b>7 years old</b>, aztán a kártyát a dobozba.",
+    sub: "Az életkorok a <code>data.js</code>-ben vannak. A <code>script.js</code> kommentjei mutatják, melyik rész hova kerül.",
+    hints: ["Létrehozod: <span class=\"mono\">const age = document.createElement(\"p\");</span>", "Feltöltöd: <span class=\"mono\">age.textContent = cats[0].age + \" years old\";</span>", "Beteszed: <span class=\"mono\">card.appendChild(title);</span> <span class=\"mono\">card.appendChild(age);</span> <span class=\"mono\">box.appendChild(card);</span>"],
+    after: "Nézd meg az oldalt: egy kártya, benne a név és az életkor. Még négy macska vár." },
+  { title: "Mindet",
+    do: "Csinálj kártyát <b>minden</b> macskának, ne csak az elsőnek.",
+    sub: "Az ellenőrzés egy másik macskalistán is lefuttatja a kódodat, úgyhogy a macskák száma változhat.",
+    hints: ["Tedd a kártya kódját egy <span class=\"mono\">for (let i = 0; i &lt; cats.length; i++) { ... }</span> ciklusba.", "A cikluson belül minden <span class=\"mono\">cats[0]</span>-ból <span class=\"mono\">cats[i]</span> lesz.", "A dobozt egyszer keresd meg, a ciklus előtt. A kártyát a cikluson belül hozod létre és teszed be."],
+    after: "Öt kártya egy kártyányi kódból. Ha a lista változik, az oldal is vele változik." },
+  { title: "A morcosak",
+    do: "Amelyik macska nem barátságos, az kap egy második class-t a kártyájára: <code>grumpy</code>.",
+    sub: "Hogy melyik macska barátságos, az a <code>data.js</code>-ben van. A <code>style.css</code> már tudja, hogy néz ki a grumpy.",
+    hints: ["A cikluson belül: <span class=\"mono\">if (cats[i].friendly === false) { ... }</span>", "<span class=\"mono\">card.classList.add(\"grumpy\");</span>", "A barátságosakon csak a <span class=\"mono\">card</span> marad."],
+    after: "Az adat dönti el, hogy néz ki az oldal. Te sehol nem írtad le, melyik macska morcos." },
+  { title: "Egy csapattárs kódja",
+    do: "A csapattársad szerint ez kész. Érd el, hogy az oldal minden macskát rendesen mutasson: név, életkor, a morcosak megjelölve.",
+    sub: "Előbb nézd meg az oldalt és a konzolt.",
+    hints: ["Előbb olvasd el a piros sort a konzolban. Megmondja, melyik sorban van a baj, alatta pedig, hogy ez mit jelent.", "A <span class=\"mono\">card</span> csak a ciklus { } részén belül létezik. A sornak, ami a dobozba teszi, ott is kell lennie.", "Név nélküli kártyák: a <span class=\"mono\">cats</span> az egész lista. A listának nincs neve, csak a macskáknak."],
+    after: "Két klasszikus hiba: az egyik kiabál, a másik csendben van. A csendes miatt nézd mindig az oldalt is, ne csak a konzolt." },
+  { title: "Most te, tippek nélkül",
+    do: "Tegyél egy <code>&lt;li&gt;</code>-t az oldalon lévő listába minden kifogásnak. A <code>used: true</code> kifogások a <code>used</code> class-t is megkapják.",
+    sub: "A kifogások a <code>data.js</code>-ben vannak, a lista az <code>index.html</code>-ben. Ebben nincs tipp.",
+    hints: [],
+    after: "Ennyi a lecke. Megkeresed a dobozt, végigmész a listán, és minden elemnél: létrehozod, feltöltöd, beteszed. Legközelebb a lista nem a data.js-ből jön, hanem egy szerverről (fetch), és utána minden az, amit ma csináltál." }
+];
+PRIMER_HU.forEach(function(p, i){ p.art = PRIMER[i].art; });
+// The words of task i in the current language. Checks, start code and solutions are shared.
+function LX(i){ return lang === "hu" ? LESSONS_HU[i] : LESSONS[i]; }
+
 PRIMER[PRIMER.length - 1].body = "You do not have to learn this slide. You will type every line of it in the next half hour, and after that it sticks.<br><br>The practice looks like VS Code, with the page open next to it, the way Live Server shows it. Save with <b>Ctrl+S</b> and the page reloads with your script run on it.";
 
 /* ====================================================================
@@ -897,7 +993,6 @@ function normalize(s){
 }
 var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
 // ?prep: start clean every time, never save, open each task with its solution run.
-var PREP = /[?&]prep(=|&|$)/.test(location.search);
 if (PREP) { S = fresh(); S.primerDone = true; }
 function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
@@ -975,6 +1070,7 @@ function solutionMarks(){
 }
 function solutionSub(){
   var m = solutionMarks();
+  if (lang === "hu") return "A <code>solution.js</code> zöld sorait gépeld be a <code>script.js</code> fájlodba" + (m.del ? ", a piros soraidat pedig töröld vagy tedd át máshova" : "") + ", aztán ments. A beillesztés ki van kapcsolva. (" + m.typed + " / " + m.todo + " begépelve" + (m.del ? ", " + m.del + " piros" : "") + ")";
   return "Type the green lines from <code>solution.js</code> into your <code>script.js</code>" + (m.del ? ", and delete or move your red lines" : "") + ", then save. Pasting is off. (" + m.typed + " of " + m.todo + " typed" + (m.del ? ", " + m.del + " red" : "") + ")";
 }
 
@@ -1021,14 +1117,14 @@ function insert(text, caretAt){
 function blockIfSolution(e){
   if (!S.sol[S.i]) return;
   e.preventDefault();
-  UI.note = "Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.";
+  UI.note = tr("Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.", "Amíg nyitva van a megoldás, a beillesztés ki van kapcsolva. A zöld sorokat gépeld be magad: így marad meg.");
   renderStripNote();
 }
 editor.addEventListener("paste", blockIfSolution);
 editor.addEventListener("drop", blockIfSolution);
 $("sc-sol").addEventListener("copy", function(e){ e.preventDefault(); });
 $("sc-view").setAttribute("tabindex", "0");
-$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + " is read-only in this lesson. Your code goes in script.js."; renderStripNote(); } });
+$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + tr(" is read-only in this lesson. Your code goes in script.js.", ": ebben a leckében csak olvasható. A kódod a script.js-be megy."); renderStripNote(); } });
 
 document.addEventListener("keydown", function(e){
   if (!$("primer").classList.contains("hidden")) {
@@ -1070,14 +1166,14 @@ function closeFile(name){
 function renderTabs(){
   $("tabs1").innerHTML = UI.open.map(function(n){
     var mod = n === "script.js" && dirty(), ro = n !== "script.js";
-    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? " (read-only in this lesson)" : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
+    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? tr(" (read-only in this lesson)", " (ebben a leckében csak olvasható)") : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
       '<span class="x" data-close="' + n + '">' + (mod ? "●" : "×") + '</span></div>';
   }).join("");
   renderSide();
 }
 $("tabs1").addEventListener("click", function(e){
   var x = e.target.closest("[data-close]");
-  if (x) { if (x.dataset.close === "script.js" && dirty()) { UI.note = "script.js has unsaved changes. Save with Ctrl+S first."; renderStripNote(); return; } closeFile(x.dataset.close); return; }
+  if (x) { if (x.dataset.close === "script.js" && dirty()) { UI.note = tr("script.js has unsaved changes. Save with Ctrl+S first.", "A script.js-ben mentetlen változások vannak. Előbb ments Ctrl+S-sel."); renderStripNote(); return; } closeFile(x.dataset.close); return; }
   var t = e.target.closest("[data-tab]"); if (t) openFile(t.dataset.tab);
 });
 function renderEditorArea(){
@@ -1100,7 +1196,7 @@ function renderSolution(){
   $("work").classList.toggle("split", open);
   if (!open) return;
   var m = solutionMarks(), t = SOLUTIONS[S.i];
-  $("tabs2").innerHTML = '<div class="tab on" title="solution.js (read-only)">' + fi("solution.js") + '<span>solution.js</span><span class="lock">🔒</span></div>';
+  $("tabs2").innerHTML = '<div class="tab on" title="solution.js ' + tr("(read-only)", "(csak olvasható)") + '">' + fi("solution.js") + '<span>solution.js</span><span class="lock">🔒</span></div>';
   $("hl-sol").innerHTML = linesHtml(t, hlJS, m.sol);
   $("gut-sol").innerHTML = gutterHtml(t.split("\n").length, 0, m.sol);
 }
@@ -1111,16 +1207,16 @@ function renderSolution(){
 
 function renderConsole(r){
   var c = $("console"), h = "";
-  if (!r) { c.innerHTML = '<div class="dt-row dim">Loading…</div>'; return; }
+  if (!r) { c.innerHTML = '<div class="dt-row dim">' + tr("Loading…", "Betöltés…") + '</div>'; return; }
   r.logs.forEach(function(l){ h += '<div class="dt-row">' + esc(l) + '</div>'; });
   r.errors.forEach(function(e){
-    var msg = /__ENDLESS__/.test(e.msg) ? "The loop ran 20000 times and was stopped." : e.msg;
+    var msg = /__ENDLESS__/.test(e.msg) ? tr("The loop ran 20000 times and was stopped.", "A ciklus 20000-szer lefutott, ezért leállítottam.") : e.msg;
     h += '<div class="dt-row err">✖ Uncaught ' + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "   script.js:" + e.line : "") + '</div>';
     var x = explain(e);
     if (x) h += '<div class="dt-row why">' + esc(x) + '</div>';
   });
-  if (r.timeout) h += '<div class="dt-row err">✖ Your code did not finish. An endless loop?</div>';
-  c.innerHTML = h || '<div class="dt-row dim">Nothing printed.</div>';
+  if (r.timeout) h += '<div class="dt-row err">✖ ' + tr("Your code did not finish. An endless loop?", "A kódod nem futott le a végéig. Végtelen ciklus?") + '</div>';
+  c.innerHTML = h || '<div class="dt-row dim">' + tr("Nothing printed.", "Nem írt ki semmit.") + '</div>';
   c.scrollTop = c.scrollHeight;
   var n = r.errors.length + (r.timeout ? 1 : 0);
   $("st-err").textContent = "⊗ " + n + " ⚠ 0";
@@ -1133,7 +1229,7 @@ function renderConsole(r){
 
 function renderDots(){
   var h = "";
-  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="' + tr("Task ", "Feladat ") + (i + 1) + ": " + esc(LX(i).title) + (S.usedSol[i] ? tr(" (solved with the solution)", " (a megoldással)") : "") + '"></button>';
   $("dots").innerHTML = h;
 }
 $("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
@@ -1145,35 +1241,35 @@ function hintState(){
 }
 
 function renderStrip(){
-  var les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a) : null, done = !!S.done[S.i];
-  $("t-kicker").textContent = "Task " + (S.i + 1) + " of " + N + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
-  $("t-title").textContent = les.title;
-  $("t-do").innerHTML = les.do;
-  var sub = les.sub;
+  var lx = LX(S.i), les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a) : null, done = !!S.done[S.i];
+  $("t-kicker").textContent = tr("Task " + (S.i + 1) + " of " + N, "Feladat " + (S.i + 1) + " / " + N) + (PREP ? (UI.prepView === "task" ? tr(" · Prep: task", " · Felkészülés: feladat") : tr(" · Prep: solution", " · Felkészülés: megoldás")) : "");
+  $("t-title").textContent = lx.title;
+  $("t-do").innerHTML = lx.do;
+  var sub = lx.sub;
   if (S.sol[S.i] && !done) {
     var m = solutionMarks();
     sub = solutionSub();
   }
   $("t-sub").innerHTML = sub;
   var r = "";
-  if (!S.saved[S.i] && !done) r = '<span class="dim">Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run your code and check it.</span>';
-  if (res && !res.done && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + " Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.";
+  if (!S.saved[S.i] && !done) r = '<span class="dim">' + tr('Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run your code and check it.', 'Ments <kbd>Ctrl</kbd>+<kbd>S</kbd>-sel: lefut a kódod, és kiderül, jó-e.') + '</span>';
+  if (res && !res.done && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + tr(" Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.", " Még valami: az <code>if ( )</code> belsejében <code>===</code> kell. Egy sima <code>=</code> átírja az értéket, ahelyett hogy megnézné.");
   if (PREP && res && res.done) done = true;
-  if (done && (!res || res.done)) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
-  else if (res && !res.done) r = '<span class="no">✗ Not yet.</span> ' + (res.msg || (last.r.errors.length ? "There is a red error in the Console." : ""));
+  if (done && (!res || res.done)) r = '<span class="yes">' + tr("✓ Done.", "✓ Kész.") + '</span> ' + (lx.after || "");
+  else if (res && !res.done) r = '<span class="no">' + tr("✗ Not yet.", "✗ Még nem.") + '</span> ' + (res.msg || (last.r.errors.length ? tr("There is a red error in the Console.", "Piros hiba van a konzolban.") : ""));
   $("t-result").innerHTML = r;
   var hs = hintState();
-  if (!les.noHints && hs.shown) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  if (!les.noHints && hs.shown) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = lx.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>" + tr("Hint ", "Tipp ") + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
   else $("t-hints").classList.add("hidden");
   var act = $("t-actions"); act.innerHTML = "";
   if (PREP) {
-    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
-    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
-    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    act.appendChild(button(tr("← Prev", "← Előző"), "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? tr("Show solution", "Megoldás mutatása") : tr("Show task", "Feladat mutatása"), "btn", togglePrep));
+    act.appendChild(button(tr("Next →", "Következő →"), "btn primary", function(){ gotoTask(S.i + 1); }));
   } else if (done) {
-    if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    if (S.i < N - 1) act.appendChild(button(tr("Next task →", "Következő feladat →"), "btn primary", function(){ gotoTask(S.i + 1); }));
   } else if (!les.noHints && !S.sol[S.i]) {
-    act.appendChild(button(hs.solutionNext ? "Show solution" : "Stuck? Hint", "btn", stuck));
+    act.appendChild(button(hs.solutionNext ? tr("Show solution", "Megoldás mutatása") : tr("Stuck? Hint", "Elakadtál? Tipp"), "btn", stuck));
   }
   renderStripNote();
 }
@@ -1197,7 +1293,8 @@ function button(label, cls, fn){ var b = document.createElement("button"); b.cla
 function stuck(){
   var hs = hintState();
   if (hs.need > 0) {
-    UI.note = "Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    UI.note = tr("Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.",
+      "Előbb próbálkozz: változtass valamit, és ments (Ctrl+S). Minden új próba számít. Még " + hs.need + ", és " + (hs.solutionNext ? "megnyílik a megoldás." : "jön egy tipp."));
     renderStripNote(); return;
   }
   UI.note = "";
@@ -1209,17 +1306,17 @@ function stuck(){
    Running: Ctrl+S saves and Live Server reloads the page
    ==================================================================== */
 
-var RED_LEFT = "The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.";
+function RED_LEFT(){ return tr("The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.", "Az oldal jónak tűnik, de van egy piros hiba a konzolban. Azt is javítsd: egy igazi oldalon ami utána jön, az már nem fut le."); }
 function evaluate(les, r, a){
   var endless = r.timeout || r.errors.some(function(e){ return /__ENDLESS__/.test(e.msg); });
   if (les.flags) {
-    var f = les.flags(r, a), fl = f.flags.slice(), msg = endless ? "Your loop never stops." : f.msg;
-    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT; }
+    var f = les.flags(r, a), fl = f.flags.slice(), msg = endless ? tr("Your loop never stops.", "A ciklusod sosem áll meg.") : f.msg;
+    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT(); }
     return { done: fl.every(Boolean), msg: msg };
   }
-  if (endless) return { done: false, msg: "Your loop never stops." };
+  if (endless) return { done: false, msg: tr("Your loop never stops.", "A ciklusod sosem áll meg.") };
   var m = les.check(r, a);
-  if (!m && r.errors.length) m = RED_LEFT;
+  if (!m && r.errors.length) m = RED_LEFT();
   return { done: !m, msg: m };
 }
 
@@ -1272,11 +1369,11 @@ function gotoTask(i){
   run(false);
 }
 $("l-again").onclick = function(){
-  if (!confirm("Put back the start code for this task? What you wrote in this task is lost.")) return;
+  if (!confirm(tr("Put back the start code for this task? What you wrote in this task is lost.", "Visszaállítod a feladat kezdő kódját? Amit ebben a feladatban írtál, elvész."))) return;
   delete S.code[S.i]; delete S.buf[S.i]; S.saved[S.i] = false; save(); gotoTask(S.i);
 };
 $("l-reset").onclick = function(){
-  if (!confirm("Start the whole lesson again from task 1? Your code and progress are cleared.")) return;
+  if (!confirm(tr("Start the whole lesson again from task 1? Your code and progress are cleared.", "Elölről kezded az egész leckét az 1. feladattól? A kódod és a haladásod törlődik."))) return;
   S = fresh(); S.primerDone = true; save(); gotoTask(0);
 };
 $("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
@@ -1295,27 +1392,59 @@ function renderAll(){
 
 function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
 function renderPrimer(){
-  var P = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  var P = (lang === "hu" ? PRIMER_HU : PRIMER)[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
   for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
   $("primer").innerHTML = '<div class="slide">' +
-    '<div class="kicker">Data to Elements · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<div class="kicker">' + tr("Data to Elements", "Adatból elemek") + ' · ' + (primerIdx + 1) + tr(' of ', ' / ') + PRIMER.length + '</div>' +
     '<h2>' + esc(P.title) + '</h2>' +
     '<div class="art">' + ART[P.art]() + '</div>' +
     '<p>' + P.body + '</p>' +
-    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(P.say) + '</div>' : "") +
+    (showSay ? '<div class="say"><b>' + tr("Teacher:", "Tanárnak:") + '</b> ' + esc(P.say) + '</div>' : "") +
     '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
-    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
-    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
-    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
-    '<div class="keys">← → to move</div></div>';
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>' + tr("← Back", "← Vissza") + '</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? tr("Let's go →", "Mehet →") : tr("Next →", "Tovább →")) + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">' + tr("Close", "Bezárás") + '</button>' : "") +
+    '<button class="btn" id="p-lang" lang="' + tr("hu", "en") + '">' + tr("Magyarul", "In English") + '</button></div>' +
+    '<div class="keys">' + tr("← → to move", "← → lapozás") + '</div></div>';
   $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
   $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); editor.focus(); };
   if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("p-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
   $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
 }
 
+function RECONSOLE(){ renderConsole(last.r); }
+
 // Test hook: lets an automated check drive the page without the UI.
-window.__DTE = { PREP: PREP, SOLUTIONS: SOLUTIONS, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun, state: function(){ return S; }, last: function(){ return last; } };
+window.__DTE = { PREP: PREP, PRIMER: PRIMER, PRIMER_HU: PRIMER_HU, LESSONS_HU: LESSONS_HU, lang: function(){ return lang; }, SOLUTIONS: SOLUTIONS, LESSONS: LESSONS, PAGES: PAGES, runIn: runIn, evaluate: evaluate, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun, state: function(){ return S; }, last: function(){ return last; } };
+
+// Static page text carries its Hungarian in data-hu; the English is kept on the first swap.
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.title = tr("Data to Elements", "Adatból elemek");
+  document.querySelectorAll("[data-hu]").forEach(function(el){
+    if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = lang === "hu" ? el.dataset.hu : el.dataset.en;
+  });
+  var b = $("btn-lang");
+  b.textContent = tr("Magyarul", "In English");
+  b.setAttribute("lang", tr("hu", "en"));
+  b.title = tr("Magyarra vált", "Switch to English");
+  $("preview").title = tr("The page, with your script run on it", "Az oldal, rajta a scripteddel");
+  $("altframe").title = tr("Second run with other data", "Második futtatás más adattal");
+}
+// Switching keeps progress: only the words change, then everything is drawn again.
+function setLanguage(l){
+  lang = l === "hu" ? "hu" : "en";
+  if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  try { var u = new URL(location.href); u.searchParams.set("lang", lang); window.history.replaceState(null, "", u.toString()); } catch (e) {}
+  applyStatic();
+  renderAll();
+  if (last) RECONSOLE();
+  if (!$("primer").classList.contains("hidden")) renderPrimer();
+}
+$("btn-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
+applyStatic();
 
 showPrimer(!S.primerDone);
 gotoTask(S.i);
