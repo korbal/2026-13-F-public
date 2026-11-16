@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git: first push, step by step</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --box: #f0f0ec; --warn: #fff4d6; --warn-line: #e0c36a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --box: #232326; --warn: #2e2a1c; --warn-line: #7a6a35; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  h2 { font-size: 1.25rem; margin: 40px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 28px 0 6px; }
+  .num { display: inline-block; min-width: 1.8em; color: var(--muted); }
+  a { color: var(--link); }
+  code { font: 15px ui-monospace, Consolas, monospace; background: var(--box); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--box); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; margin: 8px 0; }
+  pre code { background: none; padding: 0; }
+  .why { margin: 6px 0 0; }
+  .why b { font-weight: 600; }
+  .warn { background: var(--warn); border: 1px solid var(--warn-line); border-radius: 6px; padding: 10px 14px; margin: 10px 0; }
+  .btn { font: inherit; font-size: 15px; padding: 6px 12px; border: 1px solid var(--line); background: var(--box); color: var(--fg); border-radius: 6px; cursor: pointer; }
+  .pic { display: grid; grid-template-columns: 1fr; gap: 6px; max-width: 360px; margin: 16px auto; text-align: center; }
+  .place { border: 2px solid var(--fg); border-radius: 8px; padding: 10px; }
+  .place small { display: block; color: var(--muted); }
+  .arrows { display: flex; justify-content: space-around; font: 15px ui-monospace, Consolas, monospace; }
+  dl { margin: 8px 0; }
+  dt { font-weight: 600; margin-top: 10px; }
+  dd { margin: 2px 0 0 0; }
+  ul.later { padding-left: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 data-hu="Git: első push, lépésről lépésre">Git: first push, step by step</h1>
+      <p class="sub" data-hu="Mit csinálsz, és miért. <a href=&quot;../index.html&quot;>Vissza a főoldalra</a>">What you do, and why. <a href="../index.html">Back to home</a></p>
+    </div>
+    <button class="btn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button>
+  </header>
+
+  <p data-hu="A cél: saját repód a GitHubon, benne egy <code>hello.txt</code>, amit erről a gépről pusholtál, és a commit a te neveddel látszik.">The goal: your own repo on GitHub, with a <code>hello.txt</code> pushed from this computer, and the commit shows your name.</p>
+
+  <h2 data-hu="A kép">The picture</h2>
+  <p data-hu="A projektednek két példánya van:">Your project has two copies:</p>
+  <div class="pic" aria-label="GitHub at the top, your computer at the bottom; push goes up, clone goes down" data-hu-aria="Fent a GitHub, lent a te géped; a push felfelé megy, a clone lefelé">
+    <div class="place"><b>GitHub</b><small data-hu="online, mások is látják">online, others can see it</small></div>
+    <div class="arrows"><span>▲ push</span><span>clone ▼</span></div>
+    <div class="place"><b data-hu="A te géped">Your computer</b><small data-hu="itt dolgozol: fájl → add → commit">you work here: file → add → commit</small></div>
+  </div>
+  <p data-hu="A GitHubon lévő példány biztonságban van, ha a géped elromlik, és mások is látják. A gépeden lévőn dolgozol. A Git mozgatja a változásokat a kettő között, de a géped csak akkor beszél a GitHubbal, amikor szólsz neki (<code>clone</code>, <code>push</code>, később <code>pull</code>). Minden más a te gépeden történik.">The copy on GitHub is safe if your computer dies, and others can see it. The copy on your computer is where you work. Git moves changes between the two, but your computer only talks to GitHub when you tell it to (<code>clone</code>, <code>push</code>, later <code>pull</code>). Everything else happens on your computer.</p>
+
+  <h2 data-hu="Szavak">Words</h2>
+  <dl>
+    <dt data-hu="Repó (repository)">Repository (repo)</dt>
+    <dd data-hu="Egy projektmappa, amit a Git figyel. Emlékszik minden elmentett változatra.">A project folder that Git watches. It remembers every saved version.</dd>
+    <dt>Commit</dt>
+    <dd data-hu="A projekt egy elmentett változata, egy üzenettel és annak a nevével, aki csinálta.">One saved version of the project, with a message and the name of who made it.</dd>
+    <dt>Remote</dt>
+    <dd data-hu="A GitHubon lévő példány. Az alapneve <code>origin</code>.">The copy on GitHub. Its default name is <code>origin</code>.</dd>
+  </dl>
+
+  <h2 data-hu="A lépések, és hogy miért">The steps, and why</h2>
+
+  <h3><span class="num">1</span><span data-hu="Megvan a Git?">Is Git there?</span></h3>
+  <pre><code>git --version</code></pre>
+  <p data-hu="Ezt kell látnod: <code>git version 2.x</code>">Expected: <code>git version 2.x</code></p>
+  <p class="why" data-hu="<b>Miért:</b> megnézed, hogy a Git fel van-e telepítve, és a terminál megtalálja-e. Ha ez nem megy, semmi más sem fog, ezért ez az első.">
+    <b>Why:</b> it checks that Git is installed and the terminal can find it. If this fails, nothing else will work, so it comes first.</p>
+
+  <h3><span class="num">2</span><span data-hu="Lépj be a GitHubra">Log in to GitHub</span></h3>
+  <p data-hu="A github.com-on, a <b>saját</b> fiókoddal.">At github.com, with <b>your own</b> account.</p>
+
+  <h3><span class="num">3</span><span data-hu="Csinálj egy repót">Create a repo</span></h3>
+  <p data-hu="Jobb fent <b>+</b> → <b>New repository</b>. Név: <code>elso-repo</code>, Public, pipáld be az <b>Add a README file</b>-t, aztán <b>Create repository</b>.">Top right <b>+</b> → <b>New repository</b>. Name: <code>elso-repo</code>, Public, tick <b>Add a README file</b>, then <b>Create repository</b>.</p>
+  <p class="why" data-hu="<b>Miért:</b> a repó a GitHubon kezdődik. A README miatt lesz benne egy fájl, így nem üres, és rögtön le tudod tölteni.">
+    <b>Why:</b> the repo starts on GitHub. The README puts one file in it, so it isn't empty and you can download it straight away.</p>
+
+  <h3><span class="num">4</span><span data-hu="Másold ki a repód linkjét">Copy your repo's link</span></h3>
+  <p data-hu="A repód oldalán: zöld <b>Code</b> gomb → HTTPS → másolás ikon.">On your repo's page: green <b>Code</b> button → HTTPS → copy icon.</p>
+  <p class="why" data-hu="<b>Miért:</b> ez a repód címe. Másolod, nem begépeled, mert egy elírás és jön a <code>Repository not found</code>.">
+    <b>Why:</b> this link is your repo's address. You copy it instead of typing it, because one typo means <code>Repository not found</code>.</p>
+
+  <h3><span class="num">5</span><span data-hu="Menj az Asztalra">Go to the Desktop</span></h3>
+  <pre><code>cd ~\Desktop</code></pre>
+  <p class="why" data-hu="<b>Miért:</b> a <code>cd</code> (change directory) átviszi a terminált egy mappába. Ami ezután jön, az abban a mappában történik.">
+    <b>Why:</b> <code>cd</code> means "change directory": it moves the terminal into a folder. Whatever you do next happens in that folder.</p>
+
+  <h3><span class="num">6</span><span data-hu="Töltsd le a repódat">Download your repo</span></h3>
+  <p data-hu="Írd be, hogy <code>git clone </code>, illeszd be a linked, Enter. Aztán:">Type <code>git clone </code>, paste your link, press Enter. Then:</p>
+  <pre><code>cd elso-repo</code></pre>
+  <p class="why" data-hu="<b>Miért:</b> a <code>clone</code> letölti az egész repót a GitHubról egy új mappába, és megjegyzi, honnan jött. Ezért tudja majd a <code>git push</code>, hova küldje a dolgokat. A <code>cd elso-repo</code> belép abba a mappába: a git parancsok csak egy repón belül működnek.">
+    <b>Why:</b> <code>clone</code> downloads the whole repo from GitHub into a new folder, and remembers where it came from. That is why <code>git push</code> later knows where to send things. <code>cd elso-repo</code> steps into that folder: git commands only work inside a repo.</p>
+
+  <h3><span class="num">7</span><span data-hu="Mondd meg a Gitnek, ki vagy">Tell Git who you are</span></h3>
+  <p data-hu="A saját neved, és az email, amivel a GitHubra regisztráltál:">Your own name, and the email you used for GitHub:</p>
+  <pre><code>git config user.name "Your Name"
+git config user.email "your-github-email"</code></pre>
+  <p class="why" data-hu="<b>Miért:</b> minden commiton rajta van egy név és egy email. A GitHub az emailből tudja, hogy a commit a te fiókodé, és odarakja a képedet. Rossz email = a munkád másé lesz, vagy senkié. <code>--global</code> nélkül csak erre a repóra érvényes, és egy közös iskolai gépen pont ez kell.">
+    <b>Why:</b> every commit carries a name and an email. GitHub uses the email to link the commit to your account and your picture. A wrong email means your work shows up as someone else's, or as no one's. Without <code>--global</code> it is set for this repo only, which is what you want on a shared school computer.</p>
+
+  <h3><span class="num">8</span><span data-hu="Csinálj egy fájlt, és pushold">Make a file and push it</span></h3>
+  <pre><code>echo hello > hello.txt
+git add .
+git commit -m "first commit"
+git push</code></pre>
+  <p data-hu="Felugrik egy belépő ablak. A <b>saját</b> GitHub fiókoddal lépj be.">A login window opens. Log in with <b>your own</b> GitHub account.</p>
+  <p class="why" data-hu="<b>Miért, soronként:</b>">
+    <b>Why, line by line:</b></p>
+  <dl>
+    <dt><code>echo hello > hello.txt</code></dt>
+    <dd data-hu="Csinál egy fájlt. A Git látja, de még nem menti.">Creates a file. Git sees it but does not save it yet.</dd>
+    <dt><code>git add .</code></dt>
+    <dd data-hu="Kiválasztod, mi menjen a következő mentésbe. A <code>.</code> azt jelenti: minden ebben a mappában.">Chooses what goes into the next save. The <code>.</code> means "everything in this folder".</dd>
+    <dt><code>git commit -m "first commit"</code></dt>
+    <dd data-hu="Elment egy változatot a <b>te gépeden</b>, egy üzenettel arról, mi változott. A GitHub még nem tud róla.">Saves a version <b>on your computer</b>, with a message saying what changed. GitHub doesn't know about it yet.</dd>
+    <dt><code>git push</code></dt>
+    <dd data-hu="Felküldi a commitjaidat a GitHubra. Ekkor kell először a GitHubnak tudnia, ki vagy, ezért jön a belépő ablak.">Sends your commits to GitHub. This is the first time GitHub needs to know who you are, so the login window opens.</dd>
+  </dl>
+  <p data-hu="Miért három lépés, és nem egy „mentés”? Az <code>add</code>-dal választod ki, mi menjen bele, a <code>commit</code>-tal lesz belőle egy változat, amihez vissza tudsz menni, a <code>push</code>-sal pedig megosztod. Később sok commitot csinálsz, és egyszerre pusholod őket.">Why three steps instead of one "save"? <code>add</code> lets you choose what goes in, <code>commit</code> makes it a version you can go back to, and <code>push</code> shares it. Later you will make many commits and push them all at once.</p>
+
+  <h3><span class="num">9</span><span data-hu="Nézd meg a GitHubon">Check on GitHub</span></h3>
+  <p data-hu="Frissítsd a repód oldalát: ott a <code>hello.txt</code>, és a commiton a te neved látszik.">Refresh your repo's page: <code>hello.txt</code> is there, and the commit shows your name.</p>
+  <p class="why" data-hu="<b>Miért:</b> a commit csak akkor számít, ha a GitHub mutatja. A neved és a képed rajta a bizonyíték, hogy a 7. és 8. lépés sikerült.">
+    <b>Why:</b> the commit only counts if GitHub shows it. Your name and picture on it prove that steps 7 and 8 worked.</p>
+
+  <h3><span class="num">10</span><span data-hu="Jelentkezz ki, mielőtt otthagyod a gépet">Log out before you leave the computer</span></h3>
+  <p data-hu="Start menü → <b>Credential Manager</b> (Hitelesítőadat-kezelő) → Windows Credentials → <code>git:https://github.com</code> → Remove. Aztán jelentkezz ki a github.com-ról a böngészőben.">Start menu → <b>Credential Manager</b> → Windows Credentials → <code>git:https://github.com</code> → Remove. Then log out of github.com in the browser.</p>
+  <p class="warn" data-hu="<b>Miért:</b> a Windows megjegyzi a GitHub belépésedet ezen a gépen. Ha nem törlöd, a következő, aki erről a gépről pushol, <b>te nevedben</b> pushol, a te fiókodba.">
+    <b>Why:</b> Windows remembers your GitHub login on this computer. If you don't remove it, the next person who pushes from this machine pushes as <b>you</b>, into your account.</p>
+
+  <h2 data-hu="Ha elakadsz">If it breaks</h2>
+  <p data-hu="Olvasd el a hibaüzenetet. Az egészet.">Read the error message. All of it.</p>
+  <dl>
+    <dt><code>'git' is not recognized</code></dt>
+    <dd data-hu="Nincs Git, vagy a terminál nem találja. Szólj a tanárnak.">No Git, or the terminal can't find it. Tell the teacher.</dd>
+    <dt><code>not a git repository</code></dt>
+    <dd data-hu="Nem vagy a repó mappájában: <code>cd elso-repo</code>">You're not inside the repo folder: <code>cd elso-repo</code></dd>
+    <dt><code>Please tell me who you are</code></dt>
+    <dd data-hu="Kimaradt a 7. lépés. Csináld meg, aztán commitolj újra.">You skipped step 7. Do it, then commit again.</dd>
+    <dt><code>Repository not found</code></dt>
+    <dd data-hu="Elírás a linkben. Másold ki újra a zöld Code gombról.">Typo in the link. Copy it again from the green Code button.</dd>
+    <dt><code>403</code> / <code>Permission denied</code></dt>
+    <dd data-hu="Valaki más belépése van még elmentve ezen a gépen. Töröld (10. lépés), és pusholj újra.">Someone else's login is still saved on this computer. Remove it (step 10) and push again.</dd>
+  </dl>
+
+  <h2 data-hu="Később jön">Coming later</h2>
+  <ul class="later">
+    <li data-hu="<code>git pull</code>: letölti, amit mások változtattak, a GitHubról a te gépedre.">
+      <code>git pull</code>: download changes others made, from GitHub to your computer.</li>
+    <li data-hu="<code>git status</code> és <code>git log</code>: mi változott, és ki mit csinált.">
+      <code>git status</code> and <code>git log</code>: see what changed and who did what.</li>
+  </ul>
+  <p data-hu="Gyakorolni: <a href=&quot;git-practice.html&quot;>Git gyakorló</a>">Practice: <a href="git-practice.html">Git practice</a></p>
+</main>
+<script>
+(function () {
+  var KEY = "first-push-lang";
+  var nodes = document.querySelectorAll("[data-hu]");
+  for (var i = 0; i < nodes.length; i++) nodes[i].setAttribute("data-en", nodes[i].innerHTML);
+  var aria = document.querySelectorAll("[data-hu-aria]");
+  for (var j = 0; j < aria.length; j++) aria[j].setAttribute("data-en-aria", aria[j].getAttribute("aria-label"));
+  var btn = document.getElementById("btn-lang");
+
+  function apply(lang) {
+    var hu = lang === "hu";
+    for (var i = 0; i < nodes.length; i++) nodes[i].innerHTML = nodes[i].getAttribute(hu ? "data-hu" : "data-en");
+    for (var j = 0; j < aria.length; j++) aria[j].setAttribute("aria-label", aria[j].getAttribute(hu ? "data-hu-aria" : "data-en-aria"));
+    document.documentElement.lang = hu ? "hu" : "en";
+    btn.textContent = hu ? "In English" : "Magyarul";
+    btn.lang = hu ? "en" : "hu";
+    btn.title = hu ? "Switch to English" : "Magyarra vált";
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+    try {
+      var u = new URL(window.location.href);
+      if (hu) u.searchParams.set("lang", "hu"); else u.searchParams.delete("lang");
+      window.history.replaceState(null, "", u.toString());
+    } catch (e) {}
+  }
+
+  var start = "en";
+  var q = new URLSearchParams(window.location.search).get("lang");
+  if (q === "hu" || q === "en") start = q;
+  else { try { if (localStorage.getItem(KEY) === "hu") start = "hu"; } catch (e) {} }
+  if (start === "hu") apply("hu");
+  btn.addEventListener("click", function () { apply(document.documentElement.lang === "hu" ? "en" : "hu"); });
+})();
+</script>
+</body>
+</html>
