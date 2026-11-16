@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vizsgaremek concept example</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --box: #f0f0ec; --warn: #fff4d6; --warn-line: #e0c36a; --pick: #1a5fb4; --pick-fg: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --box: #232326; --warn: #2e2a1c; --warn-line: #7a6a35; --pick: #78aeed; --pick-fg: #18181a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  h2 { font-size: 1.15rem; margin: 32px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .num { display: inline-block; min-width: 1.6em; color: var(--muted); }
+  a { color: var(--link); }
+  code { font: 14px ui-monospace, Consolas, monospace; background: var(--box); padding: 1px 4px; border-radius: 4px; }
+  ol, ul { padding-left: 22px; margin: 6px 0; }
+  li { margin: 4px 0; }
+  .note { background: var(--warn); border: 1px solid var(--warn-line); border-radius: 6px; padding: 10px 14px; margin: 0 0 8px; }
+  .scroll { overflow-x: auto; margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; border-bottom: 2px solid var(--line); }
+  td.tag { white-space: nowrap; font-size: 13px; font-weight: 600; }
+  td.mono { font: 13px ui-monospace, Consolas, monospace; }
+  .en-sum { font-style: italic; }
+  .btn { font: inherit; font-size: 15px; padding: 6px 12px; border: 1px solid var(--line); background: var(--box); color: var(--fg); border-radius: 6px; cursor: pointer; }
+  /* phone sketch */
+  .phone { width: 220px; margin: 14px auto 4px; border: 2px solid var(--fg); border-radius: 22px; padding: 18px 12px 22px; font-size: 13px; }
+  .phone .bar { width: 50px; height: 5px; border-radius: 3px; background: var(--fg); margin: 0 auto 12px; opacity: .5; }
+  .phone .step { color: var(--muted); font-size: 12px; }
+  .phone .title { font-weight: 700; margin: 2px 0 8px; }
+  .phone .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .phone .slot { border: 1.5px solid var(--fg); border-radius: 8px; padding: 8px 0; text-align: center; font-weight: 600; }
+  .phone .slot.on { background: var(--pick); border-color: var(--pick); color: var(--pick-fg); }
+  .phone .go { margin-top: 12px; border-radius: 8px; padding: 9px 0; text-align: center; font-weight: 700; background: var(--fg); color: var(--bg); }
+  .cap { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 data-hu="Vizsgaremek koncepció: minta">Vizsgaremek concept: example</h1>
+      <p class="sub" data-hu="<a href=&quot;concept.html&quot;>Mit kell írni</a> · <a href=&quot;../index.html&quot;>Vissza a főoldalra</a>"><a href="concept.html">What to write</a> · <a href="../index.html">Back to home</a></p>
+    </div>
+    <button class="btn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button>
+  </header>
+
+  <p class="note" data-hu="Ez egy kitalált csapat kitöltött koncepciója. Így néz ki egy elfogadható koncepció: konkrét emberek, konkrét adatok, konkrét lépések. <b>Ne ezt a témát válasszátok</b>, hanem a sajátotokat írjátok meg ugyanígy.">This is a made-up team's filled-in concept. This is what an acceptable one looks like: concrete people, concrete data, concrete steps. <b>Don't pick this topic</b>; write up your own the same way.</p>
+
+  <h2><span class="num">1</span><span data-hu="Csapat és cím">Team and title</span></h2>
+  <p><b data-hu="Csapat:">Team:</b> Minta Péter, Példa Zsófia<br>
+     <b data-hu="Munkacím:">Working title:</b> <span data-hu="<i>Ollóka</i>, időpontfoglaló egy kis fodrászszalonnak"><i>Ollóka</i>, a booking app for a small hair salon</span></p>
+
+  <h2><span class="num">2</span><span data-hu="A probléma">The problem</span></h2>
+  <p data-hu="A győri <i>Hajvarázs</i> szalonban két fodrász dolgozik (Pethő Gábor és Szabó Edit). A vendégek ma telefonon vagy Messengeren foglalnak időpontot, a fodrászok pedig egy papírfüzetbe írják be. Munka közben gyakran nem tudják felvenni a telefont, ezért elvesznek vendégek. Előfordul, hogy két vendéget írnak ugyanarra az időpontra. Este senki sem látja egyben, mennyi bevétel jött aznap.">The <i>Hajvarázs</i> salon in Győr has two hairdressers (Pethő Gábor and Szabó Edit). Today customers book by phone or on Messenger, and the hairdressers write it into a paper notebook. While they work they often can't pick up the phone, so they lose customers. Sometimes two customers get written down for the same time. In the evening nobody sees in one place how much money came in that day.</p>
+
+  <h2><span class="num">3</span><span data-hu="Szerepkörök">Roles</span></h2>
+  <div class="scroll"><table>
+    <tr><th data-hu="Szerep">Role</th><th data-hu="Mit csinálhat">What they can do</th></tr>
+    <tr><td data-hu="Vendég (nincs belépve)">Guest (not logged in)</td><td data-hu="megnézi a szolgáltatásokat, az árakat és a szabad időpontokat">sees services, prices and free time slots</td></tr>
+    <tr><td data-hu="Regisztrált vendég">Registered customer</td><td data-hu="foglal, lemondja a foglalását, látja a korábbi foglalásait">books, cancels a booking, sees past bookings</td></tr>
+    <tr><td data-hu="Fodrász">Hairdresser</td><td data-hu="látja a saját napi listáját, szabadnapot állít be">sees their own daily list, sets days off</td></tr>
+    <tr><td data-hu="Admin (a tulajdonos)">Admin (the owner)</td><td data-hu="szolgáltatásokat és fodrászokat kezel, napi bevételt lát">manages services and hairdressers, sees daily income</td></tr>
+  </table></div>
+
+  <h2><span class="num">4</span><span data-hu="Felhasználói történetek">User stories</span></h2>
+  <div class="scroll"><table>
+    <tr><th>#</th><th data-hu="Történet">Story</th><th></th></tr>
+    <tr><td>1</td><td data-hu="Mint vendég, szeretném látni a szabad időpontokat, hogy ne kelljen telefonálnom.">As a guest, I want to see the free time slots, so that I don't have to call.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>2</td><td data-hu="Mint regisztrált vendég, szeretnék időpontot foglalni egy fodrászhoz egy szolgáltatásra, hogy biztos legyen a helyem.">As a registered customer, I want to book a hairdresser for a service, so that my place is certain.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>3</td><td data-hu="Mint regisztrált vendég, szeretném lemondani a foglalásomat, hogy más kaphassa meg az időpontot.">As a registered customer, I want to cancel my booking, so that someone else can get the slot.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>4</td><td data-hu="Mint fodrász, szeretném látni a mai foglalásaimat időrendben, hogy tudjam, ki jön.">As a hairdresser, I want to see today's bookings in time order, so that I know who is coming.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>5</td><td data-hu="Mint admin, szeretnék új szolgáltatást felvenni (név, ár, időtartam), hogy az árlista naprakész legyen.">As the admin, I want to add a new service (name, price, length), so that the price list is up to date.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>6</td><td data-hu="Mint fodrász, szeretnék szabadnapot beállítani, hogy arra a napra ne lehessen foglalni.">As a hairdresser, I want to set a day off, so that nobody can book that day.</td><td class="tag" data-hu="KELL">MUST</td></tr>
+    <tr><td>7</td><td data-hu="Mint admin, szeretném látni a napi és havi bevételt, hogy lássam, hogy megy az üzlet.">As the admin, I want to see daily and monthly income, so that I see how the business is doing.</td><td class="tag" data-hu="JÓ LENNE">NICE TO HAVE</td></tr>
+    <tr><td>8</td><td data-hu="Mint regisztrált vendég, szeretnék e-mail emlékeztetőt kapni előző nap, hogy ne felejtsem el.">As a registered customer, I want an email reminder the day before, so that I don't forget.</td><td class="tag" data-hu="JÓ LENNE">NICE TO HAVE</td></tr>
+  </table></div>
+
+  <h2><span class="num">5</span><span data-hu="Egy konkrét forgatókönyv">One concrete scenario</span></h2>
+  <ol>
+    <li data-hu="<b>Kiss Anna</b> este 21:00-kor megnyitja az Ollókát a <b>telefonján</b>."><b>Kiss Anna</b> opens Ollóka on her <b>phone</b> at 21:00.</li>
+    <li data-hu="Kiválasztja a <i>Női hajvágás</i> szolgáltatást (6 500 Ft, 45 perc).">She picks the <i>Női hajvágás</i> (women's haircut) service (6 500 Ft, 45 minutes).</li>
+    <li data-hu="Kiválasztja Pethő Gábort, aztán a csütörtöki napot. Az app csak azokat az időpontokat mutatja, ahová belefér 45 perc: 9:00, 10:00, 14:15, 17:00.">She picks Pethő Gábor, then Thursday. The app only shows the slots where 45 minutes fit: 9:00, 10:00, 14:15, 17:00.</li>
+    <li data-hu="A 17:00-t választja. Mivel még nincs fiókja, regisztrál (név, e-mail, telefonszám, jelszó).">She picks 17:00. She has no account yet, so she registers (name, email, phone number, password).</li>
+    <li data-hu="Megjelenik a visszaigazolás: „Csütörtök 17:00–17:45, Pethő Gábor, Női hajvágás, 6 500 Ft”.">The confirmation appears: “Thursday 17:00–17:45, Pethő Gábor, Női hajvágás, 6 500 Ft”.</li>
+    <li data-hu="Csütörtök reggel Pethő Gábor a szalon <b>gépén</b> megnyitja a napi listáját: a 17:00-s sorban ott van Kiss Anna a telefonszámával.">On Thursday morning Pethő Gábor opens his daily list on the salon <b>computer</b>: Kiss Anna is in the 17:00 row with her phone number.</li>
+    <li data-hu="Ha ezután valaki más is foglalni akar csütörtökre Gáborhoz, a 17:00 már nem jelenik meg neki.">If someone else then wants to book Gábor for Thursday, 17:00 no longer shows up for them.</li>
+  </ol>
+
+  <h2><span class="num">6</span><span data-hu="Adatok">Data</span></h2>
+  <div class="scroll"><table>
+    <tr><th data-hu="Tábla">Table</th><th data-hu="Mezők">Fields</th><th data-hu="Példasor">Sample row</th></tr>
+    <tr><td class="mono">felhasznalo</td><td class="mono">id, nev, email, telefon, jelszo_hash, szerep</td><td>12, Kiss Anna, anna@pelda.hu, +36 30 123 4567, (hash), vendeg</td></tr>
+    <tr><td class="mono">fodrasz</td><td class="mono">id, nev, felhasznalo_id</td><td>2, Pethő Gábor, 3</td></tr>
+    <tr><td class="mono">szolgaltatas</td><td class="mono">id, nev, ar, perc</td><td>4, Női hajvágás, 6500, 45</td></tr>
+    <tr><td class="mono">foglalas</td><td class="mono">id, felhasznalo_id, fodrasz_id, szolgaltatas_id, kezdes, allapot</td><td>88, 12, 2, 4, 2026-11-26 17:00, aktiv</td></tr>
+    <tr><td class="mono">szabadnap</td><td class="mono">id, fodrasz_id, datum</td><td>5, 2, 2026-12-24</td></tr>
+  </table></div>
+  <p data-hu="<b>Kapcsolatok:</b> egy vendégnek több foglalása lehet. Egy fodrásznak több foglalása és több szabadnapja lehet. Minden foglalás pontosan egy vendéghez, egy fodrászhoz és egy szolgáltatáshoz tartozik."><b>Relationships:</b> one customer can have many bookings. One hairdresser can have many bookings and many days off. Every booking belongs to exactly one customer, one hairdresser and one service.</p>
+
+  <h2><span class="num">7</span><span data-hu="Képernyők">Screens</span></h2>
+  <div class="scroll"><table>
+    <tr><th data-hu="Képernyő">Screen</th><th data-hu="Mire való">What it is for</th><th data-hu="Főleg hol">Mostly where</th></tr>
+    <tr><td data-hu="Kezdőlap / árlista">Home / price list</td><td data-hu="szolgáltatások és árak">services and prices</td><td data-hu="telefon">phone</td></tr>
+    <tr><td data-hu="Foglalás (3 lépés)">Booking (3 steps)</td><td data-hu="szolgáltatás → fodrász és nap → időpont">service → hairdresser and day → time</td><td data-hu="telefon">phone</td></tr>
+    <tr><td data-hu="Belépés / regisztráció">Log in / register</td><td></td><td data-hu="telefon">phone</td></tr>
+    <tr><td data-hu="Foglalásaim">My bookings</td><td data-hu="a vendég foglalásai, lemondás gomb">the customer's bookings, cancel button</td><td data-hu="telefon">phone</td></tr>
+    <tr><td data-hu="Napi lista">Daily list</td><td data-hu="a fodrász mai foglalásai">the hairdresser's bookings for today</td><td data-hu="gép (a szalonban)">computer (in the salon)</td></tr>
+    <tr><td data-hu="Admin: szolgáltatások, fodrászok, bevétel">Admin: services, hairdressers, income</td><td data-hu="táblázatok, új sor felvétele, szerkesztés">tables, add a row, edit</td><td data-hu="gép">computer</td></tr>
+  </table></div>
+  <p data-hu="<b>Telefon vagy gép:</b> a vendégek szinte csak telefonról foglalnak, ezért a foglalás 3 lépése telefonra van tervezve: nagy gombok, egy oszlop. A fodrász és az admin a szalon gépén dolgozik, ott táblázatos nézet van."><b>Phone or computer:</b> customers book almost only from their phone, so the 3 booking steps are designed for a phone: big buttons, one column. The hairdresser and the admin work on the salon computer, where there are table views.</p>
+
+  <div class="phone" aria-label="Phone sketch: step 3 of 3, Thursday with Pethő Gábor, four time slots, 17:00 selected, Book button" data-hu-aria="Telefonos vázlat: 3/3. lépés, csütörtök, Pethő Gábor, négy időpont, a 17:00 kiválasztva, Foglalás gomb">
+    <div class="bar"></div>
+    <div class="step" data-hu="3/3. lépés · Időpont">Step 3 of 3 · Time</div>
+    <div class="title" data-hu="Csütörtök, Pethő Gábor">Thursday, Pethő Gábor</div>
+    <div class="slots"><div class="slot">9:00</div><div class="slot">10:00</div><div class="slot">14:15</div><div class="slot on">17:00</div></div>
+    <div class="go" data-hu="Foglalás">Book</div>
+  </div>
+  <p class="cap" data-hu="Vázlat: a fő képernyő telefonon. Nálatok egy lefotózott kézi rajz is jó.">Sketch: the main screen on a phone. For yours, a photo of a hand drawing is fine.</p>
+
+  <h2><span class="num">8</span><span data-hu="Ki mit csinál">Who does what</span></h2>
+  <div class="scroll"><table>
+    <tr><th data-hu="Ki">Who</th><th data-hu="Saját része (ezt mutatja be egyedül, magyarul és angolul)">Own part (presents it alone, in Hungarian and English)</th></tr>
+    <tr><td>Minta Péter</td><td data-hu="adatbázis, backend (REST végpontok: szolgáltatások, foglalások, szabad időpontok kiszámítása), backend tesztek">database, backend (REST endpoints: services, bookings, working out the free slots), backend tests</td></tr>
+    <tr><td>Példa Zsófia</td><td data-hu="webes kliens: a foglalás folyamata telefonon, a napi lista és az admin felület a gépen, frontend tesztek">web client: the booking flow on the phone, the daily list and the admin pages on the computer, frontend tests</td></tr>
+  </table></div>
+  <p data-hu="Közösen: GitHub repó, feladatok a GitHub Projects táblán, a dokumentáció.">Together: the GitHub repo, tasks on a GitHub Projects board, the documentation.</p>
+
+  <h2><span class="num">9</span><span data-hu="Mi NEM lesz benne">What will NOT be in it</span></h2>
+  <ul>
+    <li data-hu="online fizetés (a szalonban fizetnek)">online payment (they pay in the salon)</li>
+    <li data-hu="több szalon kezelése (csak egy szalon van)">several salons (there is only one)</li>
+    <li data-hu="natív mobilapp (reszponzív webes kliens lesz)">a native mobile app (it will be a responsive web client)</li>
+    <li data-hu="értékelések és vélemények">ratings and reviews</li>
+  </ul>
+
+  <h2><span class="num">10</span><span data-hu="Kérdések, kockázatok">Questions, risks</span></h2>
+  <ul>
+    <li data-hu="Hogyan számoljuk ki a szabad időpontokat, ha a szolgáltatások hossza különböző (30, 45, 90 perc)?">How do we work out the free slots when services have different lengths (30, 45, 90 minutes)?</li>
+    <li data-hu="Mi történik, ha két vendég ugyanabban a másodpercben foglalja le ugyanazt az időpontot?">What happens if two customers book the same slot in the same second?</li>
+    <li data-hu="A belépést (jelszó, munkamenet) még nem tudjuk megcsinálni.">We can't build login (password, session) yet.</li>
+  </ul>
+
+  <h2><span class="num">11</span><span data-hu="Angol összefoglaló">English summary</span></h2>
+  <p class="en-sum" lang="en">Ollóka is a booking app for a small hair salon. Customers see free time slots on their phone and book an appointment in three steps instead of calling. Hairdressers see their daily list on the salon computer, and the owner manages services and prices. It replaces the paper notebook and prevents double bookings.</p>
+</main>
+<script>
+(function () {
+  var KEY = "vizsgaremek-example-lang";
+  var nodes = document.querySelectorAll("[data-hu]");
+  for (var i = 0; i < nodes.length; i++) nodes[i].setAttribute("data-en", nodes[i].innerHTML);
+  var aria = document.querySelectorAll("[data-hu-aria]");
+  for (var j = 0; j < aria.length; j++) aria[j].setAttribute("data-en-aria", aria[j].getAttribute("aria-label"));
+  var btn = document.getElementById("btn-lang");
+
+  function apply(lang) {
+    var hu = lang === "hu";
+    for (var i = 0; i < nodes.length; i++) nodes[i].innerHTML = nodes[i].getAttribute(hu ? "data-hu" : "data-en");
+    for (var j = 0; j < aria.length; j++) aria[j].setAttribute("aria-label", aria[j].getAttribute(hu ? "data-hu-aria" : "data-en-aria"));
+    document.documentElement.lang = hu ? "hu" : "en";
+    btn.textContent = hu ? "In English" : "Magyarul";
+    btn.lang = hu ? "en" : "hu";
+    btn.title = hu ? "Switch to English" : "Magyarra vált";
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+    try {
+      var u = new URL(window.location.href);
+      if (hu) u.searchParams.set("lang", "hu"); else u.searchParams.delete("lang");
+      window.history.replaceState(null, "", u.toString());
+    } catch (e) {}
+  }
+
+  var start = "en";
+  var q = new URLSearchParams(window.location.search).get("lang");
+  if (q === "hu" || q === "en") start = q;
+  else { try { if (localStorage.getItem(KEY) === "hu") start = "hu"; } catch (e) {} }
+  if (start === "hu") apply("hu");
+  btn.addEventListener("click", function () { apply(document.documentElement.lang === "hu" ? "en" : "hu"); });
+})();
+</script>
+</body>
+</html>

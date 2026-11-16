@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vizsgaremek concept</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --box: #f0f0ec; --warn: #fff4d6; --warn-line: #e0c36a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --box: #232326; --warn: #2e2a1c; --warn-line: #7a6a35; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  h2 { font-size: 1.15rem; margin: 32px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .num { display: inline-block; min-width: 1.6em; color: var(--muted); }
+  a { color: var(--link); }
+  ul { padding-left: 22px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  .eg { color: var(--muted); }
+  .box { background: var(--box); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin: 12px 0; }
+  .warn { background: var(--warn); border: 1px solid var(--warn-line); border-radius: 6px; padding: 10px 14px; margin: 24px 0 10px; }
+  .warn ul { margin-bottom: 0; }
+  .btn { font: inherit; font-size: 15px; padding: 6px 12px; border: 1px solid var(--line); background: var(--box); color: var(--fg); border-radius: 6px; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 data-hu="Vizsgaremek: koncepció">Vizsgaremek: concept</h1>
+      <p class="sub" data-hu="Mit írjatok a jövő heti órára. <a href=&quot;concept-example.html&quot;>Kitöltött minta</a> · <a href=&quot;../index.html&quot;>Vissza a főoldalra</a>">What to write for next week's lesson. <a href="concept-example.html">Filled-in example</a> · <a href="../index.html">Back to home</a></p>
+    </div>
+    <button class="btn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button>
+  </header>
+
+  <div class="box">
+    <p style="margin:0" data-hu="<b>Formátum:</b> egy A4-es oldal, plusz egy kézzel rajzolt képernyővázlat (lefotózva is jó). Csapatonként egyet adjatok le.">
+      <b>Format:</b> one A4 page, plus one hand-drawn screen sketch (a photo is fine). One per team.</p>
+    <p style="margin:8px 0 0" data-hu="A „jó lesz”, „stb.” és „ilyesmi” nem válasz. Mindenhol konkrét neveket, adatokat és lépéseket írjatok. Nézzétek meg a <a href=&quot;concept-example.html&quot;>mintát</a>: ilyen részletes legyen.">
+      “It'll be good”, “etc.” and “something like that” are not answers. Write concrete names, data and steps everywhere. Look at the <a href="concept-example.html">example</a>: this is the level of detail.</p>
+  </div>
+
+  <h2><span class="num">1</span><span data-hu="Csapat és cím">Team and title</span></h2>
+  <p data-hu="Nevek (2–3 fő) és a projekt munkacíme.">Names (2–3 people) and a working title for the project.</p>
+
+  <h2><span class="num">2</span><span data-hu="A probléma (3–5 mondat)">The problem (3–5 sentences)</span></h2>
+  <ul>
+    <li data-hu="Kinek van ez a problémája? Egy valódi embert vagy csoportot nevezzetek meg. <span class=&quot;eg&quot;>Pl. „a nagybátyám fodrászszalonja”, nem azt, hogy „a felhasználók”.</span>">Who has this problem? Name a real person or group. <span class="eg">E.g. “my uncle's hair salon”, not “the users”.</span></li>
+    <li data-hu="Hogyan oldják meg ma? <span class=&quot;eg&quot;>Füzet, Excel, Messenger-csoport…</span>">How do they solve it today? <span class="eg">A notebook, Excel, a Messenger group…</span></li>
+    <li data-hu="Mi ezzel a baj?">What's wrong with that?</li>
+  </ul>
+
+  <h2><span class="num">3</span><span data-hu="Szerepkörök">Roles</span></h2>
+  <p data-hu="Kik használják az appot, és mit csinálhat mindegyik? <span class=&quot;eg&quot;>Pl. vendég, regisztrált felhasználó, admin.</span>">Who uses the app, and what can each of them do? <span class="eg">E.g. guest, registered user, admin.</span></p>
+
+  <h2><span class="num">4</span><span data-hu="Felhasználói történetek (6–10 db)">User stories (6–10)</span></h2>
+  <p data-hu="Ezt a mintát kövessétek: <i>„Mint [szerep], szeretném [mit], hogy [miért].”</i>">Use this pattern: <i>“As a [role], I want to [what], so that [why].”</i></p>
+  <p data-hu="Mindegyik mellé írjátok oda: <b>KELL</b> (enélkül nincs app) vagy <b>JÓ LENNE</b> (ha marad idő).">Mark each one <b>MUST</b> (no app without it) or <b>NICE TO HAVE</b> (if there is time left).</p>
+
+  <h2><span class="num">5</span><span data-hu="Egy konkrét forgatókönyv">One concrete scenario</span></h2>
+  <p data-hu="Egy kitalált felhasználó egy teljes útja, lépésenként, valódi adatokkal.">One made-up user's whole journey, step by step, with real data.</p>
+  <p class="eg" data-hu="Pl.: „Kiss Anna megnyitja a telefonján, kiválasztja a csütörtök 17:00-s időpontot Pethő Gábornál, megadja a nevét, és visszaigazolást kap. A szalon tulajdonosa a gépén látja a foglalást a napi listában.”">E.g.: “Kiss Anna opens it on her phone, picks Thursday 17:00 with Pethő Gábor, enters her name and gets a confirmation. The salon owner sees the booking in the daily list on the computer.”</p>
+
+  <h2><span class="num">6</span><span data-hu="Adatok">Data</span></h2>
+  <ul>
+    <li data-hu="Milyen dolgokat tárol az app? <span class=&quot;eg&quot;>Pl. Felhasználó, Időpont, Szolgáltatás.</span>">What things does the app store? <span class="eg">E.g. User, Appointment, Service.</span></li>
+    <li data-hu="Mindegyiknél 3–5 mező és <b>egy kitöltött példasor</b>.">For each: 3–5 fields and <b>one filled-in sample row</b>.</li>
+    <li data-hu="A kapcsolatok szavakkal. <span class=&quot;eg&quot;>Pl. „egy felhasználónak több foglalása lehet”.</span>">The relationships in words. <span class="eg">E.g. “one user can have many bookings”.</span></li>
+  </ul>
+
+  <h2><span class="num">7</span><span data-hu="Képernyők">Screens</span></h2>
+  <ul>
+    <li data-hu="Az összes képernyő listája, egy mondat mindegyikhez.">A list of all screens, one sentence each.</li>
+    <li data-hu="Egy kézi rajz a fő képernyőről, <b>telefonon</b>.">One hand drawing of the main screen, <b>on a phone</b>.</li>
+    <li data-hu="Mit csinál a felhasználó a telefonon, és mit a gépen?">What does the user do on the phone, and what on the computer?</li>
+  </ul>
+
+  <h2><span class="num">8</span><span data-hu="Ki mit csinál">Who does what</span></h2>
+  <p data-hu="Mindenkinek legyen egy saját része, amit a védésen egyedül mutat be, magyarul és angolul is. <span class=&quot;eg&quot;>Pl. „Kovács: adatbázis + backend végpontok; Nagy: telefonos felület.”</span>">Everyone has their own part that they present alone at the defence, in Hungarian and in English. <span class="eg">E.g. “Kovács: database + backend endpoints; Nagy: the phone interface.”</span></p>
+
+  <h2><span class="num">9</span><span data-hu="Mi NEM lesz benne">What will NOT be in it</span></h2>
+  <p data-hu="Legalább 3 dolog, amit tudatosan kihagytok.">At least 3 things you leave out on purpose.</p>
+
+  <h2><span class="num">10</span><span data-hu="Kérdések, kockázatok">Questions, risks</span></h2>
+  <p data-hu="Miben vagytok bizonytalanok? Mit nem tudtok még megcsinálni?">What are you unsure about? What can't you build yet?</p>
+
+  <h2><span class="num">11</span><span data-hu="Angol összefoglaló">English summary</span></h2>
+  <p data-hu="3–5 mondat angolul: mire jó az app, és ki használja. A védésen is lesz egy 3–5 perces angol rész, ez az első lépés.">3–5 sentences in English: what the app is for and who uses it. The defence has a 3–5 minute English part too; this is the first step.</p>
+
+  <div class="warn">
+    <b data-hu="Nem fogadom el, ha:">Not accepted if:</b>
+    <ul>
+      <li data-hu="nincs valódi felhasználó,">there is no real user,</li>
+      <li data-hu="nincs tárolt adat (ilyen a játék, a kalkulátor vagy a statikus oldal),">there is no stored data (a game, a calculator or a static page),</li>
+      <li data-hu="egy csapattag része nem látszik,">one team member's part is not visible,</li>
+      <li data-hu="a forgatókönyv csak általánosságokat mond.">the scenario only says general things.</li>
+    </ul>
+  </div>
+</main>
+<script>
+(function () {
+  var KEY = "vizsgaremek-concept-lang";
+  var nodes = document.querySelectorAll("[data-hu]");
+  for (var i = 0; i < nodes.length; i++) nodes[i].setAttribute("data-en", nodes[i].innerHTML);
+  var btn = document.getElementById("btn-lang");
+
+  function apply(lang) {
+    var hu = lang === "hu";
+    for (var i = 0; i < nodes.length; i++) nodes[i].innerHTML = nodes[i].getAttribute(hu ? "data-hu" : "data-en");
+    document.documentElement.lang = hu ? "hu" : "en";
+    btn.textContent = hu ? "In English" : "Magyarul";
+    btn.lang = hu ? "en" : "hu";
+    btn.title = hu ? "Switch to English" : "Magyarra vált";
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+    try {
+      var u = new URL(window.location.href);
+      if (hu) u.searchParams.set("lang", "hu"); else u.searchParams.delete("lang");
+      window.history.replaceState(null, "", u.toString());
+    } catch (e) {}
+  }
+
+  var start = "en";
+  var q = new URLSearchParams(window.location.search).get("lang");
+  if (q === "hu" || q === "en") start = q;
+  else { try { if (localStorage.getItem(KEY) === "hu") start = "hu"; } catch (e) {} }
+  if (start === "hu") apply("hu");
+  btn.addEventListener("click", function () { apply(document.documentElement.lang === "hu" ? "en" : "hu"); });
+})();
+</script>
+</body>
+</html>
