@@ -70,13 +70,13 @@
     <dt><code>ls</code></dt>
     <dd data-hu="Kilistázza, mi van ebben a mappában.">Lists what is in that folder.</dd>
   </dl>
-  <p data-hu="Mindkettő működik PowerShellben, Macen és Linuxon is. Ha bármi furcsa, először ezt a kettőt futtasd.">Both work in PowerShell, on Mac and on Linux. When anything looks wrong, run these two first.</p>
+  <p data-hu="Mindkettő működik Git Bashben, Macen és Linuxon is. Ha bármi furcsa, először ezt a kettőt futtasd.">Both work in Git Bash, on Mac and on Linux. When anything looks wrong, run these two first.</p>
 
   <h2 data-hu="Otthon">At home</h2>
   <div class="steps">
 
     <h3 class="step"><span data-hu="Legyen Git a gépeden">Get Git on your computer</span></h3>
-    <p data-hu="Nyiss egy terminált (Windowson PowerShell), és nézd meg:">Open a terminal (PowerShell on Windows) and check:</p>
+    <p data-hu="Nyiss egy terminált, és nézd meg. Windowson a <b>Git Bash</b>-t használd (a Gittel együtt települ), mint az iskolában.">Open a terminal and check. On Windows use <b>Git Bash</b> (it comes with Git), like at school.</p>
     <pre><code>git --version</code></pre>
     <p data-hu="Ha verziószámot ír, megvan, mehetsz tovább. Ha nem, telepítsd a <a href=&quot;https://git-scm.com/downloads&quot;>git-scm.com/downloads</a> oldalról a saját rendszeredre. Windowson a telepítő alapbeállításai jók. Macen a <code>git --version</code> maga felajánlja a telepítést. Linuxon a csomagkezelőd (pl. <code>apt</code>) tudja.">If it prints a version number, you have it: go on. If not, install it for your system from <a href="https://git-scm.com/downloads">git-scm.com/downloads</a>. On Windows the installer's defaults are fine. On a Mac, <code>git --version</code> offers to install it by itself. On Linux, your package manager (e.g. <code>apt</code>) has it.</p>
     <p class="check" data-hu="<b>Ellenőrzés:</b> telepítés után <b>zárd be a terminált, nyiss újat</b>, és futtasd újra a <code>git --version</code>-t. A régi terminál nem tudja, hogy közben feltelepült valami.">
@@ -142,23 +142,26 @@ git push</code></pre>
   <h2 data-hu="Az iskolában (következő Git óra)">At school (next Git class)</h2>
   <div class="steps">
 
-    <h3 class="step"><span data-hu="Keresd meg a repódat a H: meghajtón">Find your repo on the H: drive</span></h3>
-    <p data-hu="Az iskolában a repód helye a <b>H:</b> meghajtó. Nyiss PowerShellt:">At school your repo belongs on the <b>H:</b> drive. Open PowerShell:</p>
-    <pre><code>cd H:\
+    <h3 class="step"><span data-hu="Keresd meg a repódat a H:-n">Find your repo on H:</span></h3>
+    <p data-hu="Az iskolában a repód helye a <b>H:</b>, a saját hálózati mappád. Nyisd meg a <b>Git Bash</b>-t:">At school your repo belongs on <b>H:</b>, your own network folder. Open <b>Git Bash</b>:</p>
+    <pre><code>cd ~
+pwd
 ls</code></pre>
-    <p class="check" data-hu="<b>Ellenőrzés:</b> a listában ott van az <code>elso-repo</code>. Ha igen, <code>cd elso-repo</code>, és a <code>git status</code> azt írja: <code>On branch main</code>.">
-      <b>Check:</b> <code>elso-repo</code> is in the list. If it is, <code>cd elso-repo</code>, and <code>git status</code> says <code>On branch main</code>.</p>
+    <p class="check" data-hu="<b>Ellenőrzés:</b> a <code>pwd</code> azt írja: <code>/h</code>, és az <code>ls</code> listájában ott van az <code>elso-repo</code>. Ha igen: <code>cd elso-repo</code>, és a <code>git status</code> azt írja: <code>On branch main</code>.">
+      <b>Check:</b> <code>pwd</code> prints <code>/h</code>, and <code>elso-repo</code> is in the <code>ls</code> list. If so: <code>cd elso-repo</code>, and <code>git status</code> says <code>On branch main</code>.</p>
     <p data-hu="Ha nem stimmel, derítsd ki, miért:">If it doesn't match, find out why:</p>
     <ul>
-      <li data-hu="<b>Nincs H: meghajtó, vagy nem a te fájljaid vannak rajta:</b> Fájlkezelő → <b>Ez a gép</b>. Keresd meg a saját hálózati meghajtódat, és jegyezd meg a betűjelét. Ma azt használd a <code>H:</code> helyett.">
-        <b>No H: drive, or it doesn't hold your files:</b> File Explorer → <b>This PC</b>. Find your own network drive and note its letter. Use that instead of <code>H:</code> today.</li>
-      <li data-hu="<b>A meghajtó jó, de nincs rajta <code>elso-repo</code>:</b> múltkor máshova klónoztad. Nem kell megkeresned: a GitHubon minden megvan. Maradj a meghajtó gyökerében, és klónozd újra: <code>git clone &lt;your-repo-link&gt;</code>. Mostantól itt lakik.">
-        <b>Right drive, but no <code>elso-repo</code> on it:</b> you cloned it somewhere else last time. You don't need to hunt for it: GitHub has everything. Stay at the root of the drive and clone again: <code>git clone &lt;your-repo-link&gt;</code>. From now on it lives here.</li>
+      <li data-hu="<b>A <code>pwd</code> nem <code>/h</code>-t ír:</b> nézd meg a Fájlkezelőben (<b>Ez a gép</b>), melyik a saját hálózati meghajtód, és menj oda: H: esetén <code>cd /h</code>, más betűnél ugyanígy, kisbetűvel. Git Bashben <code>/</code> kell, nem <code>\</code>.">
+        <b><code>pwd</code> doesn't print <code>/h</code>:</b> check in File Explorer (<b>This PC</b>) which one is your own network drive, and go there: for H: that is <code>cd /h</code>, any other letter the same way, lower case. Git Bash uses <code>/</code>, not <code>\</code>.</li>
+      <li data-hu="<b>Jó helyen vagy, de nincs <code>elso-repo</code>:</b> múltkor máshova klónoztad (pl. az Asztalra, ami csak azon a gépen van). Nem kell megkeresned: a GitHubon minden megvan. Itt, a H:-n klónozd újra: <code>git clone &lt;your-repo-link&gt;</code>. Mostantól itt lakik.">
+        <b>Right place, but no <code>elso-repo</code>:</b> you cloned it somewhere else last time (e.g. the Desktop, which only exists on that one computer). You don't need to hunt for it: GitHub has everything. Clone it again here on H:: <code>git clone &lt;your-repo-link&gt;</code>. From now on it lives here.</li>
       <li data-hu="<b><code>not a git repository</code>:</b> nem a repó mappájában vagy. <code>pwd</code>, <code>ls</code>, és <code>cd</code> a jó helyre.">
         <b><code>not a git repository</code>:</b> you're not inside the repo folder. <code>pwd</code>, <code>ls</code>, then <code>cd</code> to the right place.</li>
+      <li data-hu="<b><code>Permission denied</code>:</b> olyan mappában vagy, ami nem a tiéd (<code>D:</code>, <code>K:</code>, <code>/</code>). <code>cd ~</code>, és próbáld újra.">
+        <b><code>Permission denied</code>:</b> you're in a folder that isn't yours (<code>D:</code>, <code>K:</code>, <code>/</code>). <code>cd ~</code> and try again.</li>
     </ul>
-    <p class="why" data-hu="<b>Miért a H:?</b> Az a te meghajtód, nem egy gépé: bármelyik iskolai gépen ülsz le, ott van. A gép saját mappái (Asztal, <code>C:\temp</code>) eltűnhetnek, vagy a következő órán másik gépnél ülsz.">
-      <b>Why H:?</b> It's your drive, not one computer's: it's there whichever school computer you sit at. A computer's own folders (Desktop, <code>C:\temp</code>) can be wiped, or next class you sit at a different machine.</p>
+    <p class="why" data-hu="<b>Miért a H:?</b> Az a te mappád, nem egy gépé: bármelyik iskolai gépnél ülsz, ott van. A gép Asztala csak azon az egy gépen létezik.">
+      <b>Why H:?</b> It's your folder, not one computer's: it's there whichever school computer you sit at. A computer's Desktop only exists on that one machine.</p>
 
     <h3 class="step"><span data-hu="Húzd le">Pull</span></h3>
     <pre><code>git pull</code></pre>
