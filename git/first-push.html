@@ -69,7 +69,8 @@
 
   <h2 data-hu="A lépések, és hogy miért">The steps, and why</h2>
 
-  <h3><span class="num">1</span><span data-hu="Megvan a Git?">Is Git there?</span></h3>
+  <h3><span class="num">1</span><span data-hu="Nyisd meg a Git Basht, és nézd meg, megvan-e a Git">Open Git Bash and check Git is there</span></h3>
+  <p data-hu="Start menü → írd be, hogy <b>Git Bash</b> → Enter. Ebbe a fekete ablakba írsz mindent ezen az oldalon.">Start menu → type <b>Git Bash</b> → Enter. You type everything on this page into that black window.</p>
   <pre><code>git --version</code></pre>
   <p data-hu="Ezt kell látnod: <code>git version 2.x</code>">Expected: <code>git version 2.x</code></p>
   <p class="why" data-hu="<b>Miért:</b> megnézed, hogy a Git fel van-e telepítve, és a terminál megtalálja-e. Ha ez nem megy, semmi más sem fog, ezért ez az első.">
@@ -88,10 +89,14 @@
   <p class="why" data-hu="<b>Miért:</b> ez a repód címe. Másolod, nem begépeled, mert egy elírás és jön a <code>Repository not found</code>.">
     <b>Why:</b> this link is your repo's address. You copy it instead of typing it, because one typo means <code>Repository not found</code>.</p>
 
-  <h3><span class="num">5</span><span data-hu="Menj az Asztalra">Go to the Desktop</span></h3>
-  <pre><code>cd ~\Desktop</code></pre>
-  <p class="why" data-hu="<b>Miért:</b> a <code>cd</code> (change directory) átviszi a terminált egy mappába. Ami ezután jön, az abban a mappában történik.">
-    <b>Why:</b> <code>cd</code> means "change directory": it moves the terminal into a folder. Whatever you do next happens in that folder.</p>
+  <h3><span class="num">5</span><span data-hu="Menj a saját mappádba (H:)">Go to your own folder (H:)</span></h3>
+  <pre><code>cd ~
+pwd</code></pre>
+  <p data-hu="Ezt kell látnod: <code>/h</code>">Expected: <code>/h</code></p>
+  <p class="why" data-hu="<b>Miért:</b> a <code>cd</code> (change directory) átviszi a terminált egy mappába. Ami ezután jön, az abban a mappában történik. A <code>~</code> a saját mappád, az iskolában ez a <b>H:</b> meghajtó. A <code>pwd</code> megmondja, hol vagy éppen.">
+    <b>Why:</b> <code>cd</code> means "change directory": it moves the terminal into a folder. Whatever you do next happens in that folder. <code>~</code> is your own folder, which at school is the <b>H:</b> drive. <code>pwd</code> tells you where you are right now.</p>
+  <p class="warn" data-hu="<b>Csak a H:-n tudsz mappát csinálni.</b> A H: a te hálózati mappád, bármelyik iskolai gépről ugyanaz. A <code>D:</code>, a <code>K:</code> és az a mappa, ahol a Git Bash néha indul (<code>/</code>), nem a tiéd: ott <code>Permission denied</code>-et kapsz. A gép Asztala sem jó: az csak azon az egy gépen van.">
+    <b>You can only make folders on H:.</b> H: is your network folder, the same on every school computer. <code>D:</code>, <code>K:</code> and the folder Git Bash sometimes opens in (<code>/</code>) are not yours: there you get <code>Permission denied</code>. The computer's Desktop is no good either: it only exists on that one computer.</p>
 
   <h3><span class="num">6</span><span data-hu="Töltsd le a repódat">Download your repo</span></h3>
   <p data-hu="Írd be, hogy <code>git clone </code>, illeszd be a linked, Enter. Aztán:">Type <code>git clone </code>, paste your link, press Enter. Then:</p>
@@ -141,13 +146,17 @@ git push</code></pre>
   <dl>
     <dt><code>'git' is not recognized</code></dt>
     <dd data-hu="Nincs Git, vagy a terminál nem találja. Szólj a tanárnak.">No Git, or the terminal can't find it. Tell the teacher.</dd>
+    <dt><code>could not create work tree dir</code> / <code>mkdir: cannot create directory</code> … <code>Permission denied</code></dt>
+    <dd data-hu="Olyan mappában vagy, ami nem a tiéd. Menj a H:-ra: <code>cd ~</code>, aztán próbáld újra.">You're in a folder that isn't yours. Go to H:: <code>cd ~</code>, then try again.</dd>
+    <dt><code>No such file or directory</code></dt>
+    <dd data-hu="Nincs ilyen mappa ott, ahol vagy. A <code>pwd</code> megmondja, hol vagy, az <code>ls</code> pedig, mi van ott. Git Bashben <code>/</code> kell, nem <code>\</code>.">That folder isn't where you are. <code>pwd</code> shows where you are, <code>ls</code> shows what is there. In Git Bash use <code>/</code>, not <code>\</code>.</dd>
     <dt><code>not a git repository</code></dt>
     <dd data-hu="Nem vagy a repó mappájában: <code>cd elso-repo</code>">You're not inside the repo folder: <code>cd elso-repo</code></dd>
     <dt><code>Please tell me who you are</code></dt>
     <dd data-hu="Kimaradt a 7. lépés. Csináld meg, aztán commitolj újra.">You skipped step 7. Do it, then commit again.</dd>
     <dt><code>Repository not found</code></dt>
     <dd data-hu="Elírás a linkben. Másold ki újra a zöld Code gombról.">Typo in the link. Copy it again from the green Code button.</dd>
-    <dt><code>403</code> / <code>Permission denied</code></dt>
+    <dt><code>403</code> / <code>Permission to … denied</code> <span data-hu="(a <code>git push</code>-nál)">(on <code>git push</code>)</span></dt>
     <dd data-hu="Valaki más belépése van még elmentve ezen a gépen. Töröld (10. lépés), és pusholj újra.">Someone else's login is still saved on this computer. Remove it (step 10) and push again.</dd>
   </dl>
 
