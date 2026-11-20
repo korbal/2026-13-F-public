@@ -5,48 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>13F1 Frontend-Backend</title>
 <style>
-  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; }
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --chip: #eef3fc; }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; }
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --chip: #23262d; }
   }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
   * { box-sizing: border-box; }
-  main { max-width: 640px; margin: 0 auto; padding: 40px 16px; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 32px; }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 36px 0 6px; }
   ul { list-style: none; padding: 0; margin: 0; }
-  li { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--line); }
+  li { padding: 12px 0; border-top: 1px solid var(--line); }
   li:last-child { border-bottom: 1px solid var(--line); }
-  .name { font-weight: 600; min-width: 90px; }
   a { color: var(--link); }
-  h2 { font-size: 1.1rem; margin: 32px 0 8px; }
-  .desc { color: var(--muted); }
+  .row { display: grid; grid-template-columns: 92px 1fr; gap: 2px 14px; align-items: baseline; }
+  .num { font-size: 0.85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .title { font-weight: 600; }
+  .desc { grid-column: 2; color: var(--muted); font-size: 0.95rem; }
   code { font: 15px ui-monospace, Consolas, monospace; }
+  .links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  @media (max-width: 420px) { .row { grid-template-columns: 1fr; } .desc { grid-column: 1; } }
 </style>
 </head>
 <body>
 <main>
   <h1>13F1 Frontend-Backend</h1>
-  <p class="sub">2026/27</p>
+  <p class="sub">2026/27 · Széchenyi</p>
 
   <h2>Lessons</h2>
   <ul>
-    <li><span class="name">DOM</span> <a href="dom/01-data-to-elements.html">1 · Data to elements</a></li>
-    <li><span class="name">Fetch</span> <a href="fetch/01-what-is-json.html">1 · What is JSON?</a> · <a href="fetch/02-data-from-a-server.html">2 · Data from a server</a></li>
-    <li><span class="name">Git</span> <a href="git/git-practice.html">Git practice</a> <a href="git/first-push.html">First push, step by step</a> <a href="git/home-push.html">Homework: push at home, pull at school</a></li>
+    <li class="row"><span class="num">Lesson 1</span><a class="title" href="dom/01-data-to-elements.html">Data to elements</a><span class="desc">A list in your file becomes elements on the page.</span></li>
+    <li class="row"><span class="num">Lesson 2</span><a class="title" href="fetch/01-what-is-json.html">What is JSON?</a><span class="desc">Text or object, <code>{ }</code> or <code>[ ]</code>: reading JSON.</span></li>
+    <li class="row"><span class="num">Lesson 3</span><a class="title" href="fetch/02-data-from-a-server.html">Data from a server</a><span class="desc">Ask the class API for data with <code>fetch</code>, and put it on your page.</span></li>
+    <li class="row"><span class="num">Lesson 4</span><a class="title" href="fetch/03-cards-from-the-server.html">Cards from the server</a><span class="desc">One card for each item, and how to find a bug when nothing is red.</span></li>
+    <li class="row"><span class="num">Lesson 5</span><a class="title" href="fetch/04-data-into-a-table.html">Data into a table</a><span class="desc">Cells into the row, the row into the table.</span></li>
+    <li class="row"><span class="num">Lesson 6</span><a class="title" href="fetch/05-walking-nested-json.html">Walking nested JSON</a><span class="desc">Find any value in the data, one step at a time.</span></li>
+    <li class="row"><span class="num">Lesson 7</span><a class="title" href="fetch/06-json-parse-and-stringify.html">JSON.parse and JSON.stringify</a><span class="desc">JSON travels as text: text to object, and back.</span></li>
+  </ul>
+
+  <h2>Git and GitHub</h2>
+  <ul>
+    <li class="row"><span class="num">Practice</span><a class="title" href="git/git-practice.html">Git practice</a><span class="desc">Save points, log, revert, push and pull.</span></li>
+    <li class="row"><span class="num">In class</span><a class="title" href="git/first-push.html">First push, step by step</a><span class="desc">Your own repository on GitHub, from Git Bash.</span></li>
+    <li class="row"><span class="num">Homework</span><a class="title" href="git/home-push.html">Push at home, pull at school</a><span class="desc">The same repository on two computers.</span></li>
   </ul>
 
   <h2>Tests</h2>
   <ul>
     <!-- One <li> per test, oldest first. -->
-    <li><span class="name">Test 02</span> <a href="test02/demo.html">Mistakes</a> <a href="test02/walkthrough.html">Walkthrough</a></li>
-    <li><span class="name">Test 03</span> <a href="test03/demo.html">Mistakes</a> <a href="test03/walkthrough.html">Walkthrough</a></li>
-    <li><span class="name">Test 04</span> <a href="test04/demo.html">Mistakes</a> <a href="test04/walkthrough.html">Walkthrough</a> <a href="test04/solution/index.html?v=2">Solution</a> <a href="test04/test04-megoldas.zip?v=2">Solution (zip)</a> <a href="test04/paper.html">Paper</a> <a href="test04/test04-kiindulo.zip">Starter files (zip)</a></li>
+    <li class="row"><span class="num">Test 02</span><span class="links"><a href="test02/demo.html">Mistakes</a><a href="test02/walkthrough.html">Walkthrough</a></span></li>
+    <li class="row"><span class="num">Test 03</span><span class="links"><a href="test03/demo.html">Mistakes</a><a href="test03/walkthrough.html">Walkthrough</a></span></li>
+    <li class="row"><span class="num">Test 04</span><span class="links"><a href="test04/demo.html">Mistakes</a><a href="test04/walkthrough.html">Walkthrough</a><a href="test04/solution/index.html?v=2">Solution</a><a href="test04/paper.html">Paper</a></span><span class="desc">Downloads: <a href="test04/test04-kiindulo.zip">starter files (zip)</a> · <a href="test04/test04-megoldas.zip?v=2">solution (zip)</a></span></li>
   </ul>
 
   <h2>Vizsgaremek</h2>
   <ul>
-    <li><span class="name">Concept</span> <a href="vizsgaremek/concept.html">What to write</a> <a href="vizsgaremek/concept-example.html">Example</a></li>
+    <li class="row"><span class="num">Concept</span><span class="links"><a href="vizsgaremek/concept.html">What to write</a><a href="vizsgaremek/concept-example.html">Example</a></span></li>
   </ul>
 </main>
 </body>

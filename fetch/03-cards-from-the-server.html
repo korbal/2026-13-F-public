@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 4 · Cards from the server</title>
+<style>
+:root{
+  --vs-bg:#1f1f1f; --vs-side:#181818; --vs-border:#2b2b2b; --vs-fg:#cccccc; --vs-dim:#9d9d9d; --vs-blue:#0078d4; --vs-sel:#37373d; --vs-ln:#6e7681;
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #000;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px}
+
+.links .langbtn{border:1px solid #cfd4da;background:#fff;color:var(--ink);border-radius:6px;padding:0 8px;font-size:12px;cursor:pointer}
+.links .langbtn:hover{border-color:var(--accent)}
+
+/* ===== practice: VS Code + browser ===== */
+.work{flex:1;display:grid;grid-template-columns:55fr 45fr;min-height:0}
+.work.split{grid-template-columns:64fr 36fr}
+.vs{background:var(--vs-bg);color:var(--vs-fg);display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid #000;font-size:13px}
+.vs-title{height:34px;flex:none;background:var(--vs-side);border-bottom:1px solid var(--vs-border);display:flex;align-items:center;padding:0 8px;font-size:13px;gap:2px;overflow:hidden}
+.vs-title svg{width:16px;height:16px;margin-right:8px;flex:none}
+.vs-title .menu span{padding:3px 7px;color:var(--vs-fg)}
+.vs-title .cc{margin:0 auto;width:36%;min-width:140px;height:22px;border:1px solid #3c3c3c;background:#2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--vs-dim);font-size:12px}
+.vs-title .win{display:flex;gap:14px;color:var(--vs-dim);padding:0 4px}
+.vs-body{flex:1;display:flex;min-height:0}
+.act{width:48px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.act .ic{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:#868686;border-left:2px solid transparent}
+.act .ic svg{width:24px;height:24px}
+.act .ic.btn-ex{cursor:pointer}
+.act .ic.btn-ex:hover{color:#fff}
+.act .ic.on{color:#fff;border-left-color:var(--vs-blue)}
+.act .bottom{margin-top:auto}
+.side{width:200px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);overflow:auto}
+.side .hdr{height:35px;display:flex;align-items:center;padding:0 20px;font-size:11px;letter-spacing:.04em}
+.side .folder{padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.side .file{display:flex;align-items:center;gap:6px;padding:0 8px 0 22px;height:22px;cursor:pointer;white-space:nowrap}
+.side .file:hover{background:#2a2d2e}
+.side .file.sel{background:var(--vs-sel);outline:1px solid var(--vs-blue);outline-offset:-1px}
+.side .file .m{margin-left:auto;color:#e2c08d;font-size:11px}
+.fi{width:16px;text-align:center;font:700 10px ui-monospace,Consolas,monospace;flex:none}
+.fi.js{color:#cbcb41}.fi.json{color:#f5de19}.fi.html{color:#e44d26}.fi.css{color:#42a5f5}
+.editors{flex:1;display:flex;min-width:0}
+.group{flex:1;display:flex;flex-direction:column;min-width:0}
+.group+.group{border-left:1px solid var(--vs-border)}
+.tabs{height:35px;flex:none;background:var(--vs-side);display:flex;border-bottom:1px solid var(--vs-border);overflow-x:auto;overflow-y:hidden}
+.tab{display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;border-right:1px solid var(--vs-border);color:var(--vs-dim);white-space:nowrap;cursor:pointer;flex:none}
+.tab.on{background:var(--vs-bg);color:#fff;box-shadow:inset 0 1px 0 var(--vs-blue)}
+.tab .x{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--vs-dim)}
+.tab .x:hover{background:#3c3c3c}
+.tab .lock{font-size:11px}
+.crumbs{height:22px;flex:none;display:flex;align-items:center;padding:0 14px;color:#a9a9a9;font-size:12px}
+.scroller{flex:1;overflow:auto;position:relative;min-height:0}
+.codebox{display:flex;min-width:100%;width:max-content;font:13px/19px ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding-bottom:40vh}
+.gutter{flex:none;width:52px;text-align:right;padding-right:18px;color:var(--vs-ln);user-select:none;position:sticky;left:0;background:var(--vs-bg);z-index:2}
+.gutter div{height:19px;position:relative}
+.gutter .cur{color:#cccccc}
+.gutter .add::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#2ea043}
+.gutter .ok::after{content:"✓";position:absolute;right:-15px;top:0;color:#3fb950;font-size:11px}
+.lines{position:relative;flex:1;min-width:300px}
+.lines pre{margin:0;font:inherit;white-space:pre;color:var(--vs-fg);tab-size:2}
+.lines pre div{height:19px;padding-left:4px}
+.lines pre div.add{background:rgba(46,160,67,.17)}
+.lines pre div.ok{background:rgba(46,160,67,.06)}
+.lines pre div.del{background:rgba(248,81,73,.18)}
+.gutter .del::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#f85149}
+.lines textarea{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 0 0 4px;border:0;outline:0;resize:none;overflow:hidden;background:transparent;color:transparent;caret-color:#aeafad;font:inherit;white-space:pre;tab-size:2;z-index:1}
+.lines textarea::selection{background:rgba(38,79,120,.85);color:transparent}
+.readonly .lines pre{user-select:none}
+.k{color:#569cd6}.c{color:#c586c0}.s{color:#ce9178}.num{color:#b5cea8}.cm{color:#6a9955}.f{color:#dcdcaa}.v{color:#9cdcfe}.tgc{color:#569cd6}.at{color:#9cdcfe}.sel{color:#d7ba7d}.pr{color:#9cdcfe}
+.status{height:22px;flex:none;background:var(--vs-side);border-top:1px solid var(--vs-border);display:flex;align-items:center;font-size:12px;white-space:nowrap;overflow:hidden}
+.status .remote{background:var(--vs-blue);color:#fff;height:100%;padding:0 10px;display:flex;align-items:center}
+.status span{padding:0 8px}
+.status .r{margin-left:auto;display:flex}
+.status .err{color:#f48771}
+
+.br{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0}
+.br-url{flex:none;background:#fff;padding:6px 10px;border-bottom:1px solid #dadce0;display:flex;align-items:center;gap:10px;color:#5f6368;font-size:13px}
+.br-url .bar{flex:1;background:#f1f3f4;border-radius:14px;padding:5px 14px;color:#202124;white-space:nowrap;overflow:hidden}
+.br-url button{background:none;border:0;color:#5f6368;cursor:pointer;font-size:15px;padding:0 4px}
+#preview{flex:1;border:0;width:100%;min-height:0;background:#f5f3ee}
+.devtools{flex:none;max-height:38%;display:flex;flex-direction:column;border-top:1px solid #cbcdd1}
+.dt-head{padding:4px 10px;background:#f1f3f4;border-bottom:1px solid #e0e0e0;color:#5f6368;font-size:12px}
+.dt-out{overflow:auto;font:12px/18px ui-monospace,Consolas,monospace}
+.dt-row{padding:2px 10px;border-bottom:1px solid #f0f0f0;color:#202124;white-space:pre-wrap;word-break:break-word}
+.dt-row.err{background:#fff0f0;color:#d93025;border-bottom-color:#fbd0d0}
+.dt-row.why{background:#fffbe6;color:#7a4b00;font-family:system-ui,sans-serif;border-bottom-color:#f5e2b0}
+.dt-row.dim{color:#9aa0a6}
+#btn-lang,#p-lang{display:none!important}
+#altframe{position:absolute;width:1px;height:1px;left:-9999px;border:0}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work,.work.split{grid-template-columns:1fr;grid-auto-rows:minmax(460px,auto)}
+  .vs{border-right:0;border-bottom:1px solid #000}
+  .side{width:150px}
+  .vs-title .menu,.vs-title .win{display:none}
+  .br{min-height:460px}
+}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../" data-hu="Főoldal">Home</a><a id="l-slides" data-hu="Diák">Slides</a><a id="l-again" data-hu="Feladat elölről">Start task again</a><a id="l-reset" data-hu="Az egész elölről">Reset all</a><button class="langbtn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+
+  <div class="work" id="work">
+    <div class="vs">
+      <div class="vs-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0078d4" d="M17 2 8 10.5 3.5 7 2 7.8v8.4l1.5.8L8 13.5 17 22l5-2.4V4.4zM4 14.4V9.6L6.5 12zm13 2.4L11.3 12 17 7.2z"/></svg>
+        <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+        <div class="cc" id="cc">cards-from-the-server</div>
+        <div class="win"><span>—</span><span>☐</span><span>✕</span></div>
+      </div>
+      <div class="vs-body">
+        <div class="act">
+          <div class="ic btn-ex" id="act-ex" title="Explorer (Ctrl+B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H7a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/><path d="M6 7H4v13a1 1 0 0 0 1 1h10v-2"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 5-8 3-11 7"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4l12 8-12 8z"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="7" height="7"/><rect x="11" y="11" width="7" height="7"/><rect x="3" y="3" width="7" height="7"/><rect x="14" y="2" width="7" height="7" transform="rotate(10 17 5)"/></svg></div>
+          <div class="bottom"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div></div>
+        </div>
+        <div class="side hidden" id="side"></div>
+        <div class="editors">
+          <div class="group" id="g1">
+            <div class="tabs" id="tabs1"></div>
+            <div class="crumbs" id="crumbs1"></div>
+            <div class="scroller" id="sc-edit">
+              <div class="codebox"><div class="gutter" id="gut-edit"></div><div class="lines"><pre id="hl-edit" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-label="script.js"></textarea></div></div>
+            </div>
+            <div class="scroller readonly hidden" id="sc-view">
+              <div class="codebox"><div class="gutter" id="gut-view"></div><div class="lines"><pre id="hl-view"></pre></div></div>
+            </div>
+          </div>
+          <div class="group hidden" id="g2">
+            <div class="tabs" id="tabs2"></div>
+            <div class="crumbs">solution.js › …</div>
+            <div class="scroller readonly" id="sc-sol">
+              <div class="codebox"><div class="gutter" id="gut-sol"></div><div class="lines"><pre id="hl-sol"></pre></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status"><span class="remote">⇄</span><span id="st-err">⊗ 0 ⚠ 0</span><div class="r"><span id="st-ln">Ln 1, Col 1</span><span id="st-lang">{} JavaScript</span><span>⦿ Port : 5500</span></div></div>
+    </div>
+
+    <div class="br">
+      <div class="br-url"><button id="br-reload" title="Reload">↻</button><div class="bar">127.0.0.1:5500/index.html</div></div>
+      <iframe id="preview" sandbox="allow-scripts" title="The page, with your script run on it"></iframe>
+      <div class="devtools"><div class="dt-head">Console</div><div class="dt-out" id="console"></div></div>
+    </div>
+  </div>
+</div>
+<iframe id="altframe" sandbox="allow-scripts" title="Second run with other data" aria-hidden="true" tabindex="-1"></iframe>
+
+
+<script>
+(function(){
+"use strict";
+
+// ?prep: the teacher flips through the solutions. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+// Language: ?lang=hu in the URL wins, then the last choice on this browser, then English.
+var LANG_KEY = "cards-from-the-server-lang";
+function pickLang(){
+  return "en"; // English only until the Hungarian flag is added (lesson-format.md, MVP step 3)
+  try { var q = new URLSearchParams(location.search).get("lang"); if (q === "hu" || q === "en") return q; } catch (e) {}
+  try { var s = localStorage.getItem(LANG_KEY); if (s === "hu" || s === "en") return s; } catch (e) {}
+  return "en";
+}
+var lang = pickLang();
+if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+function tr(en, hu){ return lang === "hu" ? hu : en; }
+// Hungarian article before a word or a number: az egér, a macska; az 1., a 2., az 5.
+function az(w){ return /^[^a-z0-9]*[aáeéiíoóöőuúüű]/i.test(String(w).replace(/<[^>]*>/g, "")) ? "Az " : "A "; }
+function azN(n){ return (/^(1|5\d*)$/.test(String(n)) ? "Az " : "A ") + n + "."; }
+
+/* ====================================================================
+   Data. The class API as it is on GitHub Pages (api/cats.json,
+   api/excuses.json). Inside the practice, fetch() answers from this copy
+   after a short wait, like the real server. Every check runs the
+   student's code twice: on this data, and on other data of the same
+   shape, so typed-in values fail.
+   ==================================================================== */
+
+var API_BASE = "https://korbal.github.io/2026-13-F-public/api/";
+var CATS = [{"id": 1, "name": "Bajusz", "age": 7, "weightKg": 6.2, "sleepHoursPerDay": 16, "friendly": true, "hobbies": ["billentyűzeten alvás", "monitor eltakarása"]}, {"id": 2, "name": "Null", "age": 2, "weightKg": 3.4, "sleepHoursPerDay": 12, "friendly": false, "hobbies": ["poharak leverése az asztalról", "hajnali négykor futás"]}, {"id": 3, "name": "Undefined", "age": 4, "weightKg": 4.1, "sleepHoursPerDay": 14, "friendly": true, "hobbies": []}, {"id": 4, "name": "Szotyi", "age": 11, "weightKg": 7.8, "sleepHoursPerDay": 18, "friendly": true, "hobbies": ["dobozban ülés", "a doboz mellett ülés", "evés"]}, {"id": 5, "name": "Rendszergazda", "age": 9, "weightKg": 5.5, "sleepHoursPerDay": 15, "friendly": false, "hobbies": ["kábelek rágása", "mindenkit lenézni"]}, {"id": 6, "name": "Pötyi", "age": 1, "weightKg": 2.3, "sleepHoursPerDay": 13, "friendly": true, "hobbies": ["egérkurzor üldözése", "bekapcsolt laptopra fekvés", "nyávogás hívás közben"]}];
+var EXCUSES = [{"id": 1, "excuse": "A laptopom frissített. Még most is frissít.", "category": "technika", "believability": 7, "teacherHeardIt": true}, {"id": 2, "excuse": "Megcsináltam, csak nem mentettem el.", "category": "technika", "believability": 4, "teacherHeardIt": true}, {"id": 3, "excuse": "Nálam működött.", "category": "technika", "believability": 6, "teacherHeardIt": true}, {"id": 4, "excuse": "A git push lefutott, csak nem tudom, hova.", "category": "technika", "believability": 6, "teacherHeardIt": false}, {"id": 5, "excuse": "Elmentettem, csak a Letöltések mappába, a többi 4000 fájl közé.", "category": "technika", "believability": 8, "teacherHeardIt": false}, {"id": 6, "excuse": "Papírra írtam meg, de a papír nem futtatható.", "category": "technika", "believability": 3, "teacherHeardIt": false}, {"id": 7, "excuse": "A kutyám megette. Nincs kutyám, ez engem is aggaszt.", "category": "család", "believability": 1, "teacherHeardIt": true}, {"id": 8, "excuse": "A tesómnak kellett a gép, mert holnap neki is határideje van. Neki sincs kész.", "category": "család", "believability": 6, "teacherHeardIt": false}, {"id": 9, "excuse": "Anya szerint aludnom kellett. Anyának mindig igaza van.", "category": "család", "believability": 7, "teacherHeardIt": true}, {"id": 10, "excuse": "Nem jött a busz, és vele együtt a motivációm sem.", "category": "közlekedés", "believability": 5, "teacherHeardIt": true}, {"id": 11, "excuse": "A vonat késett, így a tanulásra szánt idő is késik.", "category": "közlekedés", "believability": 4, "teacherHeardIt": false}, {"id": 12, "excuse": "Edzésem volt. Minden nap. Egész nap.", "category": "sport", "believability": 3, "teacherHeardIt": true}, {"id": 13, "excuse": "Azt hittem, a határidő csak egy javaslat.", "category": "egzisztenciális", "believability": 2, "teacherHeardIt": false}, {"id": 14, "excuse": "Megnyitottam a VS Code-ot, és ezzel elfogyott az aznapi energiám.", "category": "egzisztenciális", "believability": 9, "teacherHeardIt": false}, {"id": 15, "excuse": "Elfelejtettem, hogy emlékeznem kellene rá.", "category": "egzisztenciális", "believability": 6, "teacherHeardIt": false}, {"id": 16, "excuse": "Elkezdtem, de a console.log azt írta, hogy undefined, és ezt személyesnek vettem.", "category": "egzisztenciális", "believability": 8, "teacherHeardIt": false}];
+var ALT_CATS = [
+  { id: 1, name: "Tigris", age: 3, weightKg: 4.5, sleepHoursPerDay: 13, friendly: false, hobbies: ["függönymászás"] },
+  { id: 2, name: "Morzsa", age: 9, weightKg: 5.1, sleepHoursPerDay: 17, friendly: true, hobbies: [] },
+  { id: 3, name: "Bug", age: 5, weightKg: 3.9, sleepHoursPerDay: 15, friendly: true, hobbies: ["dobozba ülés"] },
+  { id: 4, name: "Cirmi", age: 6, weightKg: 4.8, sleepHoursPerDay: 14, friendly: false, hobbies: ["egérkergetés"] },
+  { id: 5, name: "Vacak", age: 12, weightKg: 6.0, sleepHoursPerDay: 19, friendly: true, hobbies: ["alvás", "még több alvás"] },
+  { id: 6, name: "Lego", age: 2, weightKg: 3.1, sleepHoursPerDay: 12, friendly: false, hobbies: ["kábelrágás"] },
+  { id: 7, name: "Foci", age: 8, weightKg: 5.5, sleepHoursPerDay: 16, friendly: true, hobbies: [] }
+];
+var ALT_EXCUSES = [
+  { id: 1, excuse: "A wifi elment, pont amikor pusholni akartam.", category: "technika", believability: 6, teacherHeardIt: true },
+  { id: 2, excuse: "A VS Code frissített, és eltűnt minden.", category: "technika", believability: 4, teacherHeardIt: false },
+  { id: 3, excuse: "Megcsináltam, de a macska ráült a billentyűzetre.", category: "család", believability: 3, teacherHeardIt: true },
+  { id: 4, excuse: "Azt hittem, a házi a jövő hétre van.", category: "egyéb", believability: 7, teacherHeardIt: true },
+  { id: 5, excuse: "A Live Server nem akart elindulni.", category: "technika", believability: 5, teacherHeardIt: false }
+];
+var API = {
+  main: { "cats.json": CATS, "excuses.json": EXCUSES },
+  alt: { "cats.json": ALT_CATS, "excuses.json": ALT_EXCUSES }
+};
+// The page they watch answers in about half a second; the hidden second run answers faster.
+var DELAY = 600, ALT_DELAY = 100;
+var CATS_URL = API_BASE + "cats.json", EXCUSES_URL = API_BASE + "excuses.json";
+
+var BASE_CSS = 'body{font-family:Arial,sans-serif;background:#f5f3ee;margin:0;padding:16px;color:#1f2328}h1{margin:0 0 12px;font-size:24px}';
+var EMPTY = function(id){ return '#' + id + ':empty{display:block;border:2px dashed #c9cfd6;border-radius:10px;padding:14px;text-align:center;background:none;font-size:14px;font-weight:400}#' + id + ':empty::before{content:"#' + id + ' is empty";color:#9aa0a6;font-style:italic}'; };
+var LIST_CSS = function(id){ return '#' + id + '{background:#fff;border-radius:10px;padding:10px 10px 10px 34px;margin:0}' + EMPTY(id) + '#' + id + ' li{padding:4px 0}'; };
+
+var CARD_CSS = function(id){ return '#' + id + '{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}' + EMPTY(id) + '.card{background:#fffaf0;border:2px solid #f0a500;border-radius:10px;padding:10px 12px;font-size:15px;position:relative}.card.heard{padding-bottom:28px}.card.heard::after{content:"HEARD IT";position:absolute;right:8px;bottom:6px;color:#d93025;border:2px solid #d93025;border-radius:4px;font-size:11px;font-weight:800;padding:0 4px;transform:rotate(-6deg)}'; };
+
+var PAGES = {
+  excuses: { title: "Excuses of 13F", box: "excuses",
+    body: '<main>\n  <h1>Excuses of 13F</h1>\n  <div id="excuses"></div>\n</main>', css: BASE_CSS + CARD_CSS("excuses") },
+  cats: { title: "Cats of 13F", box: "cats",
+    body: '<main>\n  <h1>Cats of 13F</h1>\n  <div id="cats"></div>\n</main>', css: BASE_CSS + CARD_CSS("cats") }
+};
+
+/* ====================================================================
+   Running student code: a sandboxed iframe (scripts on, no same-origin).
+   fetch() is replaced by fetchStub below, so a run is only finished when
+   every answer has arrived and the code after each await has run.
+   Everything the page does is posted back in order: logs, errors, each
+   fetch and each answer.
+   ==================================================================== */
+
+var runSeq = 0, waiting = {};
+window.addEventListener("message", function(e){
+  var d = e.data;
+  if (!d || typeof d !== "object" || !d.__dte || !waiting[d.__dte]) return;
+  var w = waiting[d.__dte];
+  if (d.type === "log") { w.logs.push(d.text); w.events.push({ k: "log", text: d.text }); }
+  if (d.type === "error") { var er = d.err; er.line = er.line > w.offset ? er.line - w.offset : 0; w.errors.push(er); w.events.push({ k: "error", err: er }); }
+  if (d.type === "neterr") { var ne = { msg: d.text, name: "", line: 0, net: true }; w.errors.push(ne); w.events.push({ k: "error", err: ne }); }
+  if (d.type === "call") w.events.push({ k: "call", fn: d.fn });
+  if (d.type === "answer") w.events.push({ k: "answer", fn: d.fn });
+  if (d.type === "early") w.early = d.tree;
+  if (d.type === "done") { w.tree = d.tree; w.created = d.created; finishRun(d.__dte); return; }
+  if (w.live) w.live(w);
+});
+function finishRun(id){
+  var w = waiting[id];
+  if (!w) return;
+  delete waiting[id];
+  clearTimeout(w.timer);
+  w.resolve({ logs: w.logs, errors: w.errors, events: w.events, early: w.early === undefined ? null : w.early, tree: w.tree === undefined ? null : w.tree, created: w.created || [], timeout: !!w.timedOut });
+}
+
+// for (...) { and while (...) { get a counter, so an endless loop throws instead of freezing the tab. Same line, so line numbers hold.
+function guard(code){
+  return code
+    .replace(/\bfor\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; })
+    .replace(/\bwhile\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; });
+}
+
+// Runs inside the iframe (injected as source). The class API's addresses answer from `data`; anything else is a 404, like GitHub Pages.
+function fetchStub(data, delay){
+  var base = /^(https?:\/\/)?korbal\.github\.io\/2026-13-F-public\/api\//;
+  window.fetch = function(url){
+    url = String(url);
+    window.__pending++;
+    window.__send({ type: "call", fn: url });
+    var key = base.test(url) ? url.replace(base, "").replace(/[?#].*$/, "") : null;
+    var found = key !== null && Object.prototype.hasOwnProperty.call(data, key);
+    var body = found ? JSON.stringify(data[key]) : "<!DOCTYPE html><html><body><h1>404</h1><p>File not found</p></body></html>";
+    return new Promise(function(resolve){
+      setTimeout(function(){
+        window.__send({ type: "answer", fn: url });
+        if (!found) window.__send({ type: "neterr", text: "GET " + url + " 404 (Not Found)" });
+        window.__pending--;
+        resolve({ __resp: true, ok: found, status: found ? 200 : 404, url: url,
+          json: function(){ return new Promise(function(res, rej){ try { res(JSON.parse(body)); } catch (e) { rej(new SyntaxError("Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON")); } }); },
+          text: function(){ return Promise.resolve(body); } });
+      }, delay);
+    });
+  };
+}
+function fetchLine(which, delay){ return "(" + fetchStub.toString() + ")(" + JSON.stringify(API[which]) + ", " + delay + ");"; }
+
+function buildDoc(page, dataLine, code, id){
+  var pre =
+    '<!doctype html><html><head><meta charset="utf-8"><style>' + page.css + '</style></head><body>\n' + page.body + '\n' +
+    '<script>\n' +
+    '(function(){\n' +
+    'var ID=' + id + ';\n' +
+    'function send(o){ o.__dte=ID; parent.postMessage(o,"*"); }\n' +
+    'window.__send=send; window.__pending=0;\n' +
+    'function short(v){ return Array.isArray(v)? "Array("+v.length+")" : typeof v==="string"? JSON.stringify(v) : v&&typeof v==="object"? "{…}" : String(v); }\n' +
+    'function fmt(v,d){ d=d||0;\n' +
+    '  if (v && v.__resp) return "Response {status: "+v.status+", ok: "+v.ok+", url: \\""+v.url+"\\"}";\n' +
+    '  if (v && (typeof v==="object"||typeof v==="function") && typeof v.then==="function") return "Promise {<pending>}";\n' +
+    '  if (typeof v==="string") return d? JSON.stringify(v) : v;\n' +
+    '  if (typeof v==="function") return "ƒ "+(v.name||"")+"()";\n' +
+    '  if (v instanceof Element){ var h=v.outerHTML; return h.length>160? h.slice(0,157)+"...": h; }\n' +
+    '  if (Array.isArray(v)) return d>1? "[...]" : "[" + v.map(function(x){return fmt(x,d+1);}).join(", ") + "]";\n' +
+    '  if (v && typeof v==="object") return d>1? "{...}" : "{" + Object.keys(v).map(function(k){return k+": "+fmt(v[k],d+1);}).join(", ") + "}";\n' +
+    '  return String(v); }\n' +
+    'console.log=console.info=console.warn=console.debug=console.dir=console.table=console.error=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'window.alert=function(m){ send({type:"log",text:"alert: "+fmt(m)}); };\n' +
+    'window.__made=[];\n' +
+    'var ce=document.createElement.bind(document);\n' +
+    'document.createElement=function(t){ var el=ce(t); window.__made.push(el); return el; };\n' +
+    'window.addEventListener("error",function(e){ var m=e.error&&e.error.message||e.message||""; send({type:"error",err:{msg:String(m).replace(/^Uncaught /,""),name:e.error&&e.error.name||"",line:e.lineno||0}}); e.preventDefault(); });\n' +
+    'window.addEventListener("unhandledrejection",function(e){ var r=e.reason, m=r&&r.message!==undefined? r.message : String(r), st=r&&r.stack||"", mm=/about:srcdoc:(\\d+):\\d+/.exec(st); send({type:"error",err:{msg:String(m),name:r&&r.name||"",line:mm? +mm[1] : 0,promise:true}}); e.preventDefault(); });\n' +
+    'window.__loops=0;\n' +
+    '})();\n' +
+    dataLine + '\n' +
+    '<\/script>\n<script>\n';
+  var offset = pre.split("\n").length - 1;
+  var post =
+    '\n<\/script>\n<script>\n' +
+    '(function(){\n' +
+    'function ser(el,d){ var o={tag:el.tagName.toLowerCase(),id:el.id||"",cls:[].slice.call(el.classList),' +
+    'text:[].filter.call(el.childNodes,function(n){return n.nodeType===3;}).map(function(n){return n.textContent;}).join("").trim(),' +
+    'all:el.textContent.trim(),kids:[]};' +
+    ' if(d<4) o.kids=[].map.call(el.children,function(c){return ser(c,d+1);}); return o; }\n' +
+    'function snap(){ var box=document.getElementById(' + JSON.stringify(page.box) + '); return box? ser(box,0) : null; }\n' +
+    'function made(){ return window.__made.map(function(e){return {tag:e.tagName.toLowerCase(),text:e.textContent.trim(),cls:[].slice.call(e.classList),onPage:document.body.contains(e)};}); }\n' +
+    'window.__send({type:"early",tree:snap()});\n' +
+    // Done once nothing is waiting for the server, three checks in a row: the code after the last await has run by then.
+    'var quiet=0;\n' +
+    'function wait(){ if (window.__pending>0) quiet=0; else quiet++; if (quiet<3) { setTimeout(wait,25); return; } window.__send({type:"done",tree:snap(),created:made()}); }\n' +
+    'setTimeout(wait,0);\n' +
+    '})();\n<\/script>\n</body></html>';
+  return { html: pre + guard(code) + post, offset: offset };
+}
+
+function runIn(frame, page, dataLine, code, live){
+  var id = ++runSeq;
+  var doc = buildDoc(page, dataLine, code, id);
+  return new Promise(function(resolve){
+    waiting[id] = { logs: [], errors: [], events: [], resolve: resolve, offset: doc.offset, live: live,
+      timer: setTimeout(function(){ if (waiting[id]) { waiting[id].timedOut = true; finishRun(id); } }, 9000) };
+    // Clear first: Chrome does not always repaint a srcdoc iframe that is simply overwritten.
+    frame.removeAttribute("srcdoc");
+    frame.srcdoc = doc.html;
+  });
+}
+
+function runPlan(les, src){
+  return { code: src, main: fetchLine("main", DELAY), alt: fetchLine("alt", ALT_DELAY) };
+}
+
+/* ====================================================================
+   Plain-English error messages
+   ==================================================================== */
+
+// How many fetch(...) and .json() calls have no await in front of them.
+function missingAwaits(src){
+  src = src.replace(/\/\/.*$/gm, "");
+  var calls = (src.match(/\bfetch\s*\(/g) || []).length + (src.match(/\.json\s*\(/g) || []).length;
+  var awaited = (src.match(/\bawait\s+fetch\s*\(/g) || []).length + (src.match(/\bawait\s+[\w.]+\.json\s*\(/g) || []).length;
+  return calls - awaited;
+}
+
+function explain(err, src){
+  var m = err.msg || "", x;
+  src = src || "";
+  if (err.net) return "The server has nothing at that address. Copy the address again, exactly.";
+  if (/__ENDLESS__/.test(m)) return "Your loop never stops. Check its condition: in a for loop, i < list.length and i++.";
+  if (/await is only valid in async function|Unexpected reserved word/.test(m) || (/Unexpected identifier/.test(m) && /\bawait\b/.test(src)))
+    return "await only works inside an async function. Put the lines inside async function load() { ... } and call load(); under it.";
+  if (/Unexpected token '<'/.test(m)) return "The answer was a 404 page, not data: the address is wrong. Copy it again.";
+  if ((x = /^([\w.]+)\.json is not a function/.exec(m))) return x[1] + " is still on its way. Put await in front of fetch(...).";
+  if (/not valid JSON|JSON\.parse/.test(m)) return "No JSON.parse here: response.json() already unpacks the answer.";
+  if ((x = /^([\w.\[\]]+?)\.(forEach|map|filter|find|join|push) is not a function/.exec(m)) || (x = /^([\w.\[\]]+) is not iterable/.exec(m)))
+    return x[1] + " is not a list here. Is it still on its way? Is there an await in front of response.json()?";
+  if ((x = /^(\w+) is not defined/.exec(m))) {
+    if (["cats", "excuses", "response"].indexOf(x[1]) >= 0) return x[1] + " does not exist on this line. It is made inside load(), so this line must be inside load() too, under the await lines.";
+    if (x[1] === "address") return "address does not exist here. Is the const address = \"...\" line missing, or spelled differently?";
+    if (x[1] === "i") return "i only exists inside the loop's { }. Is this line outside the loop?";
+    if (x[1] === "card") return "card does not exist on this line: it is made inside the loop. Is this line outside the loop's { }?";
+    if (x[1] === "box") return "box does not exist here. Is the line const box = document.getElementById(\"excuses\"); there, above the loop?";
+    if (x[1] === "excuse") return "There is no excuse on its own: the list is excuses (with an s), and one excuse is excuses[i].";
+    if (["li", "ul", "p", "div"].indexOf(x[1]) >= 0) return "Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".";
+    if (x[1] === "load") return "Nothing called load exists. Is the function spelled the same where you make it and where you call it?";
+    return "Nothing called " + x[1] + " exists here. A typo? Capital letters matter: fetch, getElementById, textContent, createElement.";
+  }
+  if ((x = /Cannot access '(\w+)' before initialization/.exec(m))) return "You use " + x[1] + " on a line above the one that makes it. Move it under the line that makes it.";
+  if ((x = /Cannot read properties of null \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of null \(setting '(\w+)'\)/.exec(m)))
+    return "You used ." + x[1] + " on null: getElementById found nothing. The id must match index.html exactly, without #.";
+  if ((x = /Cannot read properties of undefined \(reading '(\w+)'\)/.exec(m)) || (x = /Cannot set properties of undefined \(setting '(\w+)'\)/.exec(m))) {
+    if (missingAwaits(src) > 0) return "You used ." + x[1] + " on something that does not exist. Is the data still on its way? Every fetch(...) and response.json() needs an await.";
+    return "You used ." + x[1] + " on something that does not exist. A typo before the dot, a missing [0], or reading past the end of the list (i <= instead of i <)?";
+  }
+  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + " is not a function. Check the spelling: fetch, response.json, getElementById, createElement, appendChild.";
+  if (/parameter 1 is not of type 'Node'/.test(m)) return "appendChild wants an element made with createElement, not a text.";
+  if (/has already been declared/.test(m)) return "That name is already taken. Give each const its own name, and do not make the same thing twice.";
+  if (/Assignment to constant/.test(m)) return "You gave a const a new value. Make a new const instead, or use let.";
+  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return "JavaScript could not read the code at all, so nothing ran. Look for a missing ) } or quote near that line.";
+  return "";
+}
+
+/* ====================================================================
+   Checks
+   ==================================================================== */
+
+function code(s){ return '<code>' + esc(s) + '</code>'; }
+function NOT_TYPED(){ return "It works for this data only. The check also ran your code on a different answer from the server, and there it was wrong. Take every value out of the data instead of typing it in."; }
+function RED_FIRST(){ return "There is a red error in the Console. Read it, and the yellow line under it."; }
+function PENDING_MSG(){ return "The Console shows <code>Promise {&lt;pending&gt;}</code>: not the data yet, only \"it is coming\". Which line is missing an <code>await</code>?"; }
+// An async function that is written but never called: its name appears only where it is made.
+function uncalled(src){
+  src = src.replace(/\/\/.*$/gm, "");
+  var re = /async\s+function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*async\b/g, m;
+  while ((m = re.exec(src))) {
+    var name = m[1] || m[2], uses = (src.match(new RegExp("\\b" + name + "\\s*\\(", "g")) || []).length;
+    if (uses - (m[1] ? 1 : 0) < 1) return true;
+  }
+  return false;
+}
+function NOTHING_RAN(src, r){
+  if (uncalled(src)) return "Nothing printed and nothing is red. A function only runs when you call it: <code>load();</code> on a line of its own, under it.";
+  if (r && !r.events.some(function(e){ return e.k === "call"; })) return "Nothing asked the server yet. The recipe on slide 2 starts with <code>fetch(address)</code>.";
+  return "Nothing printed yet.";
+}
+function logHas(run, v){
+  var re = new RegExp("(^|[^\\w])" + String(v).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^\\w]|$)");
+  return run.logs.some(function(l){ return !/^[\[{]/.test(l) && re.test(l); });
+}
+function logged(run, re){ return run.logs.some(function(l){ return re.test(l); }); }
+// The usual reasons the data is not there yet, in the order a student would hit them.
+function notThereYet(r, src){
+  if (logged(r, /^Promise \{/)) return PENDING_MSG();
+  if (logged(r, /^Response \{/)) return "That is the response: the answer, still packed. Unpack it: <code>const excuses = await response.json();</code>";
+  if (r.errors.length) return RED_FIRST();
+  return "";
+}
+// The cards in the box against the text each one should have. one: task 1, where one right first card is enough.
+function cardsProblem(r, want, boxId, one, src, listName){
+  var t = r.tree, k = t ? t.kids : [], thing = listName === "cats" ? "cat" : "excuse";
+  if (!t) return "The " + code("#" + boxId) + " box is gone from the page.";
+  if (!k.length) {
+    var why = notThereYet(r, src);
+    if (why) return why;
+    var off = (r.created || []).filter(function(e){ return !e.onPage && e.text; });
+    if (off.length) return "You made " + (off.length === 1 ? "a card" : off.length + " cards") + ", but nothing is on the page yet: <code>box.appendChild(card);</code>";
+    return uncalled(src) ? NOTHING_RAN(src, r) : "The " + code("#" + boxId) + " box is still empty.";
+  }
+  if (!one && k.length !== want.length) return "There " + (k.length === 1 ? "is 1 card" : "are " + k.length + " cards") + ", there should be " + want.length + "." + (k.length === 1 ? " Only one: is there a loop, and is <code>appendChild</code> inside it?" : k.length > want.length ? " Too many: does the loop stop at <code>i &lt; " + listName + ".length</code>?" : "");
+  var n = one ? 1 : want.length;
+  for (var j = 0; j < n; j++) {
+    var got = k[j].all;
+    if (got === want[j]) {
+      if (k[j].cls.indexOf("card") < 0) return "Card " + (j + 1) + " has the right text, but no look: <code>card.classList.add(\"card\");</code>";
+      continue;
+    }
+    if (got === "" || /undefined/.test(got)) return "Card " + (j + 1) + (got === "" ? " is empty" : " says <b>" + esc(got) + "</b>") + ": something you asked for does not exist. Print what you have, inside the loop: <code>console.log(" + listName + "[i]);</code> Which fields are there?";
+    if (/object Object/.test(got)) return "Card " + (j + 1) + " says <b>[object Object]</b>: a whole " + thing + " turned into text. Which field do you want? Print it to see.";
+    if (j > 0 && k.length > 1 && k.every(function(c){ return c.all === k[0].all; })) return "Every card says the same: <b>" + esc(k[0].all) + "</b>. Nothing is red, so print: what is <code>i</code> each round, and which " + thing + " does the card ask for?";
+    if (got && want[j].indexOf(got) === 0) return "Card " + (j + 1) + " says <b>" + esc(got) + "</b>. Something is missing at the end: it should say <b>" + esc(want[j]) + "</b>.";
+    return "Card " + (j + 1) + " says <b>" + esc(got || "nothing") + "</b>. It should say <b>" + esc(want[j]) + "</b>.";
+  }
+  return "";
+}
+function cardsCheck(r, a, src, want, altWant, boxId, one, listName){
+  var p = cardsProblem(r, want, boxId, one, src, listName);
+  if (p) return p;
+  if (cardsProblem(a, altWant, boxId, one, src, listName)) return NOT_TYPED();
+  return "";
+}
+// Task 3: every excuse printed as a whole object, one line each.
+function printProblem(run, list){
+  var objs = run.logs.filter(function(l){ return !/^\[/.test(l) && /excuse: "/.test(l); });
+  var each = list.filter(function(e){ return objs.some(function(l){ return l.indexOf('excuse: "' + e.excuse + '"') >= 0; }); }).length;
+  if (each === list.length) return "";
+  if (!run.logs.length) return notThereYet(run, "") || "Nothing printed yet. Put <code>console.log(excuses[i]);</code> inside the loop's <code>{ }</code>.";
+  if (!objs.length && run.logs.some(function(l){ return /^\[/.test(l); })) return "That is the whole list in one go. Print one excuse each round: <code>excuses[i]</code>, inside the loop.";
+  if (!objs.length && run.logs.some(function(l){ return list.some(function(e){ return l.indexOf(e.excuse) >= 0; }); })) return "You printed the text only. Print the whole excuse, <code>excuses[i]</code>, to see all its fields.";
+  if (each > 0) return "Only " + each + " of " + list.length + " excuses were printed. Is the <code>console.log</code> inside the loop?";
+  return "The excuses are not in the Console yet. Print each one inside the loop: <code>console.log(excuses[i]);</code>";
+}
+
+/* ====================================================================
+   The slides: why, before any code. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+// Mono text in coloured pieces: parts = [[text, colour, bold], ...]
+function TS(x, y, parts, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" font-family="ui-monospace,Consolas,monospace" xml:space="preserve">' + parts.map(function(p){ return '<tspan fill="' + (p[1] || "#e5e7eb") + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + label + '">' + inner + '</svg>'; }
+var DARK = "#15181f", KEYC = "#9cdcfe", STRC = "#ce9178", KWC = "#569cd6", AWC = "#c586c0", FNC = "#dcdcaa", DIM = "#9aa0a6", CMC = "#6a9955";
+
+function cut(s, n){ return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+function CARD(x, y, w, txt, bad){ return R(x, y, w, 28, { rx: 7, fill: bad ? "#fff0f0" : "#fffaf0", stroke: bad ? "#d93025" : "#f0a500", sw: 2 }) + T(x + 10, y + 19, esc(txt), { size: 12, fill: bad ? "#d93025" : INK }); }
+// Code lines on a dark box, with a label on the right: [[parts], label, label colour]
+function CODE(L, y0){ var s = ""; L.forEach(function(l, i){ var y = y0 + i * 22; s += TS(20, y, l[0], 12.5); if (l[1]) s += T(620, y, "← " + l[1], { anchor: "end", size: 12, bold: true, fill: l[2] || "#86efac" }); }); return s; }
+
+var ART = {
+  cards: function(){
+    var s = T(16, 18, "The server sends a list", { bold: true, fill: MUT }) + T(340, 18, "The page makes one card for each", { bold: true, fill: A });
+    s += R(8, 28, 290, 140, { fill: DARK, stroke: DARK });
+    [[["["]], [["  { "], ["excuse", KEYC], [": "], ['"Nálam működött."', STRC], [" },"]], [["  { "], ["excuse", KEYC], [": "], ['"A kutyám megette."', STRC], [" },"]], [["  { "], ["excuse", KEYC], [": "], ['"Edzésem volt."', STRC], [" },"]], [["  …"]], [["]"]]].forEach(function(p, i){ s += TS(20, 50 + i * 21, p, 12); });
+    s += ARROW(304, 98, 328, 98, A);
+    s += R(334, 28, 298, 140, { fill: "#fff", stroke: "#cfd6df" });
+    ["Nálam működött.", "A kutyám megette.", "Edzésem volt."].forEach(function(t, i){ s += CARD(348, 40 + i * 36, 270, t); });
+    s += T(483, 160, "…", { anchor: "middle", size: 14, bold: true, fill: MUT });
+    s += R(8, 180, 624, 40, { rx: 6, fill: "#eef4ff", stroke: "#c7dafd" }) + T(320, 205, "Exam in May, frontend part (15 points): a list from a server, as cards.", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(228, "Left: the server sends a list of excuses. Right: the page shows one card for each excuse. At the exam the frontend part, 15 points, is exactly this", s);
+  },
+  recipe: function(){
+    var L = [
+      [[["const ", KWC], ["address", KEYC], [" = "], ['"' + EXCUSES_URL + '"', STRC], [";"]], ""],
+      [[[""]], ""],
+      [[["async ", KWC], ["function ", KWC], ["load", FNC], ["() {"]], "a box for the waiting"],
+      [[["  const ", KWC], ["response", KEYC], [" = "], ["await ", AWC, 1], ["fetch", FNC], ["(address);"]], "ask the server, and wait"],
+      [[["  const ", KWC], ["excuses", KEYC], [" = "], ["await ", AWC, 1], ["response."], ["json", FNC], ["();"]], "unpack it into a list"],
+      [[[""]], ""],
+      [[["  // your code goes here", CMC]], "today you write here", "#fcd34d"],
+      [[["}"]], ""],
+      [[[""]], ""],
+      [[["load", FNC], ["();"]], "start it"]
+    ];
+    return svg(250, "The recipe, already in script.js: const address is the excuses address; async function load is a box for the waiting; await fetch asks the server and waits; await response.json unpacks the answer into a list; your code goes where the comment is; load() starts it", R(8, 8, 624, 234, { fill: DARK, stroke: DARK }) + CODE(L, 32));
+  },
+  onecard: function(){
+    var L = [
+      [[["const ", KWC], ["box", KEYC], [" = document."], ["getElementById", FNC], ["("], ['"excuses"', STRC], [");"]], "where the cards go"],
+      [[[""]], ""],
+      [[["const ", KWC], ["card", KEYC], [" = document."], ["createElement", FNC], ["("], ['"div"', STRC], [");"]], "1. make it"],
+      [[["card.classList."], ["add", FNC], ["("], ['"card"', STRC], [");"]], "2. the look"],
+      [[["card.textContent = excuses["], ["0", AWC, 1], ["].excuse;"]], "3. fill it"],
+      [[["box."], ["appendChild", FNC], ["(card);"]], "4. put it on the page"]
+    ];
+    var s = R(8, 8, 624, 148, { fill: DARK, stroke: DARK }) + CODE(L, 32);
+    s += T(20, 197, "excuses[0].excuse", { mono: true, size: 13, bold: true, fill: A });
+    s += ARROW(170, 192, 226, 192, A) + CARD(236, 178, 300, EXCUSES[0].excuse);
+    s += T(320, 236, "Four lines, and the first excuse is a card on the page.", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(246, "Four lines make one card: getElementById finds the box, createElement makes a div, classList.add gives it the look, textContent fills it with excuses[0].excuse, appendChild puts it on the page", s);
+  },
+  loop: function(){
+    var L = [
+      [[["for ", AWC], ["("], ["let ", KWC], ["i", KEYC], [" = 0; i < excuses.length; i++) {"]], "once for each excuse"],
+      [[["  const ", KWC], ["card", KEYC], [" = document."], ["createElement", FNC], ["("], ['"div"', STRC], [");"]], ""],
+      [[["  card.classList."], ["add", FNC], ["("], ['"card"', STRC], [");"]], ""],
+      [[["  card.textContent = excuses["], ["i", AWC, 1], ["].excuse;"]], "0 became i"],
+      [[["  box."], ["appendChild", FNC], ["(card);"]], ""],
+      [[["}"]], ""]
+    ];
+    var s = R(8, 8, 624, 148, { fill: DARK, stroke: DARK }) + CODE(L, 32), y = 170;
+    [[0, EXCUSES[0].excuse], [1, EXCUSES[1].excuse], [2, EXCUSES[2].excuse], null, [15, EXCUSES[15].excuse]].forEach(function(row){
+      if (!row) { s += T(20, y + 14, "…", { mono: true, size: 13, fill: MUT }); y += 24; return; }
+      s += T(20, y + 19, "i = " + row[0], { mono: true, size: 13 }) + T(84, y + 19, "excuses[" + row[0] + "]", { mono: true, size: 13, fill: A }) + ARROW(184, y + 14, 216, y + 14) + CARD(224, y, 408, cut(row[1], 60));
+      y += 34;
+    });
+    s += T(20, y + 16, "i = 16   stop: 16 is not less than excuses.length", { mono: true, size: 13, fill: MUT });
+    return svg(y + 28, "The loop runs the same four lines once for each excuse: i = 0 makes card 1, i = 1 card 2, up to i = 15, card 16; at i = 16 it stops", s);
+  },
+  print: function(){
+    var steps = [["Predict", 8, 80], ["Run", 102, 56], ["Look", 172, 62], ["Print it ★", 248, 110, 1], ["Change one thing", 372, 146]], s = "";
+    steps.forEach(function(st, i){
+      var nw = st[3];
+      s += R(st[1], 8, st[2], 30, { rx: 15, fill: nw ? "#dcfce7" : "#eef3fc", stroke: nw ? GRN : "#c7d2fe", sw: 2 }) + T(st[1] + st[2] / 2, 28, st[0], { anchor: "middle", bold: true, size: 13, fill: nw ? GRN : A });
+      if (i < steps.length - 1) s += ARROW(st[1] + st[2] + 2, 23, steps[i + 1][1] - 2, 23);
+    });
+    s += T(532, 29, "↺ again", { bold: true, size: 13, fill: MUT });
+    s += T(16, 66, "Your page", { bold: true, fill: MUT, size: 12 });
+    s += CARD(8, 74, 150, "", true) + CARD(8, 108, 150, "", true) + T(83, 156, "Empty. Nothing is red.", { anchor: "middle", size: 12, fill: MUT });
+    s += R(176, 58, 456, 70, { fill: DARK, stroke: DARK });
+    s += TS(190, 86, [["console", KEYC], ["."], ["log", FNC], ["(excuses[i]);"]], 13) + T(620, 86, "← today's new step", { anchor: "end", size: 12, bold: true, fill: "#86efac" });
+    s += TS(190, 112, [["card.textContent = excuses[i]."], ["text", "#f87171", 1], [";"]], 13);
+    s += R(176, 140, 456, 56, { rx: 6, fill: "#fff", stroke: "#cfd6df" }) + T(188, 157, "Console", { size: 11, fill: MUT });
+    s += TS(188, 182, [["{id: 1, ", INK], ["excuse", GRN, 1], [': "A laptopom…", believability: 7, …}', INK]], 12);
+    s += T(320, 228, "There is no text field. It is called excuse: excuses[i].excuse", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(240, "The programmer's loop: predict, run, look, print it (new today), change one thing, again. Example: the cards are empty and nothing is red; console.log(excuses[i]) shows the excuse has a field called excuse, not text", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Every app is a list of cards", art: "cards",
+    body: "Wolt, Netflix, Instagram: the screen is cards, and nobody typed them. The server sends a list, and the page makes one card for each item.<br><br>The frontend part of the exam in May (15 points) is exactly this. So is your project.",
+    say: "Ask how many restaurants Wolt shows in Győr, and who typed them in. (Nobody. One card, written once, used for every restaurant.)" },
+  { title: "The recipe brings the list", art: "recipe",
+    body: "This is already in your <span class=\"mono\">script.js</span>. Don't change it. After the two <b>await</b> lines, <span class=\"mono\">excuses</span> is a normal list, like the ones you typed in your tests.<br><br>Today you only write where it says <span class=\"mono\">// your code goes here</span>.",
+    say: "If someone asks what await does: it waits for the server. That is enough for today." },
+  { title: "One card, four steps", art: "onecard",
+    body: "Make it, give it the look, fill it, put it on the page.<br><br><span class=\"mono\">excuses[0]</span> is the first excuse in the list, and <span class=\"mono\">.excuse</span> is its text.",
+    say: "Read the four green labels aloud. Ask: which line puts it on the page? What happens without it? (The card exists, but nobody sees it.)" },
+  { title: "Every card: the loop", art: "loop",
+    body: "The same four steps, once for each excuse. The only change: <b>0 becomes i</b>. The loop counts i from 0 to 15 and makes one card each round.<br><br>16 excuses, 16 cards, and no excuse typed by hand.",
+    say: "Walk the table aloud: i = 0, card 1; i = 1, card 2. Ask: why does it stop at 16?" },
+  { title: "When it does not work: print it", art: "print",
+    body: "Programmers don't guess. They go round the same loop until the page shows what they predicted. Today's new step is <b>Print</b>: <span class=\"mono\">console.log(excuses[i])</span> inside the loop shows what you really have.<br><br>Then: the practice. Every task starts with <b>Predict first</b>. Save with <b>Ctrl+S</b>.",
+    say: "This is the habit for the whole year. Before you help anyone, ask: what did you predict, and what did you print? Task 5 is a page that is wrong with nothing red." }
+];
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+var RECIPE =
+  'const address = "' + EXCUSES_URL + '";\n\n' +
+  'async function load() {\n' +
+  '  const response = await fetch(address);\n' +
+  '  const excuses = await response.json();\n\n' +
+  '  // your code goes here\n' +
+  '}\n\n' +
+  'load();\n';
+function withBody(body){ return RECIPE.replace("  // your code goes here\n", body); }
+var ONE = '  const box = document.getElementById("excuses");\n  const card = document.createElement("div");\n  card.classList.add("card");\n  card.textContent = excuses[0].excuse;\n  box.appendChild(card);\n';
+function LOOP(text, first){ return '  const box = document.getElementById("excuses");\n\n  for (let i = 0; i < excuses.length; i++) {\n' + (first || "") + '    const card = document.createElement("div");\n    card.classList.add("card");\n    card.textContent = ' + text + ';\n    box.appendChild(card);\n  }\n'; }
+var SCORE = 'excuses[i].excuse + " (" + excuses[i].believability + "/10)"';
+function texts(list){ return list.map(function(e){ return e.excuse; }); }
+function scored(list){ return list.map(function(e){ return e.excuse + " (" + e.believability + "/10)"; }); }
+function catLines(list){ return list.map(function(c){ return c.name + ", " + c.hobbies.length + " hobbies"; }); }
+function P(q){ return '<span class="predict">Predict first: ' + q + '</span> '; }
+
+var LESSONS = [
+  { title: "One card", page: "excuses",
+    do: P("what will the card say?") + "Make one card for the first excuse: a <code>div</code> with the class <code>card</code>, in <code>&lt;div id=\"excuses\"&gt;</code>.",
+    sub: "The four steps are on slide 3 (<b>Slides</b>, top left). The recipe is already here: write under <code>// your code goes here</code>.",
+    start: RECIPE,
+    hints: ["The four lines are on slide 3. Start with the box: <code>const box = document.getElementById(\"excuses\");</code>", "Make the card and give it the look: <code>const card = document.createElement(\"div\");</code> and <code>card.classList.add(\"card\");</code>", "Fill it and put it on the page: <code>card.textContent = excuses[0].excuse;</code> and <code>box.appendChild(card);</code>"],
+    solution: withBody(ONE),
+    check: function(r, a, src){ return cardsCheck(r, a, src, texts(EXCUSES).slice(0, 1), texts(ALT_EXCUSES).slice(0, 1), "excuses", true, "excuses"); },
+    after: "The card says <b>" + esc(EXCUSES[0].excuse) + "</b>. Was that your prediction? <code>excuses[0]</code> is always the first excuse in the list." },
+
+  { title: "Every excuse", page: "excuses",
+    do: P("how many cards will there be?") + "Now a card for <b>every</b> excuse, with no excuse typed by hand.",
+    sub: "The loop is on slide 4. Your one card from task 1 is here to start from.",
+    start: withBody(ONE),
+    hints: ["The loop is on slide 4: <code>for (let i = 0; i &lt; excuses.length; i++) { }</code>", "The box line stays above the loop. The other four lines go inside the loop's <code>{ }</code>.", "Inside the loop, <code>excuses[0]</code> becomes <code>excuses[i]</code>."],
+    solution: withBody(LOOP("excuses[i].excuse")),
+    check: function(r, a, src){ return cardsCheck(r, a, src, texts(EXCUSES), texts(ALT_EXCUSES), "excuses", false, "excuses"); },
+    after: "16 cards, one for each round of the loop. You typed no excuse, so the same code works for any list the server sends." },
+
+  { title: "Print it", page: "excuses",
+    do: P("how many lines will the Console show?") + "Inside the loop, print each excuse: <code>console.log(excuses[i]);</code> Then open a line in the Console: which field is a number from 1 to 10?",
+    sub: "This is what programmers do when a page is wrong and nothing is red: print what you really have.",
+    start: withBody(LOOP("excuses[i].excuse")),
+    hints: ["Put the line inside the loop's <code>{ }</code>, so it runs once each round.", "Print the whole excuse, <code>excuses[i]</code>, not only its text: you want to see every field.", "<code>console.log(excuses[i]);</code> as the first line inside the loop."],
+    solution: withBody(LOOP("excuses[i].excuse", "    console.log(excuses[i]);\n")),
+    check: function(r, a, src){
+      var m = printProblem(r, EXCUSES);
+      if (m) return m;
+      if (printProblem(a, ALT_EXCUSES)) return NOT_TYPED();
+      return cardsCheck(r, a, src, texts(EXCUSES), texts(ALT_EXCUSES), "excuses", false, "excuses");
+    },
+    after: "16 lines, one each round. The number from 1 to 10 is <code>believability</code>: you need it in task 4." },
+
+  { title: "The excuse and its score", page: "excuses", alsoDone: [0, 1, 2],
+    do: P("what will the third card say?") + "Every card shows the excuse and its score, like <b>Nálam működött. (6/10)</b>.",
+    sub: "<b>Confident? Start here.</b> If this one passes, tasks 1 to 3 count as done. Only the recipe is here: you write the whole loop yourself.",
+    start: RECIPE,
+    hints: ["It is the loop from task 2: the box above it, the four card lines inside it.", "The score is in the field <code>believability</code>. Not sure? Print one excuse.", "<code>card.textContent = excuses[i].excuse + \" (\" + excuses[i].believability + \"/10)\";</code>"],
+    solution: withBody(LOOP(SCORE)),
+    check: function(r, a, src){ return cardsCheck(r, a, src, scored(EXCUSES), scored(ALT_EXCUSES), "excuses", false, "excuses"); },
+    after: "The third card says <b>Nálam működött. (6/10)</b>. Data from a server, one card per item, two fields on each: that is the frontend task of the exam." },
+
+  { title: "A teammate's page", page: "excuses",
+    do: P("what should the second card say?") + "Your teammate's page shows 16 cards, and every one says the same excuse. Nothing is red. Find out why by printing, then fix it.",
+    sub: "Save first and look at the page. Then print inside the loop.",
+    start: withBody(LOOP('excuses[0].excuse + " (" + excuses[0].believability + "/10)"')),
+    hints: ["Print inside the loop: <code>console.log(i, excuses[i].excuse);</code> Does <code>i</code> change each round?", "Now look at the card line. Which excuse does it ask for? Look at the number in the <code>[ ]</code>.", "<code>excuses[0]</code> is always the first one. Inside the loop it must be <code>excuses[i]</code>, in both places."],
+    solution: withBody(LOOP(SCORE)),
+    check: function(r, a, src){ return cardsCheck(r, a, src, scored(EXCUSES), scored(ALT_EXCUSES), "excuses", false, "excuses"); },
+    after: "<code>i</code> went from 0 to 15, but the card always asked for <code>[0]</code>. Nothing was red, so only printing could show it." },
+
+  { title: "Extra A: heard it", page: "excuses",
+    do: "Extra, no hints: the excuses the teacher has already heard get the class <code>heard</code> as well. <code>style.css</code> turns it into a red HEARD IT stamp.",
+    sub: "Print one excuse to find the field that says it. No hints in this one.",
+    start: withBody(LOOP(SCORE)),
+    hints: [],
+    solution: withBody(LOOP(SCORE).replace("    box.appendChild(card);\n", "    if (excuses[i].teacherHeardIt) {\n      card.classList.add(\"heard\");\n    }\n    box.appendChild(card);\n")),
+    flags: function(r, a, src){
+      var p = cardsProblem(r, scored(EXCUSES), "excuses", false, src, "excuses"), f1 = !p;
+      var k = r.tree ? r.tree.kids : [], wrong = -1;
+      if (f1) for (var j = 0; j < k.length; j++) if ((k[j].cls.indexOf("heard") >= 0) !== !!EXCUSES[j].teacherHeardIt) { wrong = j; break; }
+      var f2 = f1 && wrong < 0;
+      var ak = a.tree ? a.tree.kids : [];
+      var f3 = f2 && !cardsProblem(a, scored(ALT_EXCUSES), "excuses", false, src, "excuses") && ak.every(function(n, j){ return (n.cls.indexOf("heard") >= 0) === !!ALT_EXCUSES[j].teacherHeardIt; });
+      var msg = "";
+      if (!f1) msg = p;
+      else if (!f2) msg = "Card " + (wrong + 1) + (EXCUSES[wrong].teacherHeardIt ? " should have the stamp: the teacher has heard that one." : " should not have the stamp: the teacher has not heard that one yet.");
+      else if (!f3) msg = NOT_TYPED();
+      return { flags: [f1, f2, f3], msg: msg };
+    },
+    after: "An if inside the loop: each card is checked on its own. That is how a page shows some items differently." },
+
+  { title: "Extra B: same code, other list", page: "cats",
+    do: "Extra, no hints: make your code work for the cats. One card per cat, like <b>Bajusz, 2 hobbies</b>.",
+    sub: "The address: <a href=\"" + CATS_URL + "\" target=\"_blank\" rel=\"noopener\">" + CATS_URL + "</a>. <code>index.html</code> is different here: look at it first. Print the list before you use it.",
+    start: withBody(LOOP(SCORE)),
+    hints: [],
+    solution: 'const address = "' + CATS_URL + '";\n\nasync function load() {\n  const response = await fetch(address);\n  const cats = await response.json();\n  const box = document.getElementById("cats");\n\n  for (let i = 0; i < cats.length; i++) {\n    const card = document.createElement("div");\n    card.classList.add("card");\n    card.textContent = cats[i].name + ", " + cats[i].hobbies.length + " hobbies";\n    box.appendChild(card);\n  }\n}\n\nload();\n',
+    flags: function(r, a, src){
+      var p = cardsProblem(r, catLines(CATS), "cats", false, src, "cats");
+      var f1 = !!r.tree && r.tree.kids.length > 0, f2 = !p, f3 = f2 && !cardsProblem(a, catLines(ALT_CATS), "cats", false, src, "cats");
+      return { flags: [f1, f2, f3], msg: !f2 ? p : !f3 ? NOT_TYPED() : "" };
+    },
+    after: "Same loop, other list. You only had to print it to find the field names: the loop does not care what is in the list." }
+];
+LESSONS.forEach(function(l){ l.edit = "script.js"; });
+
+// English only for now (MVP step 2). The Hungarian lists stand in as the English ones until step 3.
+var PRIMER_HU = PRIMER, LESSONS_HU = LESSONS;
+function LX(i){ return LESSONS[i]; }
+
+
+/* ====================================================================
+   Small helpers
+   ==================================================================== */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* ---- syntax colours, VS Code Dark Modern ---- */
+var KW = { async:"k", await:"c", const:"k", let:"k", var:"k", true:"k", false:"k", null:"k", undefined:"k", function:"k", new:"k", for:"c", if:"c", else:"c", return:"c", while:"c" };
+function hlJS(line){
+  var re = /(\/\/.*$)|("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\sA-Za-z_$\d"']+)/g, out = "", m, prevDot = false;
+  while ((m = re.exec(line))) {
+    if (m[1]) out += '<span class="cm">' + esc(m[1]) + '</span>';
+    else if (m[2]) out += '<span class="s">' + esc(m[2]) + '</span>';
+    else if (m[3]) out += '<span class="num">' + m[3] + '</span>';
+    else if (m[4]) {
+      var w = m[4], rest = line.slice(re.lastIndex);
+      if (KW[w] && !prevDot) out += '<span class="' + KW[w] + '">' + w + '</span>';
+      else if (/^\s*\(/.test(rest)) out += '<span class="f">' + w + '</span>';
+      else out += '<span class="v">' + w + '</span>';
+    }
+    else if (m[5]) out += m[5];
+    else out += esc(m[6]);
+    if (!m[5]) prevDot = !!(m[6] && /\.$/.test(m[6]));
+  }
+  return out;
+}
+// JSON: keys blue, string values orange.
+function hlJSON(line){
+  return hlJS(line).replace(/<span class="s">("(?:[^"\\<]|\\.)*")<\/span>(\s*:)/g, '<span class="v">$1</span>$2');
+}
+function hlHTML(line){
+  return esc(line).replace(/(&lt;\/?)([\w!-]+)([^&]*?)(\/?&gt;)/g, function(_, a, t, attrs, b){
+    return '<span class="tgc">' + a + t + '</span>' + attrs.replace(/([\w-]+)(=)("[^"]*")/g, '<span class="at">$1</span>$2<span class="s">$3</span>') + '<span class="tgc">' + b + '</span>';
+  });
+}
+function hlCSS(line){
+  if (/^\s+[\w-]+\s*:/.test(line)) return line.replace(/^(\s+)([\w-]+)(\s*:)(.*)$/, function(_, sp, p, c, v){ return sp + '<span class="pr">' + p + '</span>' + c + '<span class="s">' + esc(v) + '</span>'; });
+  if (/\{\s*$/.test(line)) return '<span class="sel">' + esc(line.replace(/\s*\{\s*$/, "")) + '</span> {';
+  return esc(line);
+}
+function hlFor(name){ return /\.html$/.test(name) ? hlHTML : /\.css$/.test(name) ? hlCSS : /\.json$/.test(name) ? hlJSON : hlJS; }
+
+/* ---- the project's other files, shown read-only ---- */
+function indexHtml(les){
+  var page = PAGES[les.page];
+  var scripts = '  <script src="script.js"><\/script>\n';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>' + page.title + '</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n' +
+    page.body.split("\n").map(function(l){ return "  " + l; }).join("\n") + '\n\n' + scripts + '</body>\n</html>\n';
+}
+function styleCss(page){
+  return page.css.split("}").filter(function(r){ return r.trim(); }).map(function(r){
+    var p = r.split("{"), decls = p.slice(1).join("{").split(";").filter(function(d){ return d.trim(); });
+    return p[0].trim().replace(/,/g, ", ") + " {\n" + decls.map(function(d){ return "  " + d.trim().replace(/:/, ": ") + ";"; }).join("\n") + "\n}";
+  }).join("\n\n") + "\n";
+}
+function EDIT(){ return L().edit; }
+function fileText(name){
+  var les = L();
+  if (name === les.edit) return editor.value;
+  if (name === "index.html") return indexHtml(les);
+  if (name === "style.css") return styleCss(PAGES[les.page]);
+  if (name === "script.js") return les.given;
+  if (name === "solution") return les.solution;
+  return "";
+}
+function filesFor(les){ return ["index.html", "script.js", "style.css"]; }
+function ext(n){ return n.split(".").pop(); }
+function fi(n){ var e = ext(n); return '<span class="fi ' + e + '">' + (e === "js" ? "JS" : e === "html" ? "&lt;&gt;" : e === "json" ? "{}" : "#") + '</span>'; }
+function solName(){ return "solution." + ext(EDIT()); }
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "cards-from-the-server-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], code: {}, buf: {}, primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, saved: {}, side: false }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+// ?prep: start clean every time, never save, open each task with its solution run.
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var editor = $("code");
+var UI = { open: [], active: "", note: "" };
+var last = null, primerIdx = 0, showSay = PREP;
+
+function L(){ return LESSONS[S.i]; }
+function savedCode(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+function bufferCode(i){ return S.buf[i] !== undefined ? S.buf[i] : savedCode(i); }
+function dirty(){ return editor.value !== savedCode(S.i); }
+
+/* ====================================================================
+   Editor
+   ==================================================================== */
+
+function linesHtml(text, hl, marks){
+  marks = marks || {};
+  return text.split("\n").map(function(l, n){ return '<div' + (marks[n + 1] ? ' class="' + marks[n + 1] + '"' : "") + '>' + (hl(l) || " ") + '</div>'; }).join("");
+}
+function gutterHtml(count, cur, marks){
+  marks = marks || {};
+  var h = "";
+  for (var n = 1; n <= count; n++) h += '<div class="' + (n === cur ? "cur " : "") + (marks[n] || "") + '">' + n + '</div>';
+  return h;
+}
+function caretPos(){
+  var before = editor.value.slice(0, editor.selectionStart).split("\n");
+  return { ln: before.length, col: before[before.length - 1].length + 1 };
+}
+function sizeEditor(){
+  var lines = editor.value.split("\n");
+  var longest = lines.reduce(function(m, l){ return Math.max(m, l.length); }, 0);
+  editor.style.width = "calc(" + (longest + 4) + "ch + 4px)";
+  editor.parentNode.style.minWidth = "calc(" + (longest + 4) + "ch + 4px)";
+}
+function paintEditor(){
+  var marks = solutionMarks().mine;
+  $("hl-edit").innerHTML = linesHtml(editor.value, hlFor(EDIT()), marks);
+  var p = caretPos();
+  $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, marks);
+  sizeEditor();
+  if (UI.active === EDIT()) $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col;
+}
+
+// Line diff (LCS) on normalised lines: trimmed, no trailing ;, comments and blanks ignored.
+function norm(l){ return l.trim().replace(/;\s*$/, "").replace(/\s+/g, " "); }
+function codeLines(text){ var out = []; text.split("\n").forEach(function(l, n){ var t = norm(l); if (t && t.indexOf("//") !== 0) out.push({ t: t, n: n + 1 }); }); return out; }
+function lcs(A, B){
+  var n = A.length, m = B.length, d = [], i, j;
+  for (i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); }
+  for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) d[i][j] = A[i].t === B[j].t ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  var pairs = []; i = 0; j = 0;
+  while (i < n && j < m) { if (A[i].t === B[j].t) { pairs.push([i, j]); i++; j++; } else if (d[i + 1][j] > d[i][j + 1]) i++; else j++; }
+  return pairs;
+}
+// Which solution lines are new (green), which of them the student has typed (✓), which of the student's lines are in the way (red).
+function solutionMarks(){
+  var res = { sol: {}, mine: {}, todo: 0, typed: 0, del: 0 };
+  if (!S.sol[S.i]) return res;
+  var st = codeLines(L().start), so = codeLines(L().solution), mi = codeLines(editor.value);
+  var keep = {}; lcs(st, so).forEach(function(p){ keep[p[1]] = true; });
+  var solHit = {}, mineHit = {}; lcs(mi, so).forEach(function(p){ solHit[p[1]] = true; mineHit[p[0]] = p[1]; });
+  so.forEach(function(l, j){
+    if (keep[j]) return;
+    res.todo++;
+    if (solHit[j]) { res.typed++; res.sol[l.n] = "ok"; } else res.sol[l.n] = "add";
+  });
+  mi.forEach(function(l, k){
+    if (mineHit[k] === undefined) { res.mine[l.n] = "del"; res.del++; }
+    else if (!keep[mineHit[k]]) res.mine[l.n] = "ok";
+  });
+  return res;
+}
+function solutionSub(){
+  var m = solutionMarks();
+  if (lang === "hu") return "A <code>" + solName() + "</code> zöld sorait gépeld be a <code>" + EDIT() + "</code> fájlodba" + (m.del ? ", a piros soraidat pedig töröld vagy tedd át máshova" : "") + ", aztán ments. A beillesztés ki van kapcsolva. (" + m.typed + " / " + m.todo + " begépelve" + (m.del ? ", " + m.del + " piros" : "") + ")";
+  return "Type the green lines from <code>" + solName() + "</code> into your <code>" + EDIT() + "</code>" + (m.del ? ", and delete or move your red lines" : "") + ", then save. Pasting is off. (" + m.typed + " of " + m.todo + " typed" + (m.del ? ", " + m.del + " red" : "") + ")";
+}
+
+editor.addEventListener("input", function(){
+  S.buf[S.i] = editor.value; save();
+  paintEditor(); renderTabs(); renderSolution(); renderStripNote();
+});
+["click", "keyup", "focus"].forEach(function(ev){ editor.addEventListener(ev, function(){ var p = caretPos(); $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, solutionMarks().mine); $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col; }); });
+editor.addEventListener("keydown", function(e){
+  var v = editor.value, a = editor.selectionStart, b = editor.selectionEnd;
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S" || e.key === "Enter")) { e.preventDefault(); saveAndRun(); return; }
+  if (e.key === "Tab" && e.shiftKey) { e.preventDefault(); eachLine(function(l){ return l.replace(/^ {1,2}/, ""); }); return; }
+  if (e.key === "Tab" && a !== b && v.slice(a, b).indexOf("\n") >= 0) { e.preventDefault(); eachLine(function(l){ return "  " + l; }); return; }
+  if (e.key === "Tab") { e.preventDefault(); insert("  "); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "/") { e.preventDefault(); var all = selLines().every(function(l){ return !l.trim() || /^\s*\/\//.test(l); }); eachLine(function(l){ return all ? l.replace(/^(\s*)\/\/ ?/, "$1") : (l.trim() ? l.replace(/^(\s*)/, "$1// ") : l); }); return; }
+  if ((e.key === "}" || e.key === "]") && a === b) { var ls = v.lastIndexOf("\n", a - 1) + 1; if (/^\s{2,}$/.test(v.slice(ls, a))) { e.preventDefault(); editor.selectionStart = a - 2; insert(e.key); return; } }
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    var lineStart = v.lastIndexOf("\n", a - 1) + 1, indent = /^\s*/.exec(v.slice(lineStart, a))[0];
+    if (/[{[(]\s*$/.test(v.slice(lineStart, a))) {
+      if (/^\s*[}\])]/.test(v.slice(b))) { insert("\n" + indent + "  " + "\n" + indent, indent.length + 3); return; }
+      indent += "  ";
+    }
+    insert("\n" + indent);
+  }
+});
+function selLines(){ var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length; return v.slice(s, e).split("\n"); }
+function eachLine(fn){
+  var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length;
+  var block = v.slice(s, e).split("\n").map(fn).join("\n");
+  editor.selectionStart = s; editor.selectionEnd = e; insert(block);
+  editor.selectionStart = s; editor.selectionEnd = s + block.length;
+}
+function insert(text, caretAt){
+  // execCommand keeps Ctrl+Z working.
+  editor.focus();
+  if (!document.execCommand("insertText", false, text)) {
+    var a = editor.selectionStart; editor.value = editor.value.slice(0, a) + text + editor.value.slice(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = a + text.length;
+    editor.dispatchEvent(new Event("input"));
+  }
+  if (caretAt !== undefined) { var p = editor.selectionStart - text.length + caretAt; editor.selectionStart = editor.selectionEnd = p; }
+}
+function blockIfSolution(e){
+  if (!S.sol[S.i]) return;
+  e.preventDefault();
+  UI.note = tr("Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.", "Amíg nyitva van a megoldás, a beillesztés ki van kapcsolva. A zöld sorokat gépeld be magad: így marad meg.");
+  renderStripNote();
+}
+editor.addEventListener("paste", blockIfSolution);
+editor.addEventListener("drop", blockIfSolution);
+$("sc-sol").addEventListener("copy", function(e){ e.preventDefault(); });
+$("sc-view").setAttribute("tabindex", "0");
+$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + tr(" is read-only in this task. Your work goes in " + EDIT() + ".", ": ebben a feladatban csak olvasható. A munkád a " + EDIT() + " fájlba megy."); renderStripNote(); } });
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
+});
+
+/* ====================================================================
+   VS Code: Explorer, tabs, read-only views
+   ==================================================================== */
+
+function toggleSide(){ S.side = !S.side; save(); renderSide(); }
+$("act-ex").onclick = toggleSide;
+function renderSide(){
+  $("side").classList.toggle("hidden", !S.side);
+  $("act-ex").classList.toggle("on", S.side);
+  $("side").innerHTML = '<div class="hdr">EXPLORER</div><div class="folder">⌄ DATA-FROM-A-SERVER</div>' +
+    filesFor(L()).map(function(f){ return '<div class="file' + (f === UI.active ? " sel" : "") + '" data-file="' + f + '">' + fi(f) + '<span>' + f + '</span>' + (f === EDIT() && dirty() ? '<span class="m">●</span>' : "") + '</div>'; }).join("");
+}
+$("side").addEventListener("click", function(e){ var f = e.target.closest("[data-file]"); if (f) openFile(f.dataset.file); });
+
+function openFile(name){
+  if (UI.open.indexOf(name) < 0) UI.open.push(name);
+  UI.active = name;
+  renderEditorArea();
+  if (name === EDIT()) editor.focus();
+}
+function closeFile(name){
+  UI.open = UI.open.filter(function(n){ return n !== name; });
+  if (!UI.open.length) UI.open = [EDIT()];
+  if (UI.active === name) UI.active = UI.open[UI.open.length - 1];
+  renderEditorArea();
+}
+function renderTabs(){
+  $("tabs1").innerHTML = UI.open.map(function(n){
+    var mod = n === EDIT() && dirty(), ro = n !== EDIT();
+    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? tr(" (read-only in this task)", " (ebben a feladatban csak olvasható)") : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
+      '<span class="x" data-close="' + n + '">' + (mod ? "●" : "×") + '</span></div>';
+  }).join("");
+  renderSide();
+}
+$("tabs1").addEventListener("click", function(e){
+  var x = e.target.closest("[data-close]");
+  if (x) { if (x.dataset.close === EDIT() && dirty()) { UI.note = tr(EDIT() + " has unsaved changes. Save with Ctrl+S first.", "A " + EDIT() + " fájlban mentetlen változások vannak. Előbb ments Ctrl+S-sel."); renderStripNote(); return; } closeFile(x.dataset.close); return; }
+  var t = e.target.closest("[data-tab]"); if (t) openFile(t.dataset.tab);
+});
+var LANG = { js: "{} JavaScript", json: "{} JSON", html: "<> HTML", css: "# CSS" };
+function renderEditorArea(){
+  var isEdit = UI.active === EDIT();
+  $("sc-edit").classList.toggle("hidden", !isEdit);
+  $("sc-view").classList.toggle("hidden", isEdit);
+  $("crumbs1").textContent = UI.active + " › …";
+  editor.setAttribute("aria-label", EDIT());
+  $("st-lang").textContent = LANG[ext(UI.active)];
+  if (!isEdit) {
+    var t = fileText(UI.active);
+    $("hl-view").innerHTML = linesHtml(t, hlFor(UI.active));
+    $("gut-view").innerHTML = gutterHtml(t.split("\n").length, 0);
+    $("st-ln").textContent = "Ln 1, Col 1";
+  } else paintEditor();
+  renderTabs();
+}
+function renderSolution(){
+  var open = !!S.sol[S.i];
+  $("g2").classList.toggle("hidden", !open);
+  $("work").classList.toggle("split", open);
+  if (!open) return;
+  var m = solutionMarks(), t = L().solution;
+  $("tabs2").innerHTML = '<div class="tab on" title="' + solName() + ' ' + tr("(read-only)", "(csak olvasható)") + '">' + fi(solName()) + '<span>' + solName() + '</span><span class="lock">🔒</span></div>';
+  $("g2").querySelector(".crumbs").textContent = solName() + " › …";
+  $("hl-sol").innerHTML = linesHtml(t, hlFor(EDIT()), m.sol);
+  $("gut-sol").innerHTML = gutterHtml(t.split("\n").length, 0, m.sol);
+}
+
+/* ====================================================================
+   Browser: the page and its Console
+   ==================================================================== */
+
+// Logs and errors in the order they happened. While the page still waits for the server (partial), rows appear as they come.
+function renderConsole(r, les, src, partial){
+  var c = $("console"), h = "";
+  if (!r) { c.innerHTML = '<div class="dt-row dim">' + tr("Loading…", "Betöltés…") + '</div>'; return; }
+  // Task 4: the guess comes before the answer. While a "? is left, logs stay hidden (errors still show).
+  var closed = les && les.guessFirst && /["'`]\s*\?/.test(src || "");
+  if (closed) h += '<div class="dt-row dim">🔒 ' + tr("The Console stays closed until every ? is a number. Guess first, then save.", "A konzol zárva marad, amíg minden ? helyén szám nincs. Előbb tippelj, aztán ments.") + '</div>';
+  (r.events || []).forEach(function(ev){
+    if (ev.k === "log") { if (!closed) h += '<div class="dt-row">' + esc(ev.text) + '</div>'; return; }
+    if (ev.k !== "error") return;
+    var e = ev.err, msg = /__ENDLESS__/.test(e.msg) ? tr("The loop ran 20000 times and was stopped.", "A ciklus 20000-szer lefutott, ezért leállítottam.") : e.msg;
+    if (e.net) { h += '<div class="dt-row err">✖ ' + esc(e.msg) + '</div>'; var xn = explain(e, src); if (xn) h += '<div class="dt-row why">' + esc(xn) + '</div>'; return; }
+    h += '<div class="dt-row err">✖ Uncaught ' + (e.promise ? "(in promise) " : "") + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "   script.js:" + e.line : "") + '</div>';
+    var x = explain(e, src);
+    if (x) h += '<div class="dt-row why">' + esc(x) + '</div>';
+  });
+  if (r.timeout) h += '<div class="dt-row err">✖ ' + tr("Your code did not finish. An endless loop?", "A kódod nem futott le a végéig. Végtelen ciklus?") + '</div>';
+  if (partial) h += '<div class="dt-row dim">⏳ ' + "waiting for the server…" + '</div>';
+  c.innerHTML = h || '<div class="dt-row dim">' + tr("Nothing printed.", "Nem írt ki semmit.") + '</div>';
+  c.scrollTop = c.scrollHeight;
+  var n = r.errors.length + (r.timeout ? 1 : 0);
+  $("st-err").textContent = "⊗ " + n + " ⚠ 0";
+  $("st-err").classList.toggle("err", n > 0);
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="' + tr("Task ", "Feladat ") + (i + 1) + ": " + esc(LX(i).title) + (S.usedSol[i] ? tr(" (solved with the solution)", " (a megoldással)") : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints ? les.hints.length : 0;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+
+function renderStrip(){
+  var lx = LX(S.i), les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a, last.src) : null, done = !!S.done[S.i];
+  $("t-kicker").textContent = tr("Lesson 4 · Task " + (S.i + 1) + " of " + N, "Feladat " + (S.i + 1) + " / " + N) + (PREP ? (UI.prepView === "task" ? tr(" · Prep: task", " · Felkészülés: feladat") : tr(" · Prep: solution", " · Felkészülés: megoldás")) : "");
+  $("t-title").textContent = lx.title;
+  $("t-do").innerHTML = lx.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? solutionSub() : lx.sub;
+  var r = "";
+  if (!S.saved[S.i] && !done) r = '<span class="dim">' + tr('Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run it and check it.', 'Ments <kbd>Ctrl</kbd>+<kbd>S</kbd>-sel: lefut, és kiderül, jó-e.') + '</span>';
+  if (res && !res.done && les.edit === "script.js" && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + tr(" Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.", " Még valami: az <code>if ( )</code> belsejében <code>===</code> kell. Egy sima <code>=</code> átírja az értéket, ahelyett hogy megnézné.");
+  if (PREP && res && res.done) done = true;
+  if (done && (!res || res.done)) r = '<span class="yes">' + tr("✓ Done.", "✓ Kész.") + '</span> ' + (lx.after || "");
+  else if (res && !res.done) r = '<span class="no">' + tr("✗ Not yet.", "✗ Még nem.") + '</span> ' + (res.msg || (last.r.errors.length ? tr("There is a red error in the Console.", "Piros hiba van a konzolban.") : ""));
+  if (UI.running) r = '<span class="dim">⏳ ' + tr("Saved. Waiting for the server: it takes about a second.", "Mentve. Várunk a szerverre: kb. egy másodperc.") + '</span>';
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = lx.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>" + tr("Hint ", "Tipp ") + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button(tr("← Prev", "← Előző"), "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? tr("Show solution", "Megoldás mutatása") : tr("Show task", "Feladat mutatása"), "btn", togglePrep));
+    act.appendChild(button(tr("Next →", "Következő →"), "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (done) {
+    if (S.i < N - 1) act.appendChild(button(tr("Next task →", "Következő feladat →"), "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (!S.sol[S.i]) {
+    act.appendChild(button(hs.solutionNext ? tr("Show solution", "Megoldás mutatása") : tr("Stuck? Hint", "Elakadtál? Tipp"), "btn", stuck));
+  }
+  renderStripNote();
+}
+// ?prep only: flip the editor between the task's start code and its solution.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  editor.value = UI.prepView === "task" ? LESSONS[S.i].start : LESSONS[S.i].solution;
+  saveAndRun();
+}
+function renderStripNote(){
+  var n = $("t-note");
+  n.classList.toggle("hidden", !UI.note);
+  n.textContent = UI.note;
+  if (S.sol[S.i] && !S.done[S.i]) $("t-sub").innerHTML = solutionSub();
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = tr("Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.",
+      "Előbb próbálkozz: változtass valamit, és ments (Ctrl+S). Minden új próba számít. Még " + hs.need + ", és " + (hs.solutionNext ? "megnyílik a megoldás." : "jön egy tipp."));
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+
+/* ====================================================================
+   Running: Ctrl+S saves and Live Server reloads the page
+   ==================================================================== */
+
+function RED_LEFT(){ return tr("The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.", "Az oldal jónak tűnik, de van egy piros hiba a konzolban. Azt is javítsd: egy igazi oldalon ami utána jön, az már nem fut le."); }
+function evaluate(les, r, a, src){
+  var endless = r.timeout || r.errors.some(function(e){ return /__ENDLESS__/.test(e.msg); });
+  if (les.flags) {
+    var f = les.flags(r, a, src), fl = f.flags.slice(), msg = endless ? tr("Your loop never stops.", "A ciklusod sosem áll meg.") : f.msg;
+    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT(); }
+    return { done: fl.every(Boolean), msg: msg };
+  }
+  if (endless) return { done: false, msg: tr("Your loop never stops.", "A ciklusod sosem áll meg.") };
+  var m = les.check(r, a, src);
+  if (!m && r.errors.length) m = RED_LEFT();
+  return { done: !m, msg: m };
+}
+
+function squash(s){ return String(s).replace(/[ \t]+$/gm, "").trim(); }
+function runBoth(les, src, live){
+  var plan = runPlan(les, src), page = PAGES[les.page];
+  return Promise.all([runIn($("preview"), page, plan.main, plan.code, live), runIn($("altframe"), page, plan.alt, plan.code)]);
+}
+var RUN = 0;
+function saveAndRun(){
+  var idx = S.i, src = editor.value;
+  S.code[idx] = src; delete S.buf[idx]; S.saved[idx] = true; save();
+  UI.note = "";
+  renderTabs();
+  run(true, idx, src);
+}
+function run(byHand, idx, src){
+  if (idx === undefined) idx = S.i;
+  if (src === undefined) src = savedCode(idx);
+  var les = LESSONS[idx], token = ++RUN;
+  // The server takes a second: say so, and show the Console filling up while it waits. Only the newest run counts.
+  UI.running = !!byHand;
+  if (byHand) { last = null; renderStrip(); }
+  renderConsole({ events: [], errors: [], logs: [] }, les, src, true);
+  return runBoth(les, src, function(w){ if (token === RUN && idx === S.i) renderConsole(w, les, src, true); }).then(function(res){
+    if (token !== RUN) return;
+    UI.running = false;
+    if (idx !== S.i) return;
+    last = { r: res[0], a: res[1], src: src };
+    var ev = evaluate(les, last.r, last.a, src);
+    if (byHand) {
+      if (ev.done) {
+        if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+        S.sol[idx] = false;
+        (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+      } else if (S.lastTried[idx] !== squash(src) && squash(src) !== squash(les.start)) {
+        S.lastTried[idx] = squash(src); S.tries[idx] = (S.tries[idx] || 0) + 1;
+      }
+      save();
+    }
+    renderConsole(last.r, les, src);
+    renderAll();
+  });
+}
+$("br-reload").onclick = function(){ run(false); };
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); save();
+  UI.note = ""; UI.open = [EDIT()]; UI.active = EDIT();
+  last = null;
+  editor.value = PREP ? LESSONS[S.i].solution : bufferCode(S.i);
+  if (PREP) UI.prepView = "solution";
+  renderConsole(null);
+  renderAll();
+  if (PREP) { saveAndRun(); return; }
+  run(false);
+}
+$("l-again").onclick = function(){
+  if (!confirm(tr("Put back the start code for this task? What you wrote in this task is lost.", "Visszaállítod a feladat kezdő kódját? Amit ebben a feladatban írtál, elvész."))) return;
+  delete S.code[S.i]; delete S.buf[S.i]; S.saved[S.i] = false; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm(tr("Start the whole lesson again from task 1? Your code and progress are cleared.", "Elölről kezded az egész leckét az 1. feladattól? A kódod és a haladásod törlődik."))) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+function renderAll(){
+  renderDots();
+  renderStrip();
+  renderSolution();
+  renderEditorArea();
+}
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var P = (lang === "hu" ? PRIMER_HU : PRIMER)[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + "Lesson 4 · Cards from the server" + ' · ' + (primerIdx + 1) + tr(' of ', ' / ') + PRIMER.length + '</div>' +
+    '<h2>' + esc(P.title) + '</h2>' +
+    '<div class="art">' + ART[P.art]() + '</div>' +
+    '<p>' + P.body + '</p>' +
+    (showSay ? '<div class="say"><b>' + tr("Teacher:", "Tanárnak:") + '</b> ' + esc(P.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>' + tr("← Back", "← Vissza") + '</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? tr("Let's go →", "Mehet →") : tr("Next →", "Tovább →")) + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">' + tr("Close", "Bezárás") + '</button>' : "") +
+    '<button class="btn" id="p-lang" lang="' + tr("hu", "en") + '">' + tr("Magyarul", "In English") + '</button></div>' +
+    '<div class="keys">' + tr("← → to move", "← → lapozás") + '</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); editor.focus(); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("p-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+function RECONSOLE(){ renderConsole(last.r, L(), last.src); }
+
+// Test hook: lets an automated check run code against a task without the UI.
+window.__WAIT = { LESSONS: LESSONS, PRIMER: PRIMER, PRIMER_HU: PRIMER_HU, LESSONS_HU: LESSONS_HU, PREP: PREP, lang: function(){ return lang; }, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun,
+  state: function(){ return S; }, last: function(){ return last; },
+  check: function(i, src){ var les = LESSONS[i]; return runBoth(les, src).then(function(res){ var ev = evaluate(les, res[0], res[1], src); ev.logs = res[0].logs; ev.errors = res[0].errors; ev.events = res[0].events; ev.early = res[0].early; return ev; }); } };
+
+// Static page text carries its Hungarian in data-hu; the English is kept on the first swap.
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.title = "Lesson 4 · Cards from the server";
+  document.querySelectorAll("[data-hu]").forEach(function(el){
+    if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = lang === "hu" ? el.dataset.hu : el.dataset.en;
+  });
+  var b = $("btn-lang");
+  b.textContent = tr("Magyarul", "In English");
+  b.setAttribute("lang", tr("hu", "en"));
+  b.title = tr("Magyarra vált", "Switch to English");
+  $("preview").title = tr("The page, with your script run on it", "Az oldal, rajta a scripteddel");
+  $("altframe").title = tr("Second run with other data", "Második futtatás más adattal");
+}
+// Switching keeps progress: only the words change, then everything is drawn again.
+function setLanguage(l){
+  lang = l === "hu" ? "hu" : "en";
+  if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  try { var u = new URL(location.href); u.searchParams.set("lang", lang); window.history.replaceState(null, "", u.toString()); } catch (e) {}
+  applyStatic();
+  renderAll();
+  if (last) RECONSOLE();
+  if (!$("primer").classList.contains("hidden")) renderPrimer();
+}
+$("btn-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
+applyStatic();
+
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>

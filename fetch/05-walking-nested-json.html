@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 6 · Walking nested JSON</title>
+<style>
+:root{
+  --vs-bg:#1f1f1f; --vs-side:#181818; --vs-border:#2b2b2b; --vs-fg:#cccccc; --vs-dim:#9d9d9d; --vs-blue:#0078d4; --vs-sel:#37373d; --vs-ln:#6e7681;
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #000;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px}
+
+.links .langbtn{border:1px solid #cfd4da;background:#fff;color:var(--ink);border-radius:6px;padding:0 8px;font-size:12px;cursor:pointer}
+.links .langbtn:hover{border-color:var(--accent)}
+
+/* ===== practice: VS Code + browser ===== */
+.work{flex:1;display:grid;grid-template-columns:55fr 45fr;min-height:0}
+.work.split{grid-template-columns:64fr 36fr}
+.vs{background:var(--vs-bg);color:var(--vs-fg);display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid #000;font-size:13px}
+.vs-title{height:34px;flex:none;background:var(--vs-side);border-bottom:1px solid var(--vs-border);display:flex;align-items:center;padding:0 8px;font-size:13px;gap:2px;overflow:hidden}
+.vs-title svg{width:16px;height:16px;margin-right:8px;flex:none}
+.vs-title .menu span{padding:3px 7px;color:var(--vs-fg)}
+.vs-title .cc{margin:0 auto;width:36%;min-width:140px;height:22px;border:1px solid #3c3c3c;background:#2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--vs-dim);font-size:12px}
+.vs-title .win{display:flex;gap:14px;color:var(--vs-dim);padding:0 4px}
+.vs-body{flex:1;display:flex;min-height:0}
+.act{width:48px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.act .ic{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:#868686;border-left:2px solid transparent}
+.act .ic svg{width:24px;height:24px}
+.act .ic.btn-ex{cursor:pointer}
+.act .ic.btn-ex:hover{color:#fff}
+.act .ic.on{color:#fff;border-left-color:var(--vs-blue)}
+.act .bottom{margin-top:auto}
+.side{width:200px;flex:none;background:var(--vs-side);border-right:1px solid var(--vs-border);overflow:auto}
+.side .hdr{height:35px;display:flex;align-items:center;padding:0 20px;font-size:11px;letter-spacing:.04em}
+.side .folder{padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.side .file{display:flex;align-items:center;gap:6px;padding:0 8px 0 22px;height:22px;cursor:pointer;white-space:nowrap}
+.side .file:hover{background:#2a2d2e}
+.side .file.sel{background:var(--vs-sel);outline:1px solid var(--vs-blue);outline-offset:-1px}
+.side .file .m{margin-left:auto;color:#e2c08d;font-size:11px}
+.fi{width:16px;text-align:center;font:700 10px ui-monospace,Consolas,monospace;flex:none}
+.fi.js{color:#cbcb41}.fi.json{color:#f5de19}.fi.html{color:#e44d26}.fi.css{color:#42a5f5}
+.editors{flex:1;display:flex;min-width:0}
+.group{flex:1;display:flex;flex-direction:column;min-width:0}
+.group+.group{border-left:1px solid var(--vs-border)}
+.tabs{height:35px;flex:none;background:var(--vs-side);display:flex;border-bottom:1px solid var(--vs-border);overflow-x:auto;overflow-y:hidden}
+.tab{display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;border-right:1px solid var(--vs-border);color:var(--vs-dim);white-space:nowrap;cursor:pointer;flex:none}
+.tab.on{background:var(--vs-bg);color:#fff;box-shadow:inset 0 1px 0 var(--vs-blue)}
+.tab .x{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--vs-dim)}
+.tab .x:hover{background:#3c3c3c}
+.tab .lock{font-size:11px}
+.crumbs{height:22px;flex:none;display:flex;align-items:center;padding:0 14px;color:#a9a9a9;font-size:12px}
+.scroller{flex:1;overflow:auto;position:relative;min-height:0}
+.codebox{display:flex;min-width:100%;width:max-content;font:13px/19px ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding-bottom:40vh}
+.gutter{flex:none;width:52px;text-align:right;padding-right:18px;color:var(--vs-ln);user-select:none;position:sticky;left:0;background:var(--vs-bg);z-index:2}
+.gutter div{height:19px;position:relative}
+.gutter .cur{color:#cccccc}
+.gutter .add::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#2ea043}
+.gutter .ok::after{content:"✓";position:absolute;right:-15px;top:0;color:#3fb950;font-size:11px}
+.lines{position:relative;flex:1;min-width:300px}
+.lines pre{margin:0;font:inherit;white-space:pre;color:var(--vs-fg);tab-size:2}
+.lines pre div{height:19px;padding-left:4px}
+.lines pre div.add{background:rgba(46,160,67,.17)}
+.lines pre div.ok{background:rgba(46,160,67,.06)}
+.lines pre div.del{background:rgba(248,81,73,.18)}
+.gutter .del::after{content:"";position:absolute;right:-12px;top:0;bottom:0;width:3px;background:#f85149}
+.lines textarea{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 0 0 4px;border:0;outline:0;resize:none;overflow:hidden;background:transparent;color:transparent;caret-color:#aeafad;font:inherit;white-space:pre;tab-size:2;z-index:1}
+.lines textarea::selection{background:rgba(38,79,120,.85);color:transparent}
+.readonly .lines pre{user-select:none}
+.k{color:#569cd6}.c{color:#c586c0}.s{color:#ce9178}.num{color:#b5cea8}.cm{color:#6a9955}.f{color:#dcdcaa}.v{color:#9cdcfe}.tgc{color:#569cd6}.at{color:#9cdcfe}.sel{color:#d7ba7d}.pr{color:#9cdcfe}
+.status{height:22px;flex:none;background:var(--vs-side);border-top:1px solid var(--vs-border);display:flex;align-items:center;font-size:12px;white-space:nowrap;overflow:hidden}
+.status .remote{background:var(--vs-blue);color:#fff;height:100%;padding:0 10px;display:flex;align-items:center}
+.status span{padding:0 8px}
+.status .r{margin-left:auto;display:flex}
+.status .err{color:#f48771}
+
+.br{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0}
+.br-url{flex:none;background:#fff;padding:6px 10px;border-bottom:1px solid #dadce0;display:flex;align-items:center;gap:10px;color:#5f6368;font-size:13px}
+.br-url .bar{flex:1;background:#f1f3f4;border-radius:14px;padding:5px 14px;color:#202124;white-space:nowrap;overflow:hidden}
+.br-url button{background:none;border:0;color:#5f6368;cursor:pointer;font-size:15px;padding:0 4px}
+#preview{flex:1;border:0;width:100%;min-height:0;background:#f5f3ee}
+.devtools{flex:none;max-height:38%;display:flex;flex-direction:column;border-top:1px solid #cbcdd1}
+.dt-head{padding:4px 10px;background:#f1f3f4;border-bottom:1px solid #e0e0e0;color:#5f6368;font-size:12px}
+.dt-out{overflow:auto;font:12px/18px ui-monospace,Consolas,monospace}
+.dt-row{padding:2px 10px;border-bottom:1px solid #f0f0f0;color:#202124;white-space:pre-wrap;word-break:break-word}
+.dt-row.err{background:#fff0f0;color:#d93025;border-bottom-color:#fbd0d0}
+.dt-row.why{background:#fffbe6;color:#7a4b00;font-family:system-ui,sans-serif;border-bottom-color:#f5e2b0}
+.dt-row.dim{color:#9aa0a6}
+#btn-lang,#p-lang{display:none!important}
+#altframe{position:absolute;width:1px;height:1px;left:-9999px;border:0}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work,.work.split{grid-template-columns:1fr;grid-auto-rows:minmax(460px,auto)}
+  .vs{border-right:0;border-bottom:1px solid #000}
+  .side{width:150px}
+  .vs-title .menu,.vs-title .win{display:none}
+  .br{min-height:460px}
+}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../" data-hu="Főoldal">Home</a><a id="l-slides" data-hu="Diák">Slides</a><a id="l-again" data-hu="Feladat elölről">Start task again</a><a id="l-reset" data-hu="Az egész elölről">Reset all</a><button class="langbtn" id="btn-lang" lang="hu" title="Magyarra vált">Magyarul</button></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+
+  <div class="work" id="work">
+    <div class="vs">
+      <div class="vs-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0078d4" d="M17 2 8 10.5 3.5 7 2 7.8v8.4l1.5.8L8 13.5 17 22l5-2.4V4.4zM4 14.4V9.6L6.5 12zm13 2.4L11.3 12 17 7.2z"/></svg>
+        <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+        <div class="cc" id="cc">walking-nested-json</div>
+        <div class="win"><span>—</span><span>☐</span><span>✕</span></div>
+      </div>
+      <div class="vs-body">
+        <div class="act">
+          <div class="ic btn-ex" id="act-ex" title="Explorer (Ctrl+B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H7a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/><path d="M6 7H4v13a1 1 0 0 0 1 1h10v-2"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 6 6"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 5-8 3-11 7"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4l12 8-12 8z"/></svg></div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="7" height="7"/><rect x="11" y="11" width="7" height="7"/><rect x="3" y="3" width="7" height="7"/><rect x="14" y="2" width="7" height="7" transform="rotate(10 17 5)"/></svg></div>
+          <div class="bottom"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div></div>
+        </div>
+        <div class="side hidden" id="side"></div>
+        <div class="editors">
+          <div class="group" id="g1">
+            <div class="tabs" id="tabs1"></div>
+            <div class="crumbs" id="crumbs1"></div>
+            <div class="scroller" id="sc-edit">
+              <div class="codebox"><div class="gutter" id="gut-edit"></div><div class="lines"><pre id="hl-edit" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-label="script.js"></textarea></div></div>
+            </div>
+            <div class="scroller readonly hidden" id="sc-view">
+              <div class="codebox"><div class="gutter" id="gut-view"></div><div class="lines"><pre id="hl-view"></pre></div></div>
+            </div>
+          </div>
+          <div class="group hidden" id="g2">
+            <div class="tabs" id="tabs2"></div>
+            <div class="crumbs">solution.js › …</div>
+            <div class="scroller readonly" id="sc-sol">
+              <div class="codebox"><div class="gutter" id="gut-sol"></div><div class="lines"><pre id="hl-sol"></pre></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status"><span class="remote">⇄</span><span id="st-err">⊗ 0 ⚠ 0</span><div class="r"><span id="st-ln">Ln 1, Col 1</span><span id="st-lang">{} JavaScript</span><span>⦿ Port : 5500</span></div></div>
+    </div>
+
+    <div class="br">
+      <div class="br-url"><button id="br-reload" title="Reload">↻</button><div class="bar">127.0.0.1:5500/index.html</div></div>
+      <iframe id="preview" sandbox="allow-scripts" title="The page, with your script run on it"></iframe>
+      <div class="devtools"><div class="dt-head">Console</div><div class="dt-out" id="console"></div></div>
+    </div>
+  </div>
+</div>
+<iframe id="altframe" sandbox="allow-scripts" title="Second run with other data" aria-hidden="true" tabindex="-1"></iframe>
+
+
+<script>
+(function(){
+"use strict";
+
+// ?prep: the teacher flips through the solutions. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+// Language: ?lang=hu in the URL wins, then the last choice on this browser, then English.
+var LANG_KEY = "walking-nested-json-lang";
+function pickLang(){
+  return "en"; // English only until the Hungarian flag is added (lesson-format.md, MVP step 3)
+  try { var q = new URLSearchParams(location.search).get("lang"); if (q === "hu" || q === "en") return q; } catch (e) {}
+  try { var s = localStorage.getItem(LANG_KEY); if (s === "hu" || s === "en") return s; } catch (e) {}
+  return "en";
+}
+var lang = pickLang();
+if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+function tr(en, hu){ return lang === "hu" ? hu : en; }
+// Hungarian article before a word or a number: az egér, a macska; az 1., a 2., az 5.
+function az(w){ return /^[^a-z0-9]*[aáeéiíoóöőuúüű]/i.test(String(w).replace(/<[^>]*>/g, "")) ? "Az " : "A "; }
+function azN(n){ return (/^(1|5\d*)$/.test(String(n)) ? "Az " : "A ") + n + "."; }
+
+/* ====================================================================
+   Data. The class API as it is on GitHub Pages (api/canteen.json,
+   api/cats.json, api/excuses.json). Inside the practice, fetch() answers
+   from this copy after a short wait, like the real server. Every check
+   runs the student's code twice: on this data, and on other data of the
+   same shape (another week, with six days), so typed-in values fail.
+   ==================================================================== */
+
+var API_BASE = "https://korbal.github.io/2026-13-F-public/api/";
+var CANTEEN = {"week": 46, "school": "Széchenyi", "days": [{"day": "hétfő", "soup": "Paradicsomleves betűtésztával (a betűkből néha kijön, hogy SEGÍTSÉG)", "main": {"name": "Rántott sajt rizzsel", "vegetarian": true, "calories": 820}, "dessert": null, "queueMinutes": 12, "rating": 4.5}, {"day": "kedd", "soup": "Gulyásleves", "main": {"name": "Mákos tészta (a mák külön kapható, csak éppen nem kapható)", "vegetarian": true, "calories": 640}, "dessert": "alma", "queueMinutes": 4, "rating": 2.5}, {"day": "szerda", "soup": "Zöldborsóleves", "main": {"name": "Csirkepaprikás nokedlivel", "vegetarian": false, "calories": 760}, "dessert": "puding", "queueMinutes": 9, "rating": 4}, {"day": "csütörtök", "soup": "Krémleves, ismeretlen összetevőkből", "main": {"name": "Főzelék, feltéttel", "vegetarian": false, "calories": 510}, "dessert": null, "queueMinutes": 2, "rating": 1.5}, {"day": "péntek", "soup": "Nincs leves, mert péntek van", "main": {"name": "Pizza", "vegetarian": false, "calories": 950}, "dessert": "fánk", "queueMinutes": 25, "rating": 5}]};
+var CATS = [{"id": 1, "name": "Bajusz", "age": 7, "weightKg": 6.2, "sleepHoursPerDay": 16, "friendly": true, "hobbies": ["billentyűzeten alvás", "monitor eltakarása"]}, {"id": 2, "name": "Null", "age": 2, "weightKg": 3.4, "sleepHoursPerDay": 12, "friendly": false, "hobbies": ["poharak leverése az asztalról", "hajnali négykor futás"]}, {"id": 3, "name": "Undefined", "age": 4, "weightKg": 4.1, "sleepHoursPerDay": 14, "friendly": true, "hobbies": []}, {"id": 4, "name": "Szotyi", "age": 11, "weightKg": 7.8, "sleepHoursPerDay": 18, "friendly": true, "hobbies": ["dobozban ülés", "a doboz mellett ülés", "evés"]}, {"id": 5, "name": "Rendszergazda", "age": 9, "weightKg": 5.5, "sleepHoursPerDay": 15, "friendly": false, "hobbies": ["kábelek rágása", "mindenkit lenézni"]}, {"id": 6, "name": "Pötyi", "age": 1, "weightKg": 2.3, "sleepHoursPerDay": 13, "friendly": true, "hobbies": ["egérkurzor üldözése", "bekapcsolt laptopra fekvés", "nyávogás hívás közben"]}];
+var EXCUSES = [{"id": 1, "excuse": "A laptopom frissített. Még most is frissít.", "category": "technika", "believability": 7, "teacherHeardIt": true}, {"id": 2, "excuse": "Megcsináltam, csak nem mentettem el.", "category": "technika", "believability": 4, "teacherHeardIt": true}, {"id": 3, "excuse": "Nálam működött.", "category": "technika", "believability": 6, "teacherHeardIt": true}, {"id": 4, "excuse": "A git push lefutott, csak nem tudom, hova.", "category": "technika", "believability": 6, "teacherHeardIt": false}, {"id": 5, "excuse": "Elmentettem, csak a Letöltések mappába, a többi 4000 fájl közé.", "category": "technika", "believability": 8, "teacherHeardIt": false}, {"id": 6, "excuse": "Papírra írtam meg, de a papír nem futtatható.", "category": "technika", "believability": 3, "teacherHeardIt": false}, {"id": 7, "excuse": "A kutyám megette. Nincs kutyám, ez engem is aggaszt.", "category": "család", "believability": 1, "teacherHeardIt": true}, {"id": 8, "excuse": "A tesómnak kellett a gép, mert holnap neki is határideje van. Neki sincs kész.", "category": "család", "believability": 6, "teacherHeardIt": false}, {"id": 9, "excuse": "Anya szerint aludnom kellett. Anyának mindig igaza van.", "category": "család", "believability": 7, "teacherHeardIt": true}, {"id": 10, "excuse": "Nem jött a busz, és vele együtt a motivációm sem.", "category": "közlekedés", "believability": 5, "teacherHeardIt": true}, {"id": 11, "excuse": "A vonat késett, így a tanulásra szánt idő is késik.", "category": "közlekedés", "believability": 4, "teacherHeardIt": false}, {"id": 12, "excuse": "Edzésem volt. Minden nap. Egész nap.", "category": "sport", "believability": 3, "teacherHeardIt": true}, {"id": 13, "excuse": "Azt hittem, a határidő csak egy javaslat.", "category": "egzisztenciális", "believability": 2, "teacherHeardIt": false}, {"id": 14, "excuse": "Megnyitottam a VS Code-ot, és ezzel elfogyott az aznapi energiám.", "category": "egzisztenciális", "believability": 9, "teacherHeardIt": false}, {"id": 15, "excuse": "Elfelejtettem, hogy emlékeznem kellene rá.", "category": "egzisztenciális", "believability": 6, "teacherHeardIt": false}, {"id": 16, "excuse": "Elkezdtem, de a console.log azt írta, hogy undefined, és ezt személyesnek vettem.", "category": "egzisztenciális", "believability": 8, "teacherHeardIt": false}];
+var ALT_CATS = [
+  { id: 1, name: "Tigris", age: 3, weightKg: 4.5, sleepHoursPerDay: 13, friendly: false, hobbies: ["függönymászás"] },
+  { id: 2, name: "Morzsa", age: 9, weightKg: 5.1, sleepHoursPerDay: 17, friendly: true, hobbies: [] },
+  { id: 3, name: "Bug", age: 5, weightKg: 3.9, sleepHoursPerDay: 15, friendly: true, hobbies: ["dobozba ülés"] },
+  { id: 4, name: "Cirmi", age: 6, weightKg: 4.8, sleepHoursPerDay: 14, friendly: false, hobbies: ["egérkergetés"] },
+  { id: 5, name: "Vacak", age: 12, weightKg: 6.0, sleepHoursPerDay: 19, friendly: true, hobbies: ["alvás", "még több alvás"] },
+  { id: 6, name: "Lego", age: 2, weightKg: 3.1, sleepHoursPerDay: 12, friendly: false, hobbies: ["kábelrágás"] },
+  { id: 7, name: "Foci", age: 8, weightKg: 5.5, sleepHoursPerDay: 16, friendly: true, hobbies: [] }
+];
+var ALT_EXCUSES = [
+  { id: 1, excuse: "A wifi elment, pont amikor pusholni akartam.", category: "technika", believability: 6, teacherHeardIt: true },
+  { id: 2, excuse: "A VS Code frissített, és eltűnt minden.", category: "technika", believability: 4, teacherHeardIt: false },
+  { id: 3, excuse: "Megcsináltam, de a macska ráült a billentyűzetre.", category: "család", believability: 3, teacherHeardIt: true },
+  { id: 4, excuse: "Azt hittem, a házi a jövő hétre van.", category: "egyéb", believability: 7, teacherHeardIt: true },
+  { id: 5, excuse: "A Live Server nem akart elindulni.", category: "technika", believability: 5, teacherHeardIt: false }
+];
+// Another week: other dishes, nulls on other days, and six days (a Saturday school day), so a typed-in 5 fails too.
+var ALT_CANTEEN = { week: 47, school: "Kandó", days: [
+  { day: "hétfő", soup: "Húsleves", main: { name: "Rakott krumpli", vegetarian: false, calories: 870 }, dessert: "palacsinta", queueMinutes: 10, rating: 4 },
+  { day: "kedd", soup: "Lencseleves", main: { name: "Tökfőzelék tükörtojással", vegetarian: true, calories: 540 }, dessert: null, queueMinutes: 3, rating: 2 },
+  { day: "szerda", soup: "Gyümölcsleves", main: { name: "Spagetti bolognai", vegetarian: false, calories: 780 }, dessert: null, queueMinutes: 15, rating: 4.5 },
+  { day: "csütörtök", soup: "Babgulyás", main: { name: "Túrós csusza", vegetarian: true, calories: 690 }, dessert: "kakaós csiga", queueMinutes: 7, rating: 3.5 },
+  { day: "péntek", soup: "Hagymaleves", main: { name: "Hamburger", vegetarian: false, calories: 1010 }, dessert: "jégkrém", queueMinutes: 30, rating: 5 },
+  { day: "szombat", soup: "Maradékleves", main: { name: "A heti maradék", vegetarian: false, calories: 600 }, dessert: null, queueMinutes: 0, rating: 1 }
+] };
+var API = {
+  main: { "canteen.json": CANTEEN, "cats.json": CATS, "excuses.json": EXCUSES },
+  alt: { "canteen.json": ALT_CANTEEN, "cats.json": ALT_CATS, "excuses.json": ALT_EXCUSES }
+};
+// The page they watch answers in about half a second; the hidden second run answers faster.
+var DELAY = 600, ALT_DELAY = 100;
+var CANTEEN_URL = API_BASE + "canteen.json", CATS_URL = API_BASE + "cats.json";
+var EN_DAY = { "hétfő": "Monday", "kedd": "Tuesday", "szerda": "Wednesday", "csütörtök": "Thursday", "péntek": "Friday", "szombat": "Saturday" };
+
+var BASE_CSS = 'body{font-family:Arial,sans-serif;background:#f5f3ee;margin:0;padding:16px;color:#1f2328}h1{margin:0 0 12px;font-size:24px}';
+// An empty table body shows "#menu is empty" under the header row.
+var TABLE_CSS = function(id){ return 'table{border-collapse:collapse;background:#fff;font-size:15px;width:100%}th,td{border:1px solid #d6d3c4;padding:6px 10px;text-align:left;vertical-align:top}th{background:#f3efe0}' +
+  'table:has(#' + id + ':empty)::after{content:"#' + id + ' is empty";display:table-caption;caption-side:bottom;border:2px dashed #c9cfd6;border-top:0;padding:14px;text-align:center;color:#9aa0a6;font-style:italic;font-size:14px}'; };
+function TABLE_PAGE(title, id, cols){
+  return '<main>\n  <h1>' + title + '</h1>\n  <table>\n    <thead>\n      <tr>' + cols.map(function(c){ return '<th>' + c + '</th>'; }).join("") + '</tr>\n    </thead>\n    <tbody id="' + id + '"></tbody>\n  </table>\n</main>';
+}
+var COLS2 = ["Day", "Main dish"], COLS4 = ["Day", "Soup", "Main dish", "Calories"], COLS_D = ["Day", "Dessert"], COLS_C = ["Name", "Hobbies"];
+
+var PAGES = {
+  walk: { title: "Canteen menu", box: "note",
+    body: '<main>\n  <h1>Canteen menu</h1>\n  <p id="note">Nothing goes on the page in this task. Look at the Console, under the page.</p>\n</main>', css: BASE_CSS + '#note{color:#6b7280;font-style:italic}' },
+  menu2: { title: "Canteen menu", box: "menu", body: TABLE_PAGE("Canteen menu", "menu", COLS2), css: BASE_CSS + TABLE_CSS("menu") },
+  menu: { title: "Canteen menu", box: "menu", body: TABLE_PAGE("Canteen menu", "menu", COLS4), css: BASE_CSS + TABLE_CSS("menu") },
+  dessert: { title: "Desserts this week", box: "menu", body: TABLE_PAGE("Desserts this week", "menu", COLS_D), css: BASE_CSS + TABLE_CSS("menu") },
+  cats: { title: "Cats of 13F", box: "cat-list", body: TABLE_PAGE("Cats of 13F", "cat-list", COLS_C), css: BASE_CSS + TABLE_CSS("cat-list") }
+};
+
+/* ====================================================================
+   Running student code: a sandboxed iframe (scripts on, no same-origin).
+   fetch() is replaced by fetchStub below, so a run is only finished when
+   every answer has arrived and the code after each await has run.
+   Everything the page does is posted back in order: logs, errors, each
+   fetch and each answer.
+   ==================================================================== */
+
+var runSeq = 0, waiting = {};
+window.addEventListener("message", function(e){
+  var d = e.data;
+  if (!d || typeof d !== "object" || !d.__dte || !waiting[d.__dte]) return;
+  var w = waiting[d.__dte];
+  if (d.type === "log") { w.logs.push(d.text); w.events.push({ k: "log", text: d.text }); }
+  if (d.type === "error") { var er = d.err; er.line = er.line > w.offset ? er.line - w.offset : 0; w.errors.push(er); w.events.push({ k: "error", err: er }); }
+  if (d.type === "neterr") { var ne = { msg: d.text, name: "", line: 0, net: true }; w.errors.push(ne); w.events.push({ k: "error", err: ne }); }
+  if (d.type === "call") w.events.push({ k: "call", fn: d.fn });
+  if (d.type === "answer") w.events.push({ k: "answer", fn: d.fn });
+  if (d.type === "early") w.early = d.tree;
+  if (d.type === "done") { w.tree = d.tree; w.created = d.created; finishRun(d.__dte); return; }
+  if (w.live) w.live(w);
+});
+function finishRun(id){
+  var w = waiting[id];
+  if (!w) return;
+  delete waiting[id];
+  clearTimeout(w.timer);
+  w.resolve({ logs: w.logs, errors: w.errors, events: w.events, early: w.early === undefined ? null : w.early, tree: w.tree === undefined ? null : w.tree, created: w.created || [], timeout: !!w.timedOut });
+}
+
+// for (...) { and while (...) { get a counter, so an endless loop throws instead of freezing the tab. Same line, so line numbers hold.
+function guard(code){
+  return code
+    .replace(/\bfor\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; })
+    .replace(/\bwhile\s*\(([^)]*)\)\s*\{/g, function(m){ return m + " if (++__loops > 20000) throw new Error('__ENDLESS__');"; });
+}
+
+// Runs inside the iframe (injected as source). The class API's addresses answer from `data`; anything else is a 404, like GitHub Pages.
+function fetchStub(data, delay){
+  var base = /^(https?:\/\/)?korbal\.github\.io\/2026-13-F-public\/api\//;
+  window.fetch = function(url){
+    url = String(url);
+    window.__pending++;
+    window.__send({ type: "call", fn: url });
+    var key = base.test(url) ? url.replace(base, "").replace(/[?#].*$/, "") : null;
+    var found = key !== null && Object.prototype.hasOwnProperty.call(data, key);
+    var body = found ? JSON.stringify(data[key]) : "<!DOCTYPE html><html><body><h1>404</h1><p>File not found</p></body></html>";
+    return new Promise(function(resolve){
+      setTimeout(function(){
+        window.__send({ type: "answer", fn: url });
+        if (!found) window.__send({ type: "neterr", text: "GET " + url + " 404 (Not Found)" });
+        window.__pending--;
+        resolve({ __resp: true, ok: found, status: found ? 200 : 404, url: url,
+          json: function(){ return new Promise(function(res, rej){ try { res(JSON.parse(body)); } catch (e) { rej(new SyntaxError("Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON")); } }); },
+          text: function(){ return Promise.resolve(body); } });
+      }, delay);
+    });
+  };
+}
+function fetchLine(which, delay){ return "(" + fetchStub.toString() + ")(" + JSON.stringify(API[which]) + ", " + delay + ");"; }
+
+function buildDoc(page, dataLine, code, id){
+  var pre =
+    '<!doctype html><html><head><meta charset="utf-8"><style>' + page.css + '</style></head><body>\n' + page.body + '\n' +
+    '<script>\n' +
+    '(function(){\n' +
+    'var ID=' + id + ';\n' +
+    'function send(o){ o.__dte=ID; parent.postMessage(o,"*"); }\n' +
+    'window.__send=send; window.__pending=0;\n' +
+    'function short(v){ return Array.isArray(v)? "Array("+v.length+")" : typeof v==="string"? JSON.stringify(v) : v&&typeof v==="object"? "{…}" : String(v); }\n' +
+    'function fmt(v,d){ d=d||0;\n' +
+    '  if (v && v.__resp) return "Response {status: "+v.status+", ok: "+v.ok+", url: \\""+v.url+"\\"}";\n' +
+    '  if (v && (typeof v==="object"||typeof v==="function") && typeof v.then==="function") return "Promise {<pending>}";\n' +
+    '  if (typeof v==="string") return d? JSON.stringify(v) : v;\n' +
+    '  if (typeof v==="function") return "ƒ "+(v.name||"")+"()";\n' +
+    '  if (v instanceof Element){ var h=v.outerHTML; return h.length>160? h.slice(0,157)+"...": h; }\n' +
+    '  if (Array.isArray(v)) return d>1? "[...]" : "[" + v.map(function(x){return fmt(x,d+1);}).join(", ") + "]";\n' +
+    '  if (v && typeof v==="object") return d>1? "{...}" : "{" + Object.keys(v).map(function(k){return k+": "+fmt(v[k],d+1);}).join(", ") + "}";\n' +
+    '  return String(v); }\n' +
+    'console.log=console.info=console.warn=console.debug=console.dir=console.table=console.error=function(){ send({type:"log",text:[].map.call(arguments,function(a){return fmt(a);}).join(" ")}); };\n' +
+    'window.alert=function(m){ send({type:"log",text:"alert: "+fmt(m)}); };\n' +
+    'window.__made=[];\n' +
+    'var ce=document.createElement.bind(document);\n' +
+    'document.createElement=function(t){ var el=ce(t); window.__made.push(el); return el; };\n' +
+    'window.addEventListener("error",function(e){ var m=e.error&&e.error.message||e.message||""; send({type:"error",err:{msg:String(m).replace(/^Uncaught /,""),name:e.error&&e.error.name||"",line:e.lineno||0}}); e.preventDefault(); });\n' +
+    'window.addEventListener("unhandledrejection",function(e){ var r=e.reason, m=r&&r.message!==undefined? r.message : String(r), st=r&&r.stack||"", mm=/about:srcdoc:(\\d+):\\d+/.exec(st); send({type:"error",err:{msg:String(m),name:r&&r.name||"",line:mm? +mm[1] : 0,promise:true}}); e.preventDefault(); });\n' +
+    'window.__loops=0;\n' +
+    '})();\n' +
+    dataLine + '\n' +
+    '<\/script>\n<script>\n';
+  var offset = pre.split("\n").length - 1;
+  var post =
+    '\n<\/script>\n<script>\n' +
+    '(function(){\n' +
+    'function ser(el,d){ var o={tag:el.tagName.toLowerCase(),id:el.id||"",cls:[].slice.call(el.classList),' +
+    'text:[].filter.call(el.childNodes,function(n){return n.nodeType===3;}).map(function(n){return n.textContent;}).join("").trim(),' +
+    'all:el.textContent.trim(),kids:[]};' +
+    ' if(d<4) o.kids=[].map.call(el.children,function(c){return ser(c,d+1);}); return o; }\n' +
+    'function snap(){ var box=document.getElementById(' + JSON.stringify(page.box) + '); return box? ser(box,0) : null; }\n' +
+    'function made(){ return window.__made.map(function(e){return {tag:e.tagName.toLowerCase(),text:e.textContent.trim(),cls:[].slice.call(e.classList),onPage:document.body.contains(e)};}); }\n' +
+    'window.__send({type:"early",tree:snap()});\n' +
+    // Done once nothing is waiting for the server, three checks in a row: the code after the last await has run by then.
+    'var quiet=0;\n' +
+    'function wait(){ if (window.__pending>0) quiet=0; else quiet++; if (quiet<3) { setTimeout(wait,25); return; } window.__send({type:"done",tree:snap(),created:made()}); }\n' +
+    'setTimeout(wait,0);\n' +
+    '})();\n<\/script>\n</body></html>';
+  return { html: pre + guard(code) + post, offset: offset };
+}
+
+function runIn(frame, page, dataLine, code, live){
+  var id = ++runSeq;
+  var doc = buildDoc(page, dataLine, code, id);
+  return new Promise(function(resolve){
+    waiting[id] = { logs: [], errors: [], events: [], resolve: resolve, offset: doc.offset, live: live,
+      timer: setTimeout(function(){ if (waiting[id]) { waiting[id].timedOut = true; finishRun(id); } }, 9000) };
+    // Clear first: Chrome does not always repaint a srcdoc iframe that is simply overwritten.
+    frame.removeAttribute("srcdoc");
+    frame.srcdoc = doc.html;
+  });
+}
+
+function runPlan(les, src){
+  return { code: src, main: fetchLine("main", DELAY), alt: fetchLine("alt", ALT_DELAY) };
+}
+
+/* ====================================================================
+   Plain-English error messages
+   ==================================================================== */
+
+// How many fetch(...) and .json() calls have no await in front of them.
+function missingAwaits(src){
+  src = src.replace(/\/\/.*$/gm, "");
+  var calls = (src.match(/\bfetch\s*\(/g) || []).length + (src.match(/\.json\s*\(/g) || []).length;
+  var awaited = (src.match(/\bawait\s+fetch\s*\(/g) || []).length + (src.match(/\bawait\s+[\w.]+\.json\s*\(/g) || []).length;
+  return calls - awaited;
+}
+
+function explain(err, src){
+  var m = err.msg || "", x;
+  src = src || "";
+  if (err.net) return "The server has nothing at that address. Copy the address again, exactly.";
+  if (/__ENDLESS__/.test(m)) return "Your loop never stops. Check its condition: in a for loop, i < list.length and i++.";
+  if (/await is only valid in async function|Unexpected reserved word/.test(m) || (/Unexpected identifier/.test(m) && /\bawait\b/.test(src)))
+    return "await only works inside an async function. Put the lines inside async function load() { ... } and call load(); under it.";
+  if (/Unexpected token '<'/.test(m)) return "The answer was a 404 page, not data: the address is wrong. Copy it again.";
+  if ((x = /^([\w.]+)\.json is not a function/.exec(m))) return x[1] + " is still on its way. Put await in front of fetch(...).";
+  if (/not valid JSON|JSON\.parse/.test(m)) return "No JSON.parse here: response.json() already unpacks the answer.";
+  if ((x = /^([\w.\[\]]+?)\.(forEach|map|filter|find|join|push) is not a function/.exec(m)) || (x = /^([\w.\[\]]+) is not iterable/.exec(m))) {
+    if (missingAwaits(src) > 0) return x[1] + " is still on its way. Is there an await in front of response.json()?";
+    return x[1] + " is not a list, so you cannot loop over it. Walk: print " + x[1] + ". Does it start with { or with [ ?";
+  }
+  if ((x = /^(\w+) is not defined/.exec(m))) {
+    if (["canteen", "cats", "response"].indexOf(x[1]) >= 0) return x[1] + " does not exist on this line. It is made inside load(), so this line must be inside load() too, under the await lines.";
+    if (x[1] === "days") return "days does not exist on its own: the list of days is inside canteen, so its path is canteen.days.";
+    if (x[1] === "day") return "There is no day on its own. One day is canteen.days[i].";
+    if (x[1] === "main") return "main is not on its own: it is inside each day. Its path is canteen.days[i].main.";
+    if (x[1] === "hobbies") return "hobbies is not on its own: it is inside each cat. Its path is cats[i].hobbies.";
+    if (x[1] === "address") return "address does not exist here. Is the const address = \"...\" line missing, or spelled differently?";
+    if (x[1] === "i") return "i only exists inside the loop's { }. Is this line outside the loop?";
+    if (x[1] === "row") return "row does not exist on this line: it is made inside the loop. Is this line outside the loop's { }?";
+    if (x[1] === "tbody") return "tbody does not exist here. Is the line const tbody = document.getElementById(...); there, above the loop?";
+    if (["td", "tr", "li", "ul", "p", "div"].indexOf(x[1]) >= 0) return "Put quotes around it: \"" + x[1] + "\". Without quotes, JavaScript looks for a variable called " + x[1] + ".";
+    if (x[1] === "load") return "Nothing called load exists. Is the function spelled the same where you make it and where you call it?";
+    return "Nothing called " + x[1] + " exists here. A typo? Capital letters matter: fetch, getElementById, textContent, createElement.";
+  }
+  if ((x = /Cannot access '(\w+)' before initialization/.exec(m))) return "You use " + x[1] + " on a line above the one that makes it. Move it under the line that makes it.";
+  if ((x = /Cannot read properties of null \(reading '([^']+)'\)/.exec(m)) || (x = /Cannot set properties of null \(setting '([^']+)'\)/.exec(m))) {
+    if (["appendChild", "textContent", "innerHTML", "classList", "append"].indexOf(x[1]) >= 0) return "You used ." + x[1] + " on null: getElementById found nothing. The id must match index.html exactly, without #.";
+    return "You used ." + x[1] + " on null. null means \"nothing here\", like a day with no dessert. Walk: print the step before ." + x[1] + ".";
+  }
+  if ((x = /Cannot read properties of undefined \(reading '([^']+)'\)/.exec(m)) || (x = /Cannot set properties of undefined \(setting '([^']+)'\)/.exec(m))) {
+    var step = /^\d+$/.test(x[1]) ? "[" + x[1] + "]" : "." + x[1];
+    if (missingAwaits(src) > 0) return "You used " + step + " on something that does not exist. Is the data still on its way? Every fetch(...) and response.json() needs an await.";
+    return "You used " + step + " on something that does not exist (undefined). Walk: print the path just before " + step + " and look. A wrong name, a missing step, or past the end of the list (i <= instead of i <)?";
+  }
+  if ((x = /^([\w.]+) is not a function/.exec(m))) return x[1] + " is not a function. Check the spelling: fetch, response.json, getElementById, createElement, appendChild.";
+  if (/parameter 1 is not of type 'Node'/.test(m)) return "appendChild wants an element made with createElement, not a text.";
+  if (/has already been declared/.test(m)) return "That name is already taken. Give each const its own name, and do not make the same thing twice.";
+  if (/Assignment to constant/.test(m)) return "You gave a const a new value. Make a new const instead, or use let.";
+  if (err.name === "SyntaxError" || /Unexpected|missing|Invalid or unexpected/.test(m)) return "JavaScript could not read the code at all, so nothing ran. Look for a missing ) } ] or quote near that line.";
+  return "";
+}
+
+/* ====================================================================
+   Checks
+   ==================================================================== */
+
+function code(s){ return '<code>' + esc(s) + '</code>'; }
+function NOT_TYPED(){ return "It works for this data only. The check also ran your code on a different answer from the server, and there it was wrong. Take every value out of the data instead of typing it in."; }
+function RED_FIRST(){ return "There is a red error in the Console. Read it, and the yellow line under it."; }
+function PENDING_MSG(){ return "The Console shows <code>Promise {&lt;pending&gt;}</code>: not the data yet, only \"it is coming\". Which line is missing an <code>await</code>?"; }
+function noComments(src){ return String(src || "").replace(/\/\/.*$/gm, ""); }
+// An async function that is written but never called: its name appears only where it is made.
+function uncalled(src){
+  src = noComments(src);
+  var re = /async\s+function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*async\b/g, m;
+  while ((m = re.exec(src))) {
+    var name = m[1] || m[2], uses = (src.match(new RegExp("\\b" + name + "\\s*\\(", "g")) || []).length;
+    if (uses - (m[1] ? 1 : 0) < 1) return true;
+  }
+  return false;
+}
+function NOTHING_RAN(src, r){
+  if (uncalled(src)) return "Nothing printed and nothing is red. A function only runs when you call it: <code>load();</code> on a line of its own, under it.";
+  if (r && !r.events.some(function(e){ return e.k === "call"; })) return "Nothing asked the server yet: the recipe's <code>fetch(address)</code> line is missing. <b>Start task again</b> (top left) brings the recipe back.";
+  return "Nothing printed yet.";
+}
+function logged(run, re){ return run.logs.some(function(l){ return re.test(l); }); }
+// The usual reasons the data is not there yet, in the order a student would hit them.
+function notThereYet(r, src){
+  if (logged(r, /^Promise \{/)) return PENDING_MSG();
+  if (logged(r, /^Response \{/)) return "That is the response: the answer, still packed. Unpack it with <code>await response.json()</code>.";
+  if (r.errors.length) return RED_FIRST();
+  return "";
+}
+// A value printed on its own (a label around it is fine), not as part of a printed object or list.
+function printedValue(run, v){
+  var s = String(v);
+  if (typeof v === "number") {
+    var re = new RegExp("(^|[^\\w.])" + s.replace(/\./g, "\\.") + "([^\\w.]|$)");
+    return run.logs.some(function(l){ return !/\{\w+: /.test(l) && re.test(l); });
+  }
+  return run.logs.some(function(l){ return l.indexOf(s) >= 0 && l.indexOf('"' + s + '"') < 0; });
+}
+function undefinedLogs(run){ return run.logs.filter(function(l){ return /(^|\s)undefined$/.test(l); }).length; }
+// One day printed as a whole object (not inside the printed list).
+function dayLogged(run, d){ return run.logs.some(function(l){ return l.indexOf('{day: "' + d.day + '"') >= 0 && l.indexOf('[{day: "') < 0; }); }
+function mainLogged(run, d){ return run.logs.some(function(l){ return l.indexOf("{name: " + JSON.stringify(d.main.name)) >= 0 && l.indexOf("day: ") < 0; }); }
+function dayName(d){ return "<b>" + d.day + "</b> (" + EN_DAY[d.day] + ")"; }
+var UNDEF_STEP = "A step printed <b>undefined</b>: that step does not exist. Look at the line above it in the Console. Does it start with <b>{</b> (go in with a dot and a name) or with <b>[</b> (go in with a number)?";
+
+// Task 1: the walk from canteen down to Monday's main dish name, one step per line.
+function walkProblem(run, data, src){
+  var d0 = data.days[0];
+  if (!run.logs.length) return notThereYet(run, src) || NOTHING_RAN(src, run);
+  if (run.errors.length) return RED_FIRST();
+  var hasList = logged(run, new RegExp("\\[\\{day: \"" + d0.day + "\"")), hasDay = dayLogged(run, d0), hasMain = mainLogged(run, d0), hasName = printedValue(run, d0.main.name);
+  if (hasList && hasDay && hasMain && hasName) return "";
+  var lens = (noComments(src).match(/canteen\.length/g) || []).length;
+  if (undefinedLogs(run) > lens) return UNDEF_STEP;
+  var other = data.days.filter(function(d, k){ return k > 0 && dayLogged(run, d); })[0];
+  if (!hasDay && other) return "That is " + dayName(other) + ", not Monday. Monday (hétfő) is the first day in the list, and a list counts from 0.";
+  var pre = hasName ? "The name is there. Now print the steps on the way to it too, one per line: that is the walk. " : "";
+  if (!hasList) return pre + "Walk on from canteen: the next step is the list of days, <code>canteen.days</code>.";
+  if (!hasDay) return pre + "Next step: the first day in the list. A list counts from 0.";
+  if (!hasMain) return pre + "Next step: Monday's main dish. It is a field of the day, called <code>main</code>.";
+  return "Last step: the dish's name, inside <code>main</code>.";
+}
+
+// Task 2: three values deep in the data, each printed through its own path.
+function pathsProblem(run, data, src){
+  var d = data.days, undef = undefinedLogs(run) > 0, k;
+  var UNDEF = "A line printed <b>undefined</b>: that path leads nowhere. Walk: print it one step shorter, and look at what is inside.";
+  if (!run.logs.length) return notThereYet(run, src) || NOTHING_RAN(src, run);
+  if (run.errors.length) return RED_FIRST();
+  if (!printedValue(run, data.week)) {
+    if (logged(run, /^\{week: /)) return "That is the whole canteen. The week number is one step inside it.";
+    return undef ? UNDEF : "The week number is missing. Where is it: right inside canteen, or deeper?";
+  }
+  if (!printedValue(run, d[2].soup)) {
+    for (k = 0; k < d.length; k++) if (k !== 2 && printedValue(run, d[k].soup)) return "You printed the soup of " + dayName(d[k]) + ". Wednesday is szerda. Count again: a list counts from 0.";
+    if (dayLogged(run, d[2])) return "That is all of Wednesday. One step further: its soup.";
+    return undef ? UNDEF : "Wednesday's soup is missing. Wednesday (szerda) is one of <code>canteen.days</code>: which number goes in the <code>[ ]</code>?";
+  }
+  if (!printedValue(run, d[4].main.calories)) {
+    for (k = 0; k < d.length; k++) if (k !== 4 && printedValue(run, d[k].main.calories)) return "You printed the calories of " + dayName(d[k]) + ". Friday is péntek. Count again: a list counts from 0.";
+    if (mainLogged(run, d[4])) return "That is Friday's whole main dish. One step further: its calories.";
+    if (dayLogged(run, d[4])) return "That is all of Friday. Walk on: the calories are not right there. Look inside the day: which field holds them?";
+    return undef ? UNDEF : "Friday's calories are missing. They belong to Friday's main dish.";
+  }
+  return "";
+}
+
+// Tables. want[j][c] is the text cell c of row j should have, or a function(got) that returns "" or a message.
+function LOOP_ZERO(){ return "The table is empty and nothing is red: the loop ran 0 times. Walk: print the thing the loop counts, the part before <code>.length</code>. Is it a list <b>[ ]</b>, or an object <b>{ }</b>?"; }
+function tableProblem(r, want, cols, src, o){
+  var t = r.tree, k = t ? t.kids : [], n = want.length, j, c;
+  if (!t) return "The table body <code>#" + o.box + "</code> is gone from the page.";
+  if (!k.length) {
+    var why = notThereYet(r, src);
+    if (why) return why;
+    var made = r.created || [], rows = made.filter(function(e){ return e.tag === "tr"; }), off = rows.filter(function(e){ return !e.onPage; });
+    if (off.length) return "You made " + (off.length === 1 ? "a row" : off.length + " rows") + ", but nothing is in the table yet. The row goes into the table body: <code>tbody.appendChild(row);</code>";
+    if (rows.length) return "Your rows are on the page, but not in the table body. Put them into <code>#" + o.box + "</code>: <code>tbody.appendChild(row);</code>";
+    if (!made.length && /\bfor\s*\(|\bwhile\s*\(|\.forEach\s*\(/.test(noComments(src))) return LOOP_ZERO();
+    return uncalled(src) ? NOTHING_RAN(src, r) : "The table body <code>#" + o.box + "</code> is still empty.";
+  }
+  var bad = k.filter(function(x){ return x.tag !== "tr"; })[0];
+  if (bad) return "There is a <code>&lt;" + bad.tag + "&gt;</code> straight in the table body. Each cell goes into its row (<code>row.appendChild(...)</code>), and the row goes into the table (<code>tbody.appendChild(row)</code>).";
+  if (k.length !== n) return "There " + (k.length === 1 ? "is 1 row" : "are " + k.length + " rows") + ", there should be " + n + "." + (k.length === 1 ? " Only one: is there a loop over the list, with <code>tbody.appendChild(row)</code> inside it?" : k.length > n ? " Too many: does the loop stop at the end of the list?" : " Too few: does the loop go to the end of the list?");
+  for (j = 0; j < n; j++) {
+    var cells = k[j].kids;
+    if (cells.length !== cols.length) return "Row " + (j + 1) + " has " + cells.length + (cells.length === 1 ? " cell" : " cells") + ", it should have " + cols.length + ": " + cols.join(", ") + "." + (cells.length < cols.length ? " Is every cell put into the row?" : "");
+    if (j > 0 && k[j].all === k[0].all && want[j].join("|") !== want[0].join("|")) return "Every row says the same as row 1. Nothing is red, so print inside the loop: what is <code>i</code> each round, and which " + o.thing + " does the row ask for?";
+    for (c = 0; c < cols.length; c++) {
+      var got = cells[c].all, exp = want[j][c], p;
+      if (typeof exp === "function") p = exp(got);
+      else p = got === exp ? "" : cellMsg(j, c, got, exp, want[j], cols, o);
+      if (p) return p;
+    }
+  }
+  return "";
+}
+function cellMsg(j, c, got, exp, rowWant, cols, o){
+  var where = "Row " + (j + 1) + ", <b>" + cols[c] + "</b>";
+  if (got === "" || /undefined/.test(got)) return where + (got === "" ? " is empty" : " says <b>" + esc(got) + "</b>") + ": that path leads nowhere. Walk: inside the loop, print <code>console.log(" + o.item + ");</code> Which fields are there" + (o.deep && o.deep[c] ? ", and is it right there or one step deeper?" : "?");
+  if (/object Object/.test(got)) return where + " says <b>[object Object]</b>: a whole object turned into text. Walk one step further: which field inside it do you want?";
+  var other = rowWant.indexOf(got);
+  if (other >= 0) return where + " says <b>" + esc(got) + "</b>: that belongs in the <b>" + cols[other] + "</b> column. The cells go in this order: " + cols.join(", ") + ".";
+  return where + " says <b>" + esc(got) + "</b>. It should say <b>" + esc(exp) + "</b>.";
+}
+function tableCheck(r, a, src, want, altWant, cols, o){
+  var p = tableProblem(r, want, cols, src, o);
+  if (p) return p;
+  if (tableProblem(a, altWant, cols, src, o)) {
+    var ak = a.tree ? a.tree.kids.length : 0;
+    if (ak && ak !== altWant.length) return "It works for this week only. The check also ran your code on another week with " + altWant.length + " " + o.things + ", and your table had " + ak + " rows. Is a number typed in where <code>.length</code> should be?";
+    return NOT_TYPED();
+  }
+  return "";
+}
+var MENU_O = { box: "menu", item: "canteen.days[i]", thing: "day", things: "days", deep: [false, false, true, true] };
+function menu2(data){ return data.days.map(function(d){ return [d.day, d.main.name]; }); }
+function menu4(data){ return data.days.map(function(d){ return [d.day, d.soup, d.main.name, String(d.main.calories)]; }); }
+function menuCheck(r, a, src){ return tableCheck(r, a, src, menu4(CANTEEN), menu4(ALT_CANTEEN), COLS4, MENU_O); }
+
+// Extra A: a day with no dessert says so in words: not empty, not "null", not another value of that day.
+function desserts(data){
+  return data.days.map(function(d, j){
+    return [d.day, function(got){
+      var where = "Row " + (j + 1) + ", <b>Dessert</b>";
+      if (d.dessert !== null) return got === d.dessert ? "" : got === "" || /undefined/.test(got) ? where + (got ? " says <b>" + esc(got) + "</b>" : " is empty") + ". Walk: print <code>canteen.days[i]</code>. What is the dessert field called?" : where + " says <b>" + esc(got) + "</b>. It should say <b>" + esc(d.dessert) + "</b>.";
+      if (got === "") return where + " is empty. In the data, that day's dessert is <code>null</code>: there is none. Say it in words instead, like <b>no dessert</b>.";
+      if (/\bnull\b/.test(got)) return where + " says <b>" + esc(got) + "</b>. <code>null</code> is the data's word for \"nothing here\". People want words: show something like <b>no dessert</b>.";
+      if (/undefined|object Object/.test(got)) return where + " says <b>" + esc(got) + "</b>. Walk: print <code>canteen.days[i].dessert</code> for that day and look.";
+      if ([d.day, d.soup, d.main.name, String(d.main.calories)].indexOf(got) >= 0) return where + " says <b>" + esc(got) + "</b>: that is not a dessert. Which field holds the dessert?";
+      return "";
+    }];
+  });
+}
+// Extra B: every hobby in the cell, with only commas, spaces or the like between them.
+function catRows(list){
+  return list.map(function(cat, j){
+    return [cat.name, function(got){
+      var where = "Row " + (j + 1) + ", <b>Hobbies</b>", s = got, h = cat.hobbies;
+      if (/undefined|object Object|\bnull\b/.test(got) || (got === "" && h.length)) return where + (got ? " says <b>" + esc(got) + "</b>" : " is empty") + ": that path leads nowhere. Walk: print <code>cats[i]</code>. What is the field called, and does it start with { or with [ ?";
+      for (var x = 0; x < h.length; x++) {
+        var at = s.indexOf(h[x]);
+        if (at < 0) {
+          if (h.some(function(y){ return got.indexOf(y) >= 0; })) return where + " shows only some of " + esc(cat.name) + "'s hobbies. " + esc(cat.name) + " has " + h.length + ": <code>hobbies</code> is a list, so show every item in it.";
+          return where + " says <b>" + esc(got || "nothing") + "</b>. It should show " + esc(cat.name) + "'s hobbies: <b>" + esc(h.join(", ")) + "</b>.";
+        }
+        s = s.slice(0, at) + " " + s.slice(at + h[x].length);
+      }
+      if (h.length && !/^[\s,;\/|·•+&–—-]*$/.test(s.replace(/(^|\s)(and|és)(?=\s|$)/g, " "))) return where + " has more in it than the hobbies: <b>" + esc(got) + "</b>. Only the hobbies, with a comma between them.";
+      return "";
+    }];
+  });
+}
+var CATS_O = { box: "cat-list", item: "cats[i]", thing: "cat", things: "cats", deep: [false, false] };
+
+/* ====================================================================
+   The slides: why, before any code. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+// Mono text in coloured pieces: parts = [[text, colour, bold], ...]
+function TS(x, y, parts, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" font-family="ui-monospace,Consolas,monospace" xml:space="preserve">' + parts.map(function(p){ return '<tspan fill="' + (p[1] || "#e5e7eb") + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + label + '">' + inner + '</svg>'; }
+var DARK = "#15181f", KEYC = "#9cdcfe", STRC = "#ce9178", KWC = "#569cd6", AWC = "#c586c0", FNC = "#dcdcaa", DIM = "#9aa0a6", CMC = "#6a9955";
+
+function cut(s, n){ return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+function CARD(x, y, w, txt, bad){ return R(x, y, w, 28, { rx: 7, fill: bad ? "#fff0f0" : "#fffaf0", stroke: bad ? "#d93025" : "#f0a500", sw: 2 }) + T(x + 10, y + 19, esc(txt), { size: 12, fill: bad ? "#d93025" : INK }); }
+// Code lines on a dark box, with a label on the right: [[parts], label, label colour]
+function CODE(L, y0){ var s = ""; L.forEach(function(l, i){ var y = y0 + i * 22; s += TS(20, y, l[0], 12.5); if (l[1]) s += T(620, y, "← " + l[1], { anchor: "end", size: 12, bold: true, fill: l[2] || "#86efac" }); }); return s; }
+
+// A small table: cols = [[label, width, alignRight]], rows = [[cell, ...]]; o.bad = a column drawn empty and red.
+function TBL(x, y, cols, rows, o){
+  o = o || {};
+  var s = "", h = 22, cx = x;
+  cols.forEach(function(c){ s += R(cx, y, c[1], h, { rx: 0, fill: "#f3efe0", stroke: "#d6d3c4" }) + T(c[2] ? cx + c[1] - 7 : cx + 7, y + 15, c[0], { size: 11.5, bold: true, anchor: c[2] ? "end" : null }); cx += c[1]; });
+  rows.forEach(function(r, j){
+    var yy = y + h * (j + 1);
+    cx = x;
+    cols.forEach(function(c, k){
+      var bad = o.bad === k;
+      s += R(cx, yy, c[1], h, { rx: 0, fill: bad ? "#fff0f0" : "#fff", stroke: bad ? "#e8a0a0" : "#d6d3c4" });
+      if (r[k]) s += T(c[2] ? cx + c[1] - 7 : cx + 7, yy + 15, esc(cut(r[k], Math.floor((c[1] - 12) / 6.4))), { size: 11.5, anchor: c[2] ? "end" : null });
+      cx += c[1];
+    });
+  });
+  return s;
+}
+var PUR = "#7c3aed", NUMC = "#b5cea8";
+
+var ART = {
+  why: function(){
+    var s = T(16, 18, "The server sends this", { bold: true, fill: MUT }) + T(350, 18, "The page shows this", { bold: true, fill: A });
+    s += R(8, 28, 304, 162, { fill: DARK, stroke: DARK });
+    [
+      [["{ "], ['"week"', KEYC], [": "], ["46", NUMC], [", "], ['"school"', KEYC], [": "], ['"Széchenyi"', STRC], [","]],
+      [["  "], ['"days"', KEYC], [": ["]],
+      [["    { "], ['"day"', KEYC], [": "], ['"hétfő"', STRC], [","]],
+      [["      "], ['"main"', KEYC], [": { "], ['"name"', KEYC], [": "], ['"Rántott sajt…"', STRC], [","]],
+      [["                "], ['"calories"', KEYC], [": "], ["820", NUMC], [" } },"]],
+      [["    { "], ['"day"', KEYC], [": "], ['"kedd"', STRC], [", … },"]],
+      [["    …"]],
+      [["  ] }"]]
+    ].forEach(function(p, i){ s += TS(18, 50 + i * 18, p, 11.5); });
+    s += ARROW(318, 108, 338, 108, A);
+    s += R(344, 28, 288, 162, { fill: "#fff", stroke: "#cfd6df" });
+    s += T(356, 50, "Canteen menu", { bold: true, size: 14 });
+    s += TBL(356, 60, [["Day", 64], ["Main dish", 150], ["kcal", 50, 1]], [["hétfő", "Rántott sajt rizzsel", "820"], ["kedd", "Mákos tészta (a mák külön kapható)", "640"], ["szerda", "Csirkepaprikás nokedlivel", "760"]]);
+    s += T(488, 168, "…", { anchor: "middle", size: 14, bold: true, fill: MUT });
+    s += R(8, 200, 624, 38, { rx: 6, fill: "#eef4ff", stroke: "#c7dafd" }) + T(320, 224, "Exam in May, frontend part (15 points): data from a server, on the page.", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(246, "Left: the server sends the canteen menu as an object with a list of days inside, and each day has its main dish inside it. Right: the page shows it as a table, one row per day. At the exam the frontend part, 15 points, is data from a server, on the page", s);
+  },
+  brackets: function(){
+    var s = T(20, 22, "{ }   an object", { bold: true, size: 15, fill: A });
+    s += R(12, 32, 296, 118, { fill: "#eef4ff", stroke: A, sw: 2 });
+    [["week", "46"], ["school", '"Széchenyi"'], ["days", "[ … ]"]].forEach(function(f, i){
+      var y = 44 + i * 34;
+      s += R(24, y, 272, 26, { rx: 6, fill: "#fff", stroke: "#c7dafd" }) + T(36, y + 18, f[0], { mono: true, bold: true, size: 13, fill: A }) + T(130, y + 18, esc(f[1]), { mono: true, size: 13 });
+    });
+    s += T(20, 174, "Fields with names. Go in with a dot and the name:", { size: 12.5, fill: MUT });
+    s += TS(20, 198, [["canteen", INK], [".week", A, 1], ["   →  46", MUT]], 14);
+    s += T(340, 22, "[ ]   a list", { bold: true, size: 15, fill: AMB });
+    s += R(332, 32, 296, 118, { fill: "#fff7e6", stroke: AMB, sw: 2 });
+    ["hétfő", "kedd", "szerda", "csütörtök", "péntek"].forEach(function(d, i){
+      var x = 342 + i * 56;
+      s += T(x + 26, 54, String(i), { anchor: "middle", mono: true, bold: true, size: 14, fill: AMB }) + R(x, 62, 52, 52, { rx: 6, fill: "#fff", stroke: "#f3d19c" }) + T(x + 26, 93, "{ }", { anchor: "middle", mono: true, size: 13, fill: MUT }) + T(x + 26, 136, d, { anchor: "middle", size: 10.5 });
+    });
+    s += T(340, 174, "Numbered places, from 0. Go in with a number:", { size: 12.5, fill: MUT });
+    s += TS(340, 198, [["canteen.days", INK], ["[0]", AMB, 1], ['  →  {day: "hétfő", …}', MUT]], 13);
+    s += T(320, 236, "Only a list has numbered places and a length.", { anchor: "middle", bold: true, size: 13, fill: INK });
+    return svg(248, "Two kinds of box. Left: an object, in curly brackets, has fields with names (week, school, days); go in with a dot and the name, canteen.week gives 46. Right: a list, in square brackets, has numbered places from 0 (hétfő is 0, péntek is 4); go in with a number, canteen.days[0] gives Monday. Only a list has numbered places and a length", s);
+  },
+  path: function(){
+    var s = R(8, 8, 420, 262, { fill: "#eef4ff", stroke: A, sw: 2 });
+    s += TS(20, 30, [["canteen", A, 1], ["  { }", MUT]], 13);
+    s += TS(20, 52, [["week: ", INK], ["46", MUT], ["    school: ", INK], ['"Széchenyi"', MUT]], 12);
+    s += R(20, 62, 396, 196, { fill: "#fff7e6", stroke: AMB, sw: 2 });
+    s += TS(30, 80, [["days", AMB, 1], ["  [ ]", MUT]], 12.5);
+    s += R(30, 90, 300, 160, { fill: "#faf5ff", stroke: PUR, sw: 2 });
+    s += TS(40, 108, [["[0]", PUR, 1], ["  { }", MUT]], 12.5);
+    s += TS(40, 128, [["day: ", INK], ['"hétfő"', MUT]], 12);
+    s += TS(40, 148, [["soup: ", INK], ['"Paradicsomleves…"', MUT]], 12);
+    s += R(40, 158, 280, 84, { fill: "#f0fdf4", stroke: GRN, sw: 2 });
+    s += TS(50, 176, [["main", GRN, 1], ["  { }", MUT]], 12.5);
+    s += R(48, 184, 264, 22, { rx: 4, fill: "#fde68a", stroke: "#f59e0b" });
+    s += TS(56, 199, [["name: ", RED, 1], ['"Rántott sajt rizzsel"', INK, 1]], 12);
+    s += TS(56, 228, [["vegetarian: ", INK], ["true", MUT], ["  calories: ", INK], ["820", MUT]], 12);
+    ["[1]", "[2]", "[3]", "[4]"].forEach(function(t, i){ s += R(342, 90 + i * 40, 62, 30, { rx: 6, fill: "#fff", stroke: "#f3d19c" }) + T(373, 110 + i * 40, t, { anchor: "middle", mono: true, size: 12.5, fill: AMB }); });
+    s += T(440, 30, "Read it out loud", { bold: true, fill: MUT, size: 13 });
+    [["canteen", A, "the whole answer"], [".days", AMB, "its days"], ["[0]", PUR, "the first day"], [".main", GRN, "its main dish"], [".name", RED, "its name"]].forEach(function(st, i){
+      var y = 66 + i * 38;
+      s += T(440, y, st[0], { mono: true, bold: true, size: 15, fill: st[1] }) + T(516, y, st[2], { size: 12.5 });
+      if (i < 4) s += T(464, y + 20, "↓", { anchor: "middle", size: 12, fill: "#9aa0a6" });
+    });
+    s += TS(70, 298, [["canteen", A, 1], [".days", AMB, 1], ["[0]", PUR, 1], [".main", GRN, 1], [".name", RED, 1], ["  →  ", MUT], ['"Rántott sajt rizzsel"', INK]], 16);
+    return svg(312, "The canteen answer drawn as boxes inside boxes: canteen is an object; inside it, days is a list; inside that, [0] is Monday, an object; inside Monday, main is an object; inside main, name is Rántott sajt rizzsel, lit up. Read out loud: canteen, its days, the first day, its main dish, its name. The path is canteen.days[0].main.name", s);
+  },
+  walk: function(){
+    var s = T(16, 18, "script.js", { bold: true, fill: MUT }) + T(318, 18, "Console", { bold: true, fill: MUT });
+    s += R(8, 28, 296, 196, { fill: DARK, stroke: DARK }) + R(308, 28, 324, 196, { fill: "#fff", stroke: "#cfd6df" });
+    s += TS(20, 52, [["const ", KWC], ["canteen", KEYC], [" = "], ["await ", AWC], ["response."], ["json", FNC], ["();"]], 11.5);
+    s += TS(20, 72, [["// canteen: the whole answer", CMC]], 11.5);
+    [
+      [[["console", KEYC], ["."], ["log", FNC], ["(canteen);"]], '{week: 46, school: "Széchenyi", days: […]}'],
+      [[["console", KEYC], ["."], ["log", FNC], ["(canteen"], [".days", "#fcd34d", 1], [");"]], '[{day: "hétfő", …}, {day: "kedd", …}, …]'],
+      [[["console", KEYC], ["."], ["log", FNC], ["(canteen.days"], ["[0]", "#c4b5fd", 1], [");"]], '{day: "hétfő", soup: "…", main: {…}, …}'],
+      [[["console", KEYC], ["."], ["log", FNC], ["(canteen.days[0]"], [".soup", "#86efac", 1], [");"]], "Paradicsomleves betűtésztával (a…"]
+    ].forEach(function(r, i){
+      var y = 108 + i * 32;
+      s += TS(20, y, r[0], 12.5) + TS(318, y, [[r[1], INK]], 12);
+      if (i) s += R(310, y - 21, 320, 1, { rx: 0, fill: "#eef0f2", stroke: "#eef0f2" });
+    });
+    s += T(320, 250, "One step deeper on each line. undefined means: that step does not exist.", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(262, "Walking, one step per line. The recipe gives canteen, the whole answer. console.log(canteen) prints the object with week, school and days. console.log(canteen.days) prints the list of days. console.log(canteen.days[0]) prints Monday. console.log(canteen.days[0].soup) prints Monday's soup. One step deeper on each line; undefined means that step does not exist", s);
+  },
+  rows: function(){
+    var L = [
+      [[["const ", KWC], ["tbody", KEYC], [" = document."], ["getElementById", FNC], ["("], ['"menu"', STRC], [");"]], "the table body"],
+      [[["for ", AWC], ["("], ["let ", KWC], ["i", KEYC], [" = 0; i < canteen"], [".days", "#fcd34d", 1], [".length; i++) {"]], "the list is canteen.days"],
+      [[["  const ", KWC], ["row", KEYC], [" = document."], ["createElement", FNC], ["("], ['"tr"', STRC], [");"]], "a new row"],
+      [[["  const ", KWC], ["dayCell", KEYC], [" = document."], ["createElement", FNC], ["("], ['"td"', STRC], [");"]], ""],
+      [[["  dayCell.textContent = canteen.days[i]"], [".day", "#86efac", 1], [";"]], "one step in"],
+      [[["  row."], ["appendChild", FNC], ["(dayCell);"]], "cell into the row"],
+      [[["  const ", KWC], ["dishCell", KEYC], [" = document."], ["createElement", FNC], ["("], ['"td"', STRC], [");"]], ""],
+      [[["  dishCell.textContent = canteen.days[i]"], [".main.name", "#86efac", 1], [";"]], "two steps in"],
+      [[["  row."], ["appendChild", FNC], ["(dishCell);"]], ""],
+      [[["  tbody."], ["appendChild", FNC], ["(row);"]], "row into the table"],
+      [[["}"]], ""]
+    ];
+    var s = R(8, 8, 624, 260, { fill: DARK, stroke: DARK }) + CODE(L, 32);
+    var rows = [["hétfő", CANTEEN.days[0].main.name], ["kedd", CANTEEN.days[1].main.name], ["szerda", CANTEEN.days[2].main.name]];
+    s += TBL(160, 282, [["Day", 90], ["Main dish", 300]], rows);
+    rows.forEach(function(r, i){ s += T(144, 319 + i * 22, "i = " + i, { mono: true, size: 12.5, anchor: "end", fill: MUT }); });
+    s += T(205, 390, "…", { anchor: "middle", size: 14, bold: true, fill: MUT });
+    return svg(400, "The loop for the menu table: getElementById finds the table body; the for loop counts canteen.days.length, because the list is canteen.days; each round makes a row, a day cell with canteen.days[i].day, one step in, and a dish cell with canteen.days[i].main.name, two steps in; each cell goes into the row and the row into the table. Below: the table, i = 0 is hétfő, i = 1 kedd, i = 2 szerda", s);
+  },
+  walkloop: function(){
+    var steps = [["Predict", 8, 76], ["Run", 98, 50], ["Look", 162, 56], ["Print", 232, 60], ["Walk ★", 306, 84, 1], ["Change one thing", 404, 140]], s = "";
+    steps.forEach(function(st, i){
+      var nw = st[3];
+      s += R(st[1], 8, st[2], 30, { rx: 15, fill: nw ? "#dcfce7" : "#eef3fc", stroke: nw ? GRN : "#c7d2fe", sw: 2 }) + T(st[1] + st[2] / 2, 28, st[0], { anchor: "middle", bold: true, size: 13, fill: nw ? GRN : A });
+      if (i < steps.length - 1) s += ARROW(st[1] + st[2] + 2, 23, steps[i + 1][1] - 2, 23);
+    });
+    s += T(552, 29, "↺ again", { bold: true, size: 13, fill: MUT });
+    s += T(12, 66, "Your page", { bold: true, fill: MUT, size: 12 });
+    s += TBL(8, 74, [["Day", 64], ["Main dish", 92]], [["hétfő", ""], ["kedd", ""], ["szerda", ""]], { bad: 1 });
+    s += T(86, 182, "Empty. Nothing is red.", { anchor: "middle", size: 12, fill: MUT });
+    s += R(176, 58, 456, 76, { fill: DARK, stroke: DARK });
+    s += TS(190, 86, [["dishCell.textContent = canteen.days[i]."], ["name", "#f87171", 1], [";"]], 13);
+    s += TS(190, 114, [["console", KEYC], ["."], ["log", FNC], ["(canteen.days[0]);"]], 13) + T(620, 114, "← walk", { anchor: "end", size: 12, bold: true, fill: "#86efac" });
+    s += R(176, 144, 456, 54, { rx: 6, fill: "#fff", stroke: "#cfd6df" }) + T(188, 160, "Console", { size: 11, fill: MUT });
+    s += TS(188, 184, [['{day: "hétfő", soup: "…", ', INK], ["main", GRN, 1], [": {…}, dessert: null, …}", INK]], 12);
+    s += T(320, 230, "A day has no name. It is one step deeper, in main: canteen.days[i].main.name", { anchor: "middle", bold: true, size: 13, fill: A });
+    return svg(242, "The programmer's loop: predict, run, look, print, walk (new today), change one thing, again. Example: the main dish cells are empty and nothing is red; the code asks for canteen.days[i].name; walking, console.log(canteen.days[0]) shows a day has main, not name, so the path is canteen.days[i].main.name", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Real answers are boxes inside boxes", art: "why",
+    body: "The weather app, the canteen menu, a Spotify playlist: the server's answer is almost never a plain list. It is an object with a list inside, and objects inside that.<br><br>To put one value on the page, you need the way to it, step by step. At the exam in May (frontend part, 15 points), the data looks like this.",
+    say: "Ask: what does a weather app get from the server? A city, today's numbers, and a list of hours. Each hour has its own temperature and wind. Boxes inside boxes." },
+  { title: "{ } or [ ]: two kinds of box", art: "brackets",
+    body: "Look at the bracket that opens the box.<br><b>{</b> is an object: its fields have names. Go in with a dot and the name: <span class=\"mono\">canteen.week</span>.<br><b>[</b> is a list: its items are numbered from 0. Go in with a number, <span class=\"mono\">canteen.days[0]</span>, or with a loop.",
+    say: "Go back to slide 1 and point at the JSON. Ask: which bracket opens the whole answer? Which one opens days? Which one opens main?" },
+  { title: "Read the path out loud", art: "path",
+    body: "Read a path from left to right, one step at a time. <span class=\"mono\">canteen.days[0].main.name</span> is: canteen, its days, the first day, its main dish, its name.<br><br>Each dot goes into a <b>{ }</b>. Each <b>[ ]</b> picks one item from a list.",
+    say: "Read two more paths aloud together: canteen.days[4].soup (Friday's soup) and canteen.days[1].main.calories (Tuesday's calories). Then ask: what is the path to Wednesday's dessert? (canteen.days[2].dessert)" },
+  { title: "Walk: one step at a time", art: "walk",
+    body: "The recipe in <span class=\"mono\">script.js</span> is ready: after its two <b>await</b> lines, <span class=\"mono\">canteen</span> holds the whole answer.<br><br>Don't write the whole path at once. Print canteen, look, add one step, print again. When a step prints <b>undefined</b>, that step does not exist: look at the line above it. Does it start with { or with [?",
+    say: "Ask before each line: what will it print? Then ask: how would you walk to Monday's main dish name? That is task 1." },
+  { title: "A row for each day: the list is canteen.days", art: "rows",
+    body: "A loop goes over a list, so it counts <span class=\"mono\">canteen.days.length</span>. Inside the loop, <span class=\"mono\">canteen.days[i]</span> is one day, and its main dish name is two steps deeper: <span class=\"mono\">.main.name</span>.<br><br>Each cell goes into the row, and the row goes into the table body. Long paths? You can save a step first: <span class=\"mono\">const days = canteen.days;</span> Then <span class=\"mono\">days[i].main.name</span> is the same thing.",
+    say: "Walk the table aloud: i = 0 is hétfő, i = 1 is kedd. Ask: how many rows will there be, and where does that number come from?" },
+  { title: "When the page is wrong: walk", art: "walkloop",
+    body: "Programmers don't guess. When the page is wrong and nothing is red, they walk: print from the top, one step deeper on each line, until a step shows something they did not expect. Today's new step is <b>Walk</b>.<br><br>Then: the practice. Every task starts with <b>Predict first</b>. Save with <b>Ctrl+S</b>.",
+    say: "This is the habit for every JSON from now on. When someone calls you over, ask: where did your walk stop? Task 5 is a teammate's table that stays empty with nothing red." }
+];
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+function RECIPE_FOR(url, name){
+  return 'const address = "' + url + '";\n\n' +
+    'async function load() {\n' +
+    '  const response = await fetch(address);\n' +
+    '  const ' + name + ' = await response.json();\n\n' +
+    '  // your code goes here\n' +
+    '}\n\n' +
+    'load();\n';
+}
+var RECIPE = RECIPE_FOR(CANTEEN_URL, "canteen");
+function withBody(body){ return RECIPE.replace("  // your code goes here\n", body); }
+// One cell: make it, fill it, put it into the row.
+function CELL(name, path, ind){ ind = ind || "    "; return ind + 'const ' + name + ' = document.createElement("td");\n' + ind + name + '.textContent = ' + path + ';\n' + ind + 'row.appendChild(' + name + ');\n'; }
+// The table loop: tbody found above it, one row per item, the cells inside.
+function ROWS(list, cells, o){
+  o = o || {};
+  return '  const tbody = document.getElementById("' + (o.box || "menu") + '");\n' + (o.before || "") + '\n' +
+    '  for (let i = 0; i < ' + list + '.length; i++) {\n' +
+    '    const row = document.createElement("tr");\n' + cells +
+    '    tbody.appendChild(row);\n' +
+    '  }\n';
+}
+function C4(p){ return CELL("dayCell", p + ".day") + CELL("soupCell", p + ".soup") + CELL("dishCell", p + ".main.name") + CELL("calCell", p + ".main.calories"); }
+var LOOP2 = ROWS("canteen.days", CELL("dayCell", "canteen.days[i].day") + CELL("dishCell", "canteen.days[i].main.name"));
+var LOOP4 = ROWS("canteen.days", C4("canteen.days[i]"));
+var ONE_ROW = '  const tbody = document.getElementById("menu");\n\n' +
+  '  const row = document.createElement("tr");\n' +
+  CELL("dayCell", "canteen.days[0].day", "  ") + CELL("dishCell", "canteen.days[0].main.name", "  ") +
+  '  tbody.appendChild(row);\n';
+var TEAMMATE = ROWS("days", C4("days[i]"), { before: "  const days = canteen;\n" });
+var DESSERT_CELL = '    const dessertCell = document.createElement("td");\n' +
+  '    if (canteen.days[i].dessert === null) {\n' +
+  '      dessertCell.textContent = "no dessert";\n' +
+  '    } else {\n' +
+  '      dessertCell.textContent = canteen.days[i].dessert;\n' +
+  '    }\n' +
+  '    row.appendChild(dessertCell);\n';
+function P(q){ return '<span class="predict">Predict first: ' + q + '</span> '; }
+
+var LESSONS = [
+  { title: "Walk to Monday's dish", page: "walk", data: "canteen.json",
+    do: P("what will <code>console.log(canteen.length)</code> print?") + "Save and look. Then walk on to Monday's main dish: one <code>console.log</code> per step, from <code>canteen.days</code> down to the dish's name.",
+    sub: "Slide 3 has the path, slide 4 the walk (<b>Slides</b>, top left). The <code>canteen.json</code> tab shows what the server sends.",
+    start: withBody('  console.log(canteen);\n  console.log(canteen.length);\n'),
+    hints: ["One step per line. The first new line: <code>console.log(canteen.days);</code>", "Then the first day, <code>canteen.days[0]</code>. Then add <code>.main</code> to that, then <code>.name</code>.", "The four new lines: <code>console.log(canteen.days);</code> <code>console.log(canteen.days[0]);</code> <code>console.log(canteen.days[0].main);</code> <code>console.log(canteen.days[0].main.name);</code>"],
+    solution: withBody('  console.log(canteen);\n  console.log(canteen.length);\n  console.log(canteen.days);\n  console.log(canteen.days[0]);\n  console.log(canteen.days[0].main);\n  console.log(canteen.days[0].main.name);\n'),
+    check: function(r, a, src){
+      var m = walkProblem(r, CANTEEN, src);
+      if (m) return m;
+      return walkProblem(a, ALT_CANTEEN, src) ? NOT_TYPED() : "";
+    },
+    after: "<code>canteen.length</code> printed <b>undefined</b>: canteen is an object { }, and only a list has a length. Each line went one step deeper, down to <b>" + esc(CANTEEN.days[0].main.name) + "</b>." },
+
+  { title: "Write the path", page: "walk", data: "canteen.json",
+    do: P("Wednesday is the third day. Which number goes in its <code>[ ]</code>?") + "Print three values, each through its own path: the week number, Wednesday's soup, and the calories of Friday's main dish.",
+    sub: "Read <code>canteen.json</code> or walk to find where each one is. Type no value by hand: the check also runs your code on another week.",
+    start: withBody('  console.log(canteen);\n'),
+    hints: ["Read each one as a path: canteen, its days, which day, which field. Wednesday (szerda) is the third day, and a list counts from 0.", "The week is right inside canteen. The soup is a field of the day. The calories are inside the day's <code>main</code>.", "<code>console.log(canteen.week);</code> <code>console.log(canteen.days[2].soup);</code> <code>console.log(canteen.days[4].main.calories);</code>"],
+    solution: withBody('  console.log(canteen.week);\n  console.log(canteen.days[2].soup);\n  console.log(canteen.days[4].main.calories);\n'),
+    check: function(r, a, src){
+      var m = pathsProblem(r, CANTEEN, src);
+      if (m) return m;
+      return pathsProblem(a, ALT_CANTEEN, src) ? NOT_TYPED() : "";
+    },
+    after: "Week " + CANTEEN.week + ", " + esc(CANTEEN.days[2].soup) + ", " + CANTEEN.days[4].main.calories + ". Wednesday is <code>[2]</code>, because a list counts from 0. One dot for each { }, one [ ] for each list." },
+
+  { title: "A row for each day", page: "menu2", data: "canteen.json",
+    do: P("how many rows will the table have?") + "The start code makes Monday's row. Make a row for every day, with no dish typed by hand.",
+    sub: "The loop is on slide 5. Which part of <code>canteen</code> is the list?",
+    start: withBody(ONE_ROW),
+    hints: ["The loop goes over a list. Which part of canteen is a list? Print <code>canteen</code> if you are not sure.", "The tbody line stays above the loop. The row lines go inside it: <code>for (let i = 0; i &lt; canteen.days.length; i++) { }</code>", "Inside the loop, <code>canteen.days[0]</code> becomes <code>canteen.days[i]</code>, in both cells."],
+    solution: withBody(LOOP2),
+    check: function(r, a, src){ return tableCheck(r, a, src, menu2(CANTEEN), menu2(ALT_CANTEEN), COLS2, { box: "menu", item: "canteen.days[i]", thing: "day", things: "days", deep: [false, true] }); },
+    after: CANTEEN.days.length + " rows. The loop counts <code>canteen.days.length</code>: the list is inside the object, one step in." },
+
+  { title: "The week's menu", page: "menu", data: "canteen.json", alsoDone: [0, 1, 2],
+    do: P("what will the last cell of the last row say?") + "The week's menu as a table: day, soup, main dish, calories. The header row is already in <code>index.html</code>.",
+    sub: "<b>Confident? Start here.</b> If this one passes, tasks 1 to 3 count as done. Only the recipe is here: you write the whole loop yourself.",
+    start: RECIPE,
+    hints: ["It is the loop from slide 5, with four cells instead of two. The list is <code>canteen.days</code>.", "Each cell is three lines: make a <code>td</code>, fill it, put it into the row. The soup is a field of the day. The calories are inside <code>main</code>.", "The four paths: <code>canteen.days[i].day</code>, <code>canteen.days[i].soup</code>, <code>canteen.days[i].main.name</code>, <code>canteen.days[i].main.calories</code>."],
+    solution: withBody(LOOP4),
+    check: menuCheck,
+    after: "The last cell says <b>" + CANTEEN.days[4].main.calories + "</b>: Friday's pizza. Data from a server, two levels deep, as a table: that is the frontend task of the exam." },
+
+  { title: "A teammate's menu", page: "menu", data: "canteen.json",
+    do: P("how many rows should the table have?") + "Your teammate's menu table is empty, and nothing is red. Find out why by walking, then fix it.",
+    sub: "Save first and look at the page. Then walk: print each name the loop uses, starting from the top.",
+    start: withBody(TEAMMATE),
+    hints: ["Walk from the top: put <code>console.log(days);</code> above the loop. Is it a list [ ]?", "<code>days</code> is the whole canteen object, so <code>days.length</code> is undefined. <code>i &lt; undefined</code> is false, so the loop runs 0 times.", "The list is one step deeper: <code>const days = canteen.days;</code>"],
+    solution: withBody(ROWS("days", C4("days[i]"), { before: "  const days = canteen.days;\n" })),
+    check: menuCheck,
+    after: CANTEEN.days.length + " rows now, one per day. <code>days</code> was the whole canteen, an object. An object has no length, so the loop never ran, and nothing broke. The name said days: only printing showed what was in it." },
+
+  { title: "Extra A: no dessert", page: "dessert", data: "canteen.json",
+    do: "Extra, no hints: a table of the week's desserts, the day and its dessert. Some days have no dessert: there the cell says so in words (like <b>no dessert</b>), not empty and not null.",
+    sub: "Walk to a dessert first, and to the dessert of a day that has none. <code>index.html</code> is different here: look at it.",
+    start: withBody(LOOP2),
+    hints: [],
+    solution: withBody(ROWS("canteen.days", CELL("dayCell", "canteen.days[i].day") + DESSERT_CELL)),
+    flags: function(r, a, src){
+      var want = desserts(CANTEEN), k = r.tree ? r.tree.kids : [];
+      var p = tableProblem(r, want, COLS_D, src, MENU_O);
+      var f1 = k.length === want.length && k.every(function(row, j){ return row.kids.length && row.kids[0].all === CANTEEN.days[j].day; });
+      var f2 = !p, f3 = f2 && !tableProblem(a, desserts(ALT_CANTEEN), COLS_D, src, MENU_O);
+      return { flags: [f1, f2, f3], msg: !f2 ? p : !f3 ? NOT_TYPED() : "" };
+    },
+    after: "<code>null</code> means \"nothing here\". On a page, an empty cell or the word null looks like a bug, so you say it in words." },
+
+  { title: "Extra B: the cats' hobbies", page: "cats", data: "cats.json",
+    do: "Extra, no hints: the cats as a table, name and hobbies. The hobbies cell shows all of that cat's hobbies, like <b>" + esc(CATS[0].hobbies.join(", ")) + "</b>.",
+    sub: "The address: <a href=\"" + CATS_URL + "\" target=\"_blank\" rel=\"noopener\">" + CATS_URL + "</a> (the <code>cats.json</code> tab shows its answer). <code>index.html</code> is different here: look at it first. Walk before you use the data: what is on top, and what is inside each cat?",
+    start: withBody(LOOP2),
+    hints: [],
+    solution: RECIPE_FOR(CATS_URL, "cats").replace("  // your code goes here\n", ROWS("cats", CELL("nameCell", "cats[i].name") + CELL("hobbyCell", 'cats[i].hobbies.join(", ")'), { box: "cat-list" })),
+    flags: function(r, a, src){
+      var k = r.tree ? r.tree.kids : [];
+      var p = tableProblem(r, catRows(CATS), COLS_C, src, CATS_O);
+      var f1 = k.length === CATS.length && k.every(function(row, j){ return row.kids.length && row.kids[0].all === CATS[j].name; });
+      var f2 = !p, f3 = f2 && !tableProblem(a, catRows(ALT_CATS), COLS_C, src, CATS_O);
+      return { flags: [f1, f2, f3], msg: !f2 ? p : !f3 ? NOT_TYPED() : "" };
+    },
+    after: "Here the list is on top, and there is another list inside each cat. Walking shows the shape either way: { } or [ ], then the next step." }
+];
+LESSONS.forEach(function(l){ l.edit = "script.js"; });
+
+// English only for now (MVP step 2). The Hungarian lists stand in as the English ones until step 3.
+var PRIMER_HU = PRIMER, LESSONS_HU = LESSONS;
+function LX(i){ return LESSONS[i]; }
+
+
+/* ====================================================================
+   Small helpers
+   ==================================================================== */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* ---- syntax colours, VS Code Dark Modern ---- */
+var KW = { async:"k", await:"c", const:"k", let:"k", var:"k", true:"k", false:"k", null:"k", undefined:"k", function:"k", new:"k", for:"c", if:"c", else:"c", return:"c", while:"c" };
+function hlJS(line){
+  var re = /(\/\/.*$)|("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\sA-Za-z_$\d"']+)/g, out = "", m, prevDot = false;
+  while ((m = re.exec(line))) {
+    if (m[1]) out += '<span class="cm">' + esc(m[1]) + '</span>';
+    else if (m[2]) out += '<span class="s">' + esc(m[2]) + '</span>';
+    else if (m[3]) out += '<span class="num">' + m[3] + '</span>';
+    else if (m[4]) {
+      var w = m[4], rest = line.slice(re.lastIndex);
+      if (KW[w] && !prevDot) out += '<span class="' + KW[w] + '">' + w + '</span>';
+      else if (/^\s*\(/.test(rest)) out += '<span class="f">' + w + '</span>';
+      else out += '<span class="v">' + w + '</span>';
+    }
+    else if (m[5]) out += m[5];
+    else out += esc(m[6]);
+    if (!m[5]) prevDot = !!(m[6] && /\.$/.test(m[6]));
+  }
+  return out;
+}
+// JSON: keys blue, string values orange.
+function hlJSON(line){
+  return hlJS(line).replace(/<span class="s">("(?:[^"\\<]|\\.)*")<\/span>(\s*:)/g, '<span class="v">$1</span>$2');
+}
+function hlHTML(line){
+  return esc(line).replace(/(&lt;\/?)([\w!-]+)([^&]*?)(\/?&gt;)/g, function(_, a, t, attrs, b){
+    return '<span class="tgc">' + a + t + '</span>' + attrs.replace(/([\w-]+)(=)("[^"]*")/g, '<span class="at">$1</span>$2<span class="s">$3</span>') + '<span class="tgc">' + b + '</span>';
+  });
+}
+function hlCSS(line){
+  if (/^\s+[\w-]+\s*:/.test(line)) return line.replace(/^(\s+)([\w-]+)(\s*:)(.*)$/, function(_, sp, p, c, v){ return sp + '<span class="pr">' + p + '</span>' + c + '<span class="s">' + esc(v) + '</span>'; });
+  if (/\{\s*$/.test(line)) return '<span class="sel">' + esc(line.replace(/\s*\{\s*$/, "")) + '</span> {';
+  return esc(line);
+}
+function hlFor(name){ return /\.html$/.test(name) ? hlHTML : /\.css$/.test(name) ? hlCSS : /\.json$/.test(name) ? hlJSON : hlJS; }
+
+/* ---- the project's other files, shown read-only ---- */
+function indexHtml(les){
+  var page = PAGES[les.page];
+  var scripts = '  <script src="script.js"><\/script>\n';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>' + page.title + '</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n' +
+    page.body.split("\n").map(function(l){ return "  " + l; }).join("\n") + '\n\n' + scripts + '</body>\n</html>\n';
+}
+function styleCss(page){
+  return page.css.split("}").filter(function(r){ return r.trim(); }).map(function(r){
+    var p = r.split("{"), decls = p.slice(1).join("{").split(";").filter(function(d){ return d.trim(); });
+    return p[0].trim().replace(/,/g, ", ") + " {\n" + decls.map(function(d){ return "  " + d.trim().replace(/:/, ": ") + ";"; }).join("\n") + "\n}";
+  }).join("\n\n") + "\n";
+}
+function EDIT(){ return L().edit; }
+function fileText(name){
+  var les = L();
+  if (name === les.edit) return editor.value;
+  if (name === "index.html") return indexHtml(les);
+  if (name === "style.css") return styleCss(PAGES[les.page]);
+  if (name === "script.js") return les.given;
+  if (name === "solution") return les.solution;
+  if (name === les.data) return JSON.stringify(API.main[name], null, 2) + "\n";
+  return "";
+}
+function filesFor(les){ return (les.data ? [les.data] : []).concat(["index.html", "script.js", "style.css"]); }
+function ext(n){ return n.split(".").pop(); }
+function fi(n){ var e = ext(n); return '<span class="fi ' + e + '">' + (e === "js" ? "JS" : e === "html" ? "&lt;&gt;" : e === "json" ? "{}" : "#") + '</span>'; }
+function solName(){ return "solution." + ext(EDIT()); }
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "walking-nested-json-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], code: {}, buf: {}, primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, saved: {}, side: false }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+// ?prep: start clean every time, never save, open each task with its solution run.
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var editor = $("code");
+var UI = { open: [], active: "", note: "" };
+var last = null, primerIdx = 0, showSay = PREP;
+
+function L(){ return LESSONS[S.i]; }
+function savedCode(i){ return S.code[i] !== undefined ? S.code[i] : LESSONS[i].start; }
+function bufferCode(i){ return S.buf[i] !== undefined ? S.buf[i] : savedCode(i); }
+function dirty(){ return editor.value !== savedCode(S.i); }
+
+/* ====================================================================
+   Editor
+   ==================================================================== */
+
+function linesHtml(text, hl, marks){
+  marks = marks || {};
+  return text.split("\n").map(function(l, n){ return '<div' + (marks[n + 1] ? ' class="' + marks[n + 1] + '"' : "") + '>' + (hl(l) || " ") + '</div>'; }).join("");
+}
+function gutterHtml(count, cur, marks){
+  marks = marks || {};
+  var h = "";
+  for (var n = 1; n <= count; n++) h += '<div class="' + (n === cur ? "cur " : "") + (marks[n] || "") + '">' + n + '</div>';
+  return h;
+}
+function caretPos(){
+  var before = editor.value.slice(0, editor.selectionStart).split("\n");
+  return { ln: before.length, col: before[before.length - 1].length + 1 };
+}
+function sizeEditor(){
+  var lines = editor.value.split("\n");
+  var longest = lines.reduce(function(m, l){ return Math.max(m, l.length); }, 0);
+  editor.style.width = "calc(" + (longest + 4) + "ch + 4px)";
+  editor.parentNode.style.minWidth = "calc(" + (longest + 4) + "ch + 4px)";
+}
+function paintEditor(){
+  var marks = solutionMarks().mine;
+  $("hl-edit").innerHTML = linesHtml(editor.value, hlFor(EDIT()), marks);
+  var p = caretPos();
+  $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, marks);
+  sizeEditor();
+  if (UI.active === EDIT()) $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col;
+}
+
+// Line diff (LCS) on normalised lines: trimmed, no trailing ;, comments and blanks ignored.
+function norm(l){ return l.trim().replace(/;\s*$/, "").replace(/\s+/g, " "); }
+function codeLines(text){ var out = []; text.split("\n").forEach(function(l, n){ var t = norm(l); if (t && t.indexOf("//") !== 0) out.push({ t: t, n: n + 1 }); }); return out; }
+function lcs(A, B){
+  var n = A.length, m = B.length, d = [], i, j;
+  for (i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); }
+  for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) d[i][j] = A[i].t === B[j].t ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  var pairs = []; i = 0; j = 0;
+  while (i < n && j < m) { if (A[i].t === B[j].t) { pairs.push([i, j]); i++; j++; } else if (d[i + 1][j] > d[i][j + 1]) i++; else j++; }
+  return pairs;
+}
+// Which solution lines are new (green), which of them the student has typed (✓), which of the student's lines are in the way (red).
+function solutionMarks(){
+  var res = { sol: {}, mine: {}, todo: 0, typed: 0, del: 0 };
+  if (!S.sol[S.i]) return res;
+  var st = codeLines(L().start), so = codeLines(L().solution), mi = codeLines(editor.value);
+  var keep = {}; lcs(st, so).forEach(function(p){ keep[p[1]] = true; });
+  var solHit = {}, mineHit = {}; lcs(mi, so).forEach(function(p){ solHit[p[1]] = true; mineHit[p[0]] = p[1]; });
+  so.forEach(function(l, j){
+    if (keep[j]) return;
+    res.todo++;
+    if (solHit[j]) { res.typed++; res.sol[l.n] = "ok"; } else res.sol[l.n] = "add";
+  });
+  mi.forEach(function(l, k){
+    if (mineHit[k] === undefined) { res.mine[l.n] = "del"; res.del++; }
+    else if (!keep[mineHit[k]]) res.mine[l.n] = "ok";
+  });
+  return res;
+}
+function solutionSub(){
+  var m = solutionMarks();
+  if (lang === "hu") return "A <code>" + solName() + "</code> zöld sorait gépeld be a <code>" + EDIT() + "</code> fájlodba" + (m.del ? ", a piros soraidat pedig töröld vagy tedd át máshova" : "") + ", aztán ments. A beillesztés ki van kapcsolva. (" + m.typed + " / " + m.todo + " begépelve" + (m.del ? ", " + m.del + " piros" : "") + ")";
+  return "Type the green lines from <code>" + solName() + "</code> into your <code>" + EDIT() + "</code>" + (m.del ? ", and delete or move your red lines" : "") + ", then save. Pasting is off. (" + m.typed + " of " + m.todo + " typed" + (m.del ? ", " + m.del + " red" : "") + ")";
+}
+
+editor.addEventListener("input", function(){
+  S.buf[S.i] = editor.value; save();
+  paintEditor(); renderTabs(); renderSolution(); renderStripNote();
+});
+["click", "keyup", "focus"].forEach(function(ev){ editor.addEventListener(ev, function(){ var p = caretPos(); $("gut-edit").innerHTML = gutterHtml(editor.value.split("\n").length, p.ln, solutionMarks().mine); $("st-ln").textContent = "Ln " + p.ln + ", Col " + p.col; }); });
+editor.addEventListener("keydown", function(e){
+  var v = editor.value, a = editor.selectionStart, b = editor.selectionEnd;
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S" || e.key === "Enter")) { e.preventDefault(); saveAndRun(); return; }
+  if (e.key === "Tab" && e.shiftKey) { e.preventDefault(); eachLine(function(l){ return l.replace(/^ {1,2}/, ""); }); return; }
+  if (e.key === "Tab" && a !== b && v.slice(a, b).indexOf("\n") >= 0) { e.preventDefault(); eachLine(function(l){ return "  " + l; }); return; }
+  if (e.key === "Tab") { e.preventDefault(); insert("  "); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "/") { e.preventDefault(); var all = selLines().every(function(l){ return !l.trim() || /^\s*\/\//.test(l); }); eachLine(function(l){ return all ? l.replace(/^(\s*)\/\/ ?/, "$1") : (l.trim() ? l.replace(/^(\s*)/, "$1// ") : l); }); return; }
+  if ((e.key === "}" || e.key === "]") && a === b) { var ls = v.lastIndexOf("\n", a - 1) + 1; if (/^\s{2,}$/.test(v.slice(ls, a))) { e.preventDefault(); editor.selectionStart = a - 2; insert(e.key); return; } }
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    var lineStart = v.lastIndexOf("\n", a - 1) + 1, indent = /^\s*/.exec(v.slice(lineStart, a))[0];
+    if (/[{[(]\s*$/.test(v.slice(lineStart, a))) {
+      if (/^\s*[}\])]/.test(v.slice(b))) { insert("\n" + indent + "  " + "\n" + indent, indent.length + 3); return; }
+      indent += "  ";
+    }
+    insert("\n" + indent);
+  }
+});
+function selLines(){ var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length; return v.slice(s, e).split("\n"); }
+function eachLine(fn){
+  var v = editor.value, s = v.lastIndexOf("\n", editor.selectionStart - 1) + 1, e = v.indexOf("\n", Math.max(editor.selectionEnd - (editor.selectionEnd > editor.selectionStart && v[editor.selectionEnd - 1] === "\n" ? 1 : 0), editor.selectionStart)); if (e < 0) e = v.length;
+  var block = v.slice(s, e).split("\n").map(fn).join("\n");
+  editor.selectionStart = s; editor.selectionEnd = e; insert(block);
+  editor.selectionStart = s; editor.selectionEnd = s + block.length;
+}
+function insert(text, caretAt){
+  // execCommand keeps Ctrl+Z working.
+  editor.focus();
+  if (!document.execCommand("insertText", false, text)) {
+    var a = editor.selectionStart; editor.value = editor.value.slice(0, a) + text + editor.value.slice(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = a + text.length;
+    editor.dispatchEvent(new Event("input"));
+  }
+  if (caretAt !== undefined) { var p = editor.selectionStart - text.length + caretAt; editor.selectionStart = editor.selectionEnd = p; }
+}
+function blockIfSolution(e){
+  if (!S.sol[S.i]) return;
+  e.preventDefault();
+  UI.note = tr("Pasting is off while the solution is open. Type the green lines yourself: that is how it sticks.", "Amíg nyitva van a megoldás, a beillesztés ki van kapcsolva. A zöld sorokat gépeld be magad: így marad meg.");
+  renderStripNote();
+}
+editor.addEventListener("paste", blockIfSolution);
+editor.addEventListener("drop", blockIfSolution);
+$("sc-sol").addEventListener("copy", function(e){ e.preventDefault(); });
+$("sc-view").setAttribute("tabindex", "0");
+$("sc-view").addEventListener("keydown", function(e){ if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) { UI.note = UI.active + tr(" is read-only in this task. Your work goes in " + EDIT() + ".", ": ebben a feladatban csak olvasható. A munkád a " + EDIT() + " fájlba megy."); renderStripNote(); } });
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) { e.preventDefault(); toggleSide(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S") && e.target !== editor) { e.preventDefault(); saveAndRun(); }
+});
+
+/* ====================================================================
+   VS Code: Explorer, tabs, read-only views
+   ==================================================================== */
+
+function toggleSide(){ S.side = !S.side; save(); renderSide(); }
+$("act-ex").onclick = toggleSide;
+function renderSide(){
+  $("side").classList.toggle("hidden", !S.side);
+  $("act-ex").classList.toggle("on", S.side);
+  $("side").innerHTML = '<div class="hdr">EXPLORER</div><div class="folder">⌄ WALKING-NESTED-JSON</div>' +
+    filesFor(L()).map(function(f){ return '<div class="file' + (f === UI.active ? " sel" : "") + '" data-file="' + f + '">' + fi(f) + '<span>' + f + '</span>' + (f === EDIT() && dirty() ? '<span class="m">●</span>' : "") + '</div>'; }).join("");
+}
+$("side").addEventListener("click", function(e){ var f = e.target.closest("[data-file]"); if (f) openFile(f.dataset.file); });
+
+function openFile(name){
+  if (UI.open.indexOf(name) < 0) UI.open.push(name);
+  UI.active = name;
+  renderEditorArea();
+  if (name === EDIT()) editor.focus();
+}
+function closeFile(name){
+  UI.open = UI.open.filter(function(n){ return n !== name; });
+  if (!UI.open.length) UI.open = [EDIT()];
+  if (UI.active === name) UI.active = UI.open[UI.open.length - 1];
+  renderEditorArea();
+}
+function renderTabs(){
+  $("tabs1").innerHTML = UI.open.map(function(n){
+    var mod = n === EDIT() && dirty(), ro = n !== EDIT();
+    return '<div class="tab' + (n === UI.active ? " on" : "") + '" data-tab="' + n + '" title="' + n + (ro ? tr(" (read-only in this task)", " (ebben a feladatban csak olvasható)") : "") + '">' + fi(n) + '<span>' + n + '</span>' + (ro ? '<span class="lock">🔒</span>' : "") +
+      '<span class="x" data-close="' + n + '">' + (mod ? "●" : "×") + '</span></div>';
+  }).join("");
+  renderSide();
+}
+$("tabs1").addEventListener("click", function(e){
+  var x = e.target.closest("[data-close]");
+  if (x) { if (x.dataset.close === EDIT() && dirty()) { UI.note = tr(EDIT() + " has unsaved changes. Save with Ctrl+S first.", "A " + EDIT() + " fájlban mentetlen változások vannak. Előbb ments Ctrl+S-sel."); renderStripNote(); return; } closeFile(x.dataset.close); return; }
+  var t = e.target.closest("[data-tab]"); if (t) openFile(t.dataset.tab);
+});
+var LANG = { js: "{} JavaScript", json: "{} JSON", html: "<> HTML", css: "# CSS" };
+function renderEditorArea(){
+  var isEdit = UI.active === EDIT();
+  $("sc-edit").classList.toggle("hidden", !isEdit);
+  $("sc-view").classList.toggle("hidden", isEdit);
+  $("crumbs1").textContent = UI.active + " › …";
+  editor.setAttribute("aria-label", EDIT());
+  $("st-lang").textContent = LANG[ext(UI.active)];
+  if (!isEdit) {
+    var t = fileText(UI.active);
+    $("hl-view").innerHTML = linesHtml(t, hlFor(UI.active));
+    $("gut-view").innerHTML = gutterHtml(t.split("\n").length, 0);
+    $("st-ln").textContent = "Ln 1, Col 1";
+  } else paintEditor();
+  renderTabs();
+}
+function renderSolution(){
+  var open = !!S.sol[S.i];
+  $("g2").classList.toggle("hidden", !open);
+  $("work").classList.toggle("split", open);
+  if (!open) return;
+  var m = solutionMarks(), t = L().solution;
+  $("tabs2").innerHTML = '<div class="tab on" title="' + solName() + ' ' + tr("(read-only)", "(csak olvasható)") + '">' + fi(solName()) + '<span>' + solName() + '</span><span class="lock">🔒</span></div>';
+  $("g2").querySelector(".crumbs").textContent = solName() + " › …";
+  $("hl-sol").innerHTML = linesHtml(t, hlFor(EDIT()), m.sol);
+  $("gut-sol").innerHTML = gutterHtml(t.split("\n").length, 0, m.sol);
+}
+
+/* ====================================================================
+   Browser: the page and its Console
+   ==================================================================== */
+
+// Logs and errors in the order they happened. While the page still waits for the server (partial), rows appear as they come.
+function renderConsole(r, les, src, partial){
+  var c = $("console"), h = "";
+  if (!r) { c.innerHTML = '<div class="dt-row dim">' + tr("Loading…", "Betöltés…") + '</div>'; return; }
+  // Task 4: the guess comes before the answer. While a "? is left, logs stay hidden (errors still show).
+  var closed = les && les.guessFirst && /["'`]\s*\?/.test(src || "");
+  if (closed) h += '<div class="dt-row dim">🔒 ' + tr("The Console stays closed until every ? is a number. Guess first, then save.", "A konzol zárva marad, amíg minden ? helyén szám nincs. Előbb tippelj, aztán ments.") + '</div>';
+  (r.events || []).forEach(function(ev){
+    if (ev.k === "log") { if (!closed) h += '<div class="dt-row">' + esc(ev.text) + '</div>'; return; }
+    if (ev.k !== "error") return;
+    var e = ev.err, msg = /__ENDLESS__/.test(e.msg) ? tr("The loop ran 20000 times and was stopped.", "A ciklus 20000-szer lefutott, ezért leállítottam.") : e.msg;
+    if (e.net) { h += '<div class="dt-row err">✖ ' + esc(e.msg) + '</div>'; var xn = explain(e, src); if (xn) h += '<div class="dt-row why">' + esc(xn) + '</div>'; return; }
+    h += '<div class="dt-row err">✖ Uncaught ' + (e.promise ? "(in promise) " : "") + esc(e.name && e.name !== "Error" && msg.indexOf(e.name) !== 0 ? e.name + ": " + msg : msg) + (e.line > 0 ? "   script.js:" + e.line : "") + '</div>';
+    var x = explain(e, src);
+    if (x) h += '<div class="dt-row why">' + esc(x) + '</div>';
+  });
+  if (r.timeout) h += '<div class="dt-row err">✖ ' + tr("Your code did not finish. An endless loop?", "A kódod nem futott le a végéig. Végtelen ciklus?") + '</div>';
+  if (partial) h += '<div class="dt-row dim">⏳ ' + "waiting for the server…" + '</div>';
+  c.innerHTML = h || '<div class="dt-row dim">' + tr("Nothing printed.", "Nem írt ki semmit.") + '</div>';
+  c.scrollTop = c.scrollHeight;
+  var n = r.errors.length + (r.timeout ? 1 : 0);
+  $("st-err").textContent = "⊗ " + n + " ⚠ 0";
+  $("st-err").classList.toggle("err", n > 0);
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="' + tr("Task ", "Feladat ") + (i + 1) + ": " + esc(LX(i).title) + (S.usedSol[i] ? tr(" (solved with the solution)", " (a megoldással)") : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints ? les.hints.length : 0;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+
+function renderStrip(){
+  var lx = LX(S.i), les = L(), res = last && S.saved[S.i] ? evaluate(les, last.r, last.a, last.src) : null, done = !!S.done[S.i];
+  $("t-kicker").textContent = tr("Lesson 6 · Task " + (S.i + 1) + " of " + N, "Feladat " + (S.i + 1) + " / " + N) + (PREP ? (UI.prepView === "task" ? tr(" · Prep: task", " · Felkészülés: feladat") : tr(" · Prep: solution", " · Felkészülés: megoldás")) : "");
+  $("t-title").textContent = lx.title;
+  $("t-do").innerHTML = lx.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? solutionSub() : lx.sub;
+  var r = "";
+  if (!S.saved[S.i] && !done) r = '<span class="dim">' + tr('Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> to run it and check it.', 'Ments <kbd>Ctrl</kbd>+<kbd>S</kbd>-sel: lefut, és kiderül, jó-e.') + '</span>';
+  if (res && !res.done && les.edit === "script.js" && /\bif\s*\([^)]*[^=!<>]=[^=][^)]*\)/.test(savedCode(S.i))) res.msg = (res.msg || "") + tr(" Also: inside <code>if ( )</code> compare with <code>===</code>. A single <code>=</code> changes the value instead of checking it.", " Még valami: az <code>if ( )</code> belsejében <code>===</code> kell. Egy sima <code>=</code> átírja az értéket, ahelyett hogy megnézné.");
+  if (PREP && res && res.done) done = true;
+  if (done && (!res || res.done)) r = '<span class="yes">' + tr("✓ Done.", "✓ Kész.") + '</span> ' + (lx.after || "");
+  else if (res && !res.done) r = '<span class="no">' + tr("✗ Not yet.", "✗ Még nem.") + '</span> ' + (res.msg || (last.r.errors.length ? tr("There is a red error in the Console.", "Piros hiba van a konzolban.") : ""));
+  if (UI.running) r = '<span class="dim">⏳ ' + tr("Saved. Waiting for the server: it takes about a second.", "Mentve. Várunk a szerverre: kb. egy másodperc.") + '</span>';
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = lx.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>" + tr("Hint ", "Tipp ") + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button(tr("← Prev", "← Előző"), "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? tr("Show solution", "Megoldás mutatása") : tr("Show task", "Feladat mutatása"), "btn", togglePrep));
+    act.appendChild(button(tr("Next →", "Következő →"), "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (done) {
+    if (S.i < N - 1) act.appendChild(button(tr("Next task →", "Következő feladat →"), "btn primary", function(){ gotoTask(S.i + 1); }));
+  } else if (!S.sol[S.i]) {
+    act.appendChild(button(hs.solutionNext ? tr("Show solution", "Megoldás mutatása") : tr("Stuck? Hint", "Elakadtál? Tipp"), "btn", stuck));
+  }
+  renderStripNote();
+}
+// ?prep only: flip the editor between the task's start code and its solution.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  editor.value = UI.prepView === "task" ? LESSONS[S.i].start : LESSONS[S.i].solution;
+  saveAndRun();
+}
+function renderStripNote(){
+  var n = $("t-note");
+  n.classList.toggle("hidden", !UI.note);
+  n.textContent = UI.note;
+  if (S.sol[S.i] && !S.done[S.i]) $("t-sub").innerHTML = solutionSub();
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = tr("Have a go first: change something and save (Ctrl+S). Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.",
+      "Előbb próbálkozz: változtass valamit, és ments (Ctrl+S). Minden új próba számít. Még " + hs.need + ", és " + (hs.solutionNext ? "megnyílik a megoldás." : "jön egy tipp."));
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+
+/* ====================================================================
+   Running: Ctrl+S saves and Live Server reloads the page
+   ==================================================================== */
+
+function RED_LEFT(){ return tr("The page looks right, but there is a red error in the Console. Fix that too: on a real page, everything after it stops running.", "Az oldal jónak tűnik, de van egy piros hiba a konzolban. Azt is javítsd: egy igazi oldalon ami utána jön, az már nem fut le."); }
+function evaluate(les, r, a, src){
+  var endless = r.timeout || r.errors.some(function(e){ return /__ENDLESS__/.test(e.msg); });
+  if (les.flags) {
+    var f = les.flags(r, a, src), fl = f.flags.slice(), msg = endless ? tr("Your loop never stops.", "A ciklusod sosem áll meg.") : f.msg;
+    if (fl[fl.length - 1] && r.errors.length) { fl[fl.length - 1] = false; msg = RED_LEFT(); }
+    return { done: fl.every(Boolean), msg: msg };
+  }
+  if (endless) return { done: false, msg: tr("Your loop never stops.", "A ciklusod sosem áll meg.") };
+  var m = les.check(r, a, src);
+  if (!m && r.errors.length) m = RED_LEFT();
+  return { done: !m, msg: m };
+}
+
+function squash(s){ return String(s).replace(/[ \t]+$/gm, "").trim(); }
+function runBoth(les, src, live){
+  var plan = runPlan(les, src), page = PAGES[les.page];
+  return Promise.all([runIn($("preview"), page, plan.main, plan.code, live), runIn($("altframe"), page, plan.alt, plan.code)]);
+}
+var RUN = 0;
+function saveAndRun(){
+  var idx = S.i, src = editor.value;
+  S.code[idx] = src; delete S.buf[idx]; S.saved[idx] = true; save();
+  UI.note = "";
+  renderTabs();
+  run(true, idx, src);
+}
+function run(byHand, idx, src){
+  if (idx === undefined) idx = S.i;
+  if (src === undefined) src = savedCode(idx);
+  var les = LESSONS[idx], token = ++RUN;
+  // The server takes a second: say so, and show the Console filling up while it waits. Only the newest run counts.
+  UI.running = !!byHand;
+  if (byHand) { last = null; renderStrip(); }
+  renderConsole({ events: [], errors: [], logs: [] }, les, src, true);
+  return runBoth(les, src, function(w){ if (token === RUN && idx === S.i) renderConsole(w, les, src, true); }).then(function(res){
+    if (token !== RUN) return;
+    UI.running = false;
+    if (idx !== S.i) return;
+    last = { r: res[0], a: res[1], src: src };
+    var ev = evaluate(les, last.r, last.a, src);
+    if (byHand) {
+      if (ev.done) {
+        if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+        S.sol[idx] = false;
+        (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+      } else if (S.lastTried[idx] !== squash(src) && squash(src) !== squash(les.start)) {
+        S.lastTried[idx] = squash(src); S.tries[idx] = (S.tries[idx] || 0) + 1;
+      }
+      save();
+    }
+    renderConsole(last.r, les, src);
+    renderAll();
+  });
+}
+$("br-reload").onclick = function(){ run(false); };
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); save();
+  UI.note = ""; UI.open = [EDIT()].concat(L().data ? [L().data] : []); UI.active = EDIT();
+  last = null;
+  editor.value = PREP ? LESSONS[S.i].solution : bufferCode(S.i);
+  if (PREP) UI.prepView = "solution";
+  renderConsole(null);
+  renderAll();
+  if (PREP) { saveAndRun(); return; }
+  run(false);
+}
+$("l-again").onclick = function(){
+  if (!confirm(tr("Put back the start code for this task? What you wrote in this task is lost.", "Visszaállítod a feladat kezdő kódját? Amit ebben a feladatban írtál, elvész."))) return;
+  delete S.code[S.i]; delete S.buf[S.i]; S.saved[S.i] = false; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm(tr("Start the whole lesson again from task 1? Your code and progress are cleared.", "Elölről kezded az egész leckét az 1. feladattól? A kódod és a haladásod törlődik."))) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+function renderAll(){
+  renderDots();
+  renderStrip();
+  renderSolution();
+  renderEditorArea();
+}
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var P = (lang === "hu" ? PRIMER_HU : PRIMER)[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + "Lesson 6 · Walking nested JSON" + ' · ' + (primerIdx + 1) + tr(' of ', ' / ') + PRIMER.length + '</div>' +
+    '<h2>' + esc(P.title) + '</h2>' +
+    '<div class="art">' + ART[P.art]() + '</div>' +
+    '<p>' + P.body + '</p>' +
+    (showSay ? '<div class="say"><b>' + tr("Teacher:", "Tanárnak:") + '</b> ' + esc(P.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>' + tr("← Back", "← Vissza") + '</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? tr("Let's go →", "Mehet →") : tr("Next →", "Tovább →")) + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">' + tr("Close", "Bezárás") + '</button>' : "") +
+    '<button class="btn" id="p-lang" lang="' + tr("hu", "en") + '">' + tr("Magyarul", "In English") + '</button></div>' +
+    '<div class="keys">' + tr("← → to move", "← → lapozás") + '</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); editor.focus(); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("p-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+function RECONSOLE(){ renderConsole(last.r, L(), last.src); }
+
+// Test hook: lets an automated check run code against a task without the UI.
+window.__WAIT = { LESSONS: LESSONS, PRIMER: PRIMER, PRIMER_HU: PRIMER_HU, LESSONS_HU: LESSONS_HU, PREP: PREP, lang: function(){ return lang; }, explain: explain, gotoTask: gotoTask, saveAndRun: saveAndRun,
+  state: function(){ return S; }, last: function(){ return last; },
+  check: function(i, src){ var les = LESSONS[i]; return runBoth(les, src).then(function(res){ var ev = evaluate(les, res[0], res[1], src); ev.logs = res[0].logs; ev.errors = res[0].errors; ev.events = res[0].events; ev.early = res[0].early; return ev; }); } };
+
+// Static page text carries its Hungarian in data-hu; the English is kept on the first swap.
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.title = "Lesson 6 · Walking nested JSON";
+  document.querySelectorAll("[data-hu]").forEach(function(el){
+    if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+    el.innerHTML = lang === "hu" ? el.dataset.hu : el.dataset.en;
+  });
+  var b = $("btn-lang");
+  b.textContent = tr("Magyarul", "In English");
+  b.setAttribute("lang", tr("hu", "en"));
+  b.title = tr("Magyarra vált", "Switch to English");
+  $("preview").title = tr("The page, with your script run on it", "Az oldal, rajta a scripteddel");
+  $("altframe").title = tr("Second run with other data", "Második futtatás más adattal");
+}
+// Switching keeps progress: only the words change, then everything is drawn again.
+function setLanguage(l){
+  lang = l === "hu" ? "hu" : "en";
+  if (!PREP) try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  try { var u = new URL(location.href); u.searchParams.set("lang", lang); window.history.replaceState(null, "", u.toString()); } catch (e) {}
+  applyStatic();
+  renderAll();
+  if (last) RECONSOLE();
+  if (!$("primer").classList.contains("hidden")) renderPrimer();
+}
+$("btn-lang").onclick = function(){ setLanguage(lang === "hu" ? "en" : "hu"); };
+applyStatic();
+
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
