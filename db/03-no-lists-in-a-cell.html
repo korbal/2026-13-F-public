@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson D3 · No lists in a cell</title>
+<style>
+:root{
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button,input{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #c9ced6;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+
+/* ===== practice: the story beside the work ===== */
+.work{flex:1;display:grid;grid-template-columns:minmax(280px,34fr) 66fr;min-height:0}
+.storyp{background:#fffdf5;border-right:1px solid #e8dfc0;overflow:auto;padding:16px 18px}
+.storyp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#8a6d1f}
+.storyp p{margin:6px 0;font-size:15px;line-height:1.55}
+.storyp ol{margin:6px 0;padding-left:22px;font-size:15px;line-height:1.55}
+.storyp li{margin:4px 0}
+.storyp .menu{margin-top:12px;border-top:1px dashed #e0d5ad;padding-top:8px}
+.storyp table{border-collapse:collapse;font-size:14px}
+.storyp td{padding:2px 12px 2px 0}
+.ws{overflow:auto;padding:16px 18px 60px;background:#fff}
+
+/* tables they fill in */
+.designer{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tcard{border:1px solid #c7d2fe;border-radius:10px;background:#fff;padding:8px 10px 10px;max-width:100%;overflow-x:auto}
+.tcard .thead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tname{font:700 15px ui-monospace,Consolas,monospace;color:var(--ink)}
+input.tname-in{font:700 15px ui-monospace,Consolas,monospace;border:1px dashed #9aa5b8;border-radius:6px;padding:3px 6px;width:170px}
+table.g{border-collapse:collapse}
+table.g th{background:#eef3fc;border:1px solid #c7d2fe;padding:0;text-align:left;font:600 13px ui-monospace,Consolas,monospace;vertical-align:top}
+table.g th .cn{display:block;padding:5px 8px}
+table.g td{border:1px solid #d6d9de;padding:0}
+table.g td.ro{padding:5px 8px;font-size:14px}
+table.g input{border:0;padding:5px 8px;width:12ch;max-width:320px;background:transparent;font-size:14px;outline:none}
+table.g th input{font:600 13px ui-monospace,Consolas,monospace}
+table.g input:focus{background:#fffbe6;box-shadow:inset 0 0 0 2px #f2b04a}
+table.g td input{background:#fffdf0}
+table.g td.empty{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#f3f4f6 4px,#f3f4f6 8px);min-width:60px}
+table.g td.side,table.g th.side{border:0;background:none;padding:0 0 0 4px;vertical-align:middle}
+.x{border:0;background:none;color:#9aa0a6;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
+.x:hover{color:var(--bad);background:#fff0f0}
+.add{border:1px dashed #9aa5b8;background:#fff;color:#475569;border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer;margin-top:6px}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+.add.big{padding:8px 14px;font-size:14px;align-self:center}
+.colx{display:flex;align-items:center}
+
+/* pick the words, tick the problems */
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.chip{border:2px solid #c7d2fe;border-radius:20px;padding:6px 14px;background:#fff;font-size:15px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:#dbeafe;border-color:var(--accent);font-weight:700}
+.chip.on::before{content:"▦ ";color:var(--accent)}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:14px;max-width:720px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid #d6d9de;border-radius:10px;padding:9px 12px;cursor:pointer;font-size:15px;background:#fff}
+.opt:hover{border-color:var(--accent)}
+.opt.on{border-color:var(--accent);background:#eef3fc}
+.opt input{margin-top:4px}
+.ws h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ro-tables{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.solbox{border:2px solid #f2b04a;background:#fffaf0;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.solbox h4{color:var(--warn)}
+
+
+/* pointers: _id columns, and following them */
+.follow{position:sticky;top:-16px;z-index:3;background:#fff;margin:-16px -18px 12px;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:20px}
+.follow .dim{color:var(--muted)}
+.follow .lead{color:var(--accent);font-weight:700}
+.follow .broken{color:var(--bad);font-weight:700}
+.follow code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.92em}
+table.g th.ptr{background:#fde68a;border-color:#f59e0b}
+table.g td.ptr,table.g td.ptr input{background:#fef3c7}
+table.g td.ptr{cursor:pointer}
+table.g td.ptr.ro{font-weight:700}
+table.g tr.hit td,table.g tr.hit td input{background:#dbeafe}
+table.g td.from{box-shadow:inset 0 0 0 2px #f59e0b}
+table.g td.broken,table.g td.broken input{background:#fde2e1;color:var(--bad);font-weight:700}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work{grid-template-columns:1fr;display:block;overflow:auto}
+  .storyp{border-right:0;border-bottom:1px solid #e8dfc0}
+  #practice{height:auto;min-height:100%}
+  html,body{height:auto}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+  <div class="work">
+    <div class="storyp" id="story"></div>
+    <div class="ws" id="ws"></div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+// ?prep: the teacher flips through the solutions. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+var LESSON = "Lesson D3 · No lists in a cell";
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+// For comparing what they typed: no accents, lower case, single spaces.
+function norm(s){ return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+function digits(s){ return String(s == null ? "" : s).replace(/\D/g, ""); }
+function alnum(s){ return norm(s).replace(/[^a-z0-9]/g, ""); }
+
+/* ====================================================================
+   The stories. Shown on the left, next to every task.
+   ==================================================================== */
+
+var MENU_HTML = '<div class="menu"><h3>The menu</h3><table>' +
+  '<tr><td>Margherita</td><td>32 cm</td><td>2 490 Ft</td></tr>' +
+  '<tr><td>Sonkás</td><td>32 cm</td><td>2 990 Ft</td></tr>' +
+  '<tr><td>Négy sajtos</td><td>32 cm</td><td>3 290 Ft</td></tr></table></div>';
+
+var SZELET =
+  '<h3>The story</h3>' +
+  '<p><b>Szelet</b> is a small pizza place next to the school. Its app keeps customers, pizzas and orders in tables. Every row has an <b>id</b>, and a column like <code>customer_id</code> holds the id of a row in customers: it points at that row.</p>' +
+  '<ol>' +
+  '<li>Friday 4 December, 19:10. Tóth Bence, from Kossuth Lajos u. 12, orders on his phone: 2 Sonkás and 1 Margherita, in one order.</li>' +
+  '<li>He pays by card.</li>' +
+  '<li>19:25. Molnár Dóra orders 1 Négy sajtos and 2 Margherita, in one order. She pays cash.</li>' +
+  '</ol>' + MENU_HTML;
+
+var ASK =
+  '<h3>Ask both ways</h3>' +
+  '<p>Take two things, A and B. Ask two questions:</p>' +
+  '<ol><li>One A: how many B?</li><li>One B: how many A?</li></ol>' +
+  '<p><b>One</b> one way and <b>many</b> the other way: the many side gets a pointer. One order has one customer, one customer has many orders, so <code>orders</code> gets <code>customer_id</code>.</p>' +
+  '<p><b>Many both ways</b>: neither table can hold the pointer. Make a table in the middle, like <code>order_items</code>.</p>';
+
+var WORKOUT =
+  '<h3>A new story</h3>' +
+  '<p><b>Kovács Lili</b> uses a gym app. It knows the exercises, and it keeps her workouts.</p>' +
+  '<ol>' +
+  '<li>The app knows three exercises: Squat (legs), Push-up (chest) and Plank (core).</li>' +
+  '<li>Monday 1 December: Lili does Squat, 3 sets of 10, and Push-up, 3 sets of 15.</li>' +
+  '<li>Thursday 4 December: she does Squat again, 4 sets of 8, and Plank, 3 sets of 60 seconds.</li>' +
+  '</ol>';
+
+var CLUB =
+  '<h3>A new story</h3>' +
+  '<p>The school\'s <b>frisbee club</b> has an app for its events. Each event costs 500 Ft.</p>' +
+  '<ol>' +
+  '<li>Saturday 12 December, 10:00: a training in the gym hall.</li>' +
+  '<li>Sunday 13 December, 14:00: a tournament in the park.</li>' +
+  '<li>Szabó Márk signs up for both events. He has paid for the training, but not for the tournament yet.</li>' +
+  '<li>Kovács Lili signs up for the tournament. She has paid.</li>' +
+  '</ol>';
+
+/* ====================================================================
+   The slides: why first. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c, dash){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"' + (dash ? ' stroke-dasharray="5 4"' : "") + '/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + esc(label) + '">' + inner + '</svg>'; }
+
+// A table drawn as a grid. o.hl = ["row,col", ...] cells in yellow, o.hlRow = a whole row, o.hlCol = a column in blue, o.fills = colours per cell, o.bad = red header.
+function colWs(cols, rows){ return cols.map(function(c, j){ var m = c.length * 7.4; rows.forEach(function(r){ m = Math.max(m, String(r[j]).length * 6.9); }); return Math.round(m + 16); }); }
+function gridW(cols, rows){ return colWs(cols, rows).reduce(function(a, b){ return a + b; }, 0); }
+function colX(cols, rows, x, j){ var ws = colWs(cols, rows), cx = x; for (var k = 0; k < j; k++) cx += ws[k]; return cx; }
+function colMid(cols, rows, x, j){ return colX(cols, rows, x, j) + colWs(cols, rows)[j] / 2; }
+function GRID(x, y, name, cols, rows, o){
+  o = o || {};
+  var ws = colWs(cols, rows), s = "", hl = o.hl || [];
+  if (name) s += T(x, y - 6, esc(name), { bold: true, mono: true, size: 13, fill: o.bad ? RED : INK });
+  var cx = x;
+  cols.forEach(function(c, j){
+    s += R(cx, y, ws[j], 22, { rx: 0, fill: o.bad ? "#fff0f0" : "#eef3fc", stroke: o.bad ? "#f5b5b0" : "#c7d2fe" }) + T(cx + 7, y + 15, esc(c), { mono: true, bold: true, size: 11.5, fill: o.bad ? RED : INK });
+    cx += ws[j];
+  });
+  rows.forEach(function(r, i){
+    var yy = y + 22 + i * 22; cx = x;
+    r.forEach(function(v, j){
+      var key = i + "," + j, f = o.fills && o.fills[key], on = hl.indexOf(key) >= 0 || o.hlRow === i, col = o.hlCol === j;
+      var fill = f || (on ? "#fef3c7" : col ? "#fef3c7" : v === "" ? "#f3f4f6" : "#fff");
+      s += R(cx, yy, ws[j], 22, { rx: 0, fill: fill, stroke: "#d6d9de" }) + T(cx + 7, yy + 15, esc(v), { size: 12, bold: on || col || !!f, fill: INK });
+      cx += ws[j];
+    });
+  });
+  return s;
+}
+var BLUE = "#dbeafe", YEL = "#fef3c7", PINK = "#fde2e1";
+function ROWFILL(n, c){ var f = {}; for (var j = 0; j < n; j++) f["0," + j] = c; return f; }
+
+var ART = {
+  basket: function(){
+    var s = R(16, 24, 230, 128, { fill: "#fff" });
+    s += T(32, 50, "Your basket", { bold: true, size: 14 });
+    s += T(32, 80, "2 × Sonkás", { size: 13 }) + T(230, 80, "5 980 Ft", { size: 13, anchor: "end" });
+    s += T(32, 106, "1 × Margherita", { size: 13 }) + T(230, 106, "2 490 Ft", { size: 13, anchor: "end" });
+    s += R(32, 118, 198, 24, { rx: 6, fill: A, stroke: A }) + T(131, 135, "Order", { bold: true, size: 13, fill: "#fff", anchor: "middle" });
+    s += ARROW(252, 88, 300, 88, AMB);
+    var oc = ["id", "customer_id", "pizza_id", "quantity"], or = [["92", "12", "?", "?"]];
+    s += GRID(310, 66, "orders", oc, or, { fills: { "0,2": PINK, "0,3": PINK } });
+    s += T(16, 182, "One order, two kinds of pizza. One pizza_id cell.", { bold: true, size: 13 });
+    return svg(196, "A food app basket with 2 Sonkás and 1 Margherita. An arrow goes to the orders table, which has one row, order 92, with a single pizza_id cell and a single quantity cell, both marked with a question mark", s);
+  },
+  listcell: function(){
+    var oc = ["id", "customer_id", "pizza_id"], or = [["92", "12", "2, 2, 1"]];
+    var s = GRID(16, 40, "orders", oc, or, { fills: { "0,2": PINK } });
+    var right = 16 + gridW(oc, or) + 4;
+    s += ARROW(right, 73, 352, 95, RED, true);
+    s += T(364, 101, "✗", { bold: true, size: 18, fill: RED, anchor: "middle" });
+    s += GRID(380, 40, "pizzas", ["id", "name"], [["1", "Margherita"], ["2", "Sonkás"], ["3", "Négy sajtos"]]);
+    s += T(16, 156, "Follow pizza_id \"2, 2, 1\": no pizza has that id.", { bold: true, size: 13, fill: RED });
+    return svg(170, "Order 92 has 2, 2, 1 written in its one pizza_id cell. A dashed red arrow goes towards the pizzas table and ends in a cross: pizzas has ids 1, 2 and 3, and no row has the id 2, 2, 1", s);
+  },
+  numbered: function(){
+    var oc = ["id", "customer_id", "pizza1", "pizza2", "pizza3"], or = [["92", "12", "2", "2", "1"], ["93", "7", "3", "1", "1"], ["94", "31", "2", "", ""]];
+    var s = GRID(16, 40, "orders", oc, or);
+    var right = 16 + gridW(oc, or);
+    s += R(right + 8, 40, 70, 22, { rx: 0, fill: "#fff0f0", stroke: RED, dash: true }) + T(right + 15, 55, "pizza4 ?", { mono: true, bold: true, size: 11.5, fill: RED });
+    s += T(16, 156, "Empty cells, and a 4th pizza needs a new column.", { bold: true, size: 13, fill: RED });
+    return svg(170, "The orders table with three columns pizza1, pizza2 and pizza3. Order 94 has only one pizza, so two of its cells are empty. A dashed red column pizza4 with a question mark waits at the right for the first order with four pizzas", s);
+  },
+  both: function(){
+    var s = R(50, 64, 150, 50, { fill: "#eef3fc", stroke: "#c7d2fe" }) + T(125, 95, "orders", { bold: true, mono: true, size: 15, anchor: "middle" });
+    s += R(440, 64, 150, 50, { fill: "#eef3fc", stroke: "#c7d2fe" }) + T(515, 95, "pizzas", { bold: true, mono: true, size: 15, anchor: "middle" });
+    s += ARROW(204, 76, 436, 76, A) + T(320, 64, "one order → many pizzas", { bold: true, size: 13, fill: A, anchor: "middle" });
+    s += ARROW(436, 102, 204, 102, AMB) + T(320, 124, "one pizza → many orders", { bold: true, size: 13, fill: AMB, anchor: "middle" });
+    s += T(320, 166, "Many both ways: neither table can hold the pointer.", { bold: true, size: 13, anchor: "middle" });
+    return svg(182, "Two boxes, orders and pizzas. An arrow from orders to pizzas says: one order, many pizzas. An arrow back from pizzas to orders says: one pizza, many orders. Many both ways, so neither table can hold the pointer", s);
+  },
+  middle: function(){
+    var s = GRID(16, 50, "orders", ["id", "customer_id"], [["92", "12"]], { fills: ROWFILL(2, BLUE) });
+    var mc = ["order_id", "pizza_id", "quantity"], mr = [["92", "2", "2"], ["92", "1", "1"]];
+    s += GRID(196, 50, "order_items", mc, mr, { hlCol: 2 });
+    var right = 196 + gridW(mc, mr);
+    s += GRID(right + 52, 50, "pizzas", ["id", "name"], [["2", "Sonkás"], ["1", "Margherita"]], { fills: { "0,0": BLUE, "0,1": BLUE, "1,0": BLUE, "1,1": BLUE } });
+    s += ARROW(194, 94, 150, 83, AMB);
+    s += ARROW(right + 2, 83, right + 48, 83, AMB) + ARROW(right + 2, 105, right + 48, 105, AMB);
+    s += T(16, 160, "Order 92: 2 × Sonkás, 1 × Margherita. A 4th pizza? One more row.", { bold: true, size: 13 });
+    return svg(174, "Three tables side by side. In the middle, order_items has two rows: order 92, pizza 2, quantity 2, and order 92, pizza 1, quantity 1. Arrows go left to order 92 in orders and right to Sonkás and Margherita in pizzas. The quantity column is marked", s);
+  },
+  loop: function(){
+    var steps = ["read the story", "mark things and facts", "one row each", "replay", "follow the id", "ask both ways"];
+    var pos = [[16, 30], [226, 30], [436, 30], [436, 116], [226, 116], [16, 116]], s = "";
+    steps.forEach(function(st, i){
+      var x = pos[i][0], y = pos[i][1], last = i === steps.length - 1;
+      s += R(x, y, 180, 46, { fill: last ? YEL : "#fff", stroke: last ? AMB : "#c7d2fe", sw: last ? 2 : 1 });
+      s += T(x + 90, y + 28, st, { bold: last, size: 14, anchor: "middle", fill: last ? AMB : INK });
+    });
+    s += ARROW(198, 53, 224, 53) + ARROW(408, 53, 434, 53) + ARROW(526, 78, 526, 114) + ARROW(434, 139, 408, 139) + ARROW(224, 139, 198, 139);
+    s += T(106, 184, "new", { bold: true, size: 13, fill: AMB, anchor: "middle" });
+    return svg(196, "The designer's loop as six boxes: read the story, mark things and facts, one row each, replay, follow the id, and the new step, ask both ways", s);
+  }
+};
+
+var PRIMER = [
+  { title: "One order, two kinds of pizza", art: "basket",
+    body: "Open Wolt and fill your basket: 2 Sonkás and 1 Margherita. One order, three pizzas, two kinds.<br><br>Szelet's app keeps its orders in a table. Every row has an <b>id</b>, and a column like <span class=\"mono\">pizza_id</span> holds the id of a row in pizzas: it points at that row. But an order has only one <span class=\"mono\">pizza_id</span> cell. Where does the Margherita go?",
+    say: "Ask: what was in your last food order? How many kinds? Then ask where they would write it in this table. Let them try before slide 2." },
+  { title: "First try: a list in one cell", art: "listcell",
+    body: "Write all three into the cell: <span class=\"mono\">2, 2, 1</span>. Now follow the id: which pizza has the id \"2, 2, 1\"? None. The pointer is broken.<br><br>And the boss asks: how many Sonkás did we sell today? You would have to cut every cell apart and count by hand.",
+    say: "Ask how else people would write it: \"1, 2, 2\", \"2x Sonkás + Margherita\", \"Sonkás, Sonkás, Marg\". Same order, four spellings, and a computer can't count any of them." },
+  { title: "Second try: numbered columns", art: "numbered",
+    body: "Give the order <span class=\"mono\">pizza1</span>, <span class=\"mono\">pizza2</span>, <span class=\"mono\">pizza3</span>. Each cell holds one id now, so you can follow it.<br><br>But most orders leave cells empty, a 4th pizza needs a new column, and to count the Sonkás you look in three columns. It is still a list, only spread sideways.",
+    say: "Ask: what happens when a class orders 12 pizzas for a party? Who adds the columns pizza4 to pizza12?" },
+  { title: "Ask both ways", art: "both",
+    body: "Ask the question in both directions. One order: how many pizzas? <b>Many.</b> One pizza on the menu, the Sonkás: how many orders? <b>Many.</b><br><br>Customer and order were different: one order has <b>one</b> customer, so the order points at the customer. When the answer is <b>many both ways</b>, neither table can hold the pointer.",
+    say: "Do two or three pairs out loud: student and class (one class each: one-to-many), player and match (many both ways), post and comment (one-to-many)." },
+  { title: "The table in the middle", art: "middle",
+    body: "Make a table for the link itself: <span class=\"mono\">order_items</span>. Each row says: this order, this pizza, this many. Two pointers, and one fact of its own, the <span class=\"mono\">quantity</span>.<br><br><span class=\"mono\">pizza_id</span> and <span class=\"mono\">quantity</span> leave <span class=\"mono\">orders</span>. A 4th pizza? One more row. How many Sonkás today? Add up <span class=\"mono\">quantity</span> where <span class=\"mono\">pizza_id</span> is 2.",
+    say: "Point at quantity: it is not about the order (which has three pizzas) and not about the pizza (sold many times). It is about this pizza in this order. The middle table needs no id of its own: the two pointers say which row it is. If a student adds one, that's fine." },
+  { title: "Check it: ask both ways", art: "loop",
+    body: "The designer's loop so far: read the story → mark things and facts → write one row each → replay → follow the id → <b>ask both ways</b> (new). A list in a cell, or numbered columns, is the sign to ask.<br><br>The words you will meet later: things that are many both ways are <b>many-to-many</b>, and the table in the middle is a <b>junction table</b>.<br><br>In the practice, click any yellow cell: the row it points at lights up. Press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) when you are done.",
+    say: "In Hungarian: kapcsolótábla. Ask them to name a many-to-many in an app they use (playlists and songs, students and school clubs)." }
+];
+
+/* ====================================================================
+   Tables, ids and pointers
+   ==================================================================== */
+
+function P(q){ return '<span class="predict">Predict first: ' + q + '</span> '; }
+function TB(name, cols, rows){ return { name: name, cols: cols.slice(), rows: rows.map(function(r){ return r.slice(); }) }; }
+function blank(n){ var r = []; for (var i = 0; i < n; i++) r.push(""); return r; }
+
+// "id" (or "azonosito") is a table's own id.
+function isIdName(c){ var a = alnum(c); return a === "id" || a === "azonosito"; }
+// customer_id, customerId, vevo_id → "customer", "vevo". Anything else → "".
+function ptrPrefix(c){
+  var m = norm(c).match(/^(.+?)([ _-])?(id|azonosito)$/);
+  if (!m) return "";
+  var p = alnum(m[1]);
+  if (!p || (!m[2] && p.length < 4)) return "";
+  return p;
+}
+// The table a column like customer_id points at: the one whose name starts the same way (customers). -1 if none.
+function stemMatch(p, name){ var n = alnum(name), k = Math.min(4, p.length, n.length); return k >= 3 && p.slice(0, k) === n.slice(0, k); }
+// An exact name (customers, pizzak, vevok) beats a table that only starts the same way (order_items).
+function nameScore(p, name){ var n = alnum(name); if (!p || !n) return 0; if (n === p || (n.indexOf(p) === 0 && n.length - p.length <= 2)) return 3; return stemMatch(p, name) ? 1 : 0; }
+function targetOf(col, tables){
+  var p = ptrPrefix(col); if (!p) return -1;
+  var best = -1, bs = 0;
+  for (var i = 0; i < tables.length; i++) { var s = nameScore(p, tables[i].name); if (s > bs) { bs = s; best = i; } }
+  return best;
+}
+// Which column is the table's own id: "id", or a column like pizza_id in pizzas.
+function idColOf(t, ti, tables){
+  for (var i = 0; i < t.cols.length; i++) if (isIdName(t.cols[i])) return i;
+  for (var j = 0; j < t.cols.length; j++) if (ptrPrefix(t.cols[j]) && targetOf(t.cols[j], tables) === ti) return j;
+  return -1;
+}
+function isPointer(t, ti, ci, tables){ var tg = targetOf(t.cols[ci], tables); return tg >= 0 && tg !== ti && ci !== idColOf(t, ti, tables); }
+function rowById(t, ti, tables, v){
+  var idc = idColOf(t, ti, tables), want = alnum(v);
+  if (idc < 0 || !want) return -1;
+  for (var r = 0; r < t.rows.length; r++) if (alnum(t.rows[r][idc]) === want) return r;
+  return -1;
+}
+function rowLabel(t, ti, tables, r){ var idc = idColOf(t, ti, tables); return t.rows[r].filter(function(v, i){ return i !== idc && String(v).trim(); }).join(" · "); }
+
+// Shared checks for a design made from scratch.
+function filledRows(t){ return t.rows.filter(function(r){ return r.some(function(c){ return norm(c); }); }); }
+function basics(ans){
+  var ts = ans.tables;
+  if (!ts.length) return "Add a table first: <b>+ table</b>.";
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], n = norm(t.name);
+    if (!n) return "One of your tables has no name. Name it after the kind of thing in it: customers, pizzas, …";
+    if (/kitchen|konyha/.test(n)) return "The app never needs to look up the kitchen: there is one, and it is always there. Delete that table.";
+    if (!t.cols.length || t.cols.some(function(c){ return !norm(c); })) return "The table <b>" + esc(t.name) + "</b> has a column with no name. Every column holds one fact: name it after that fact.";
+    if (!filledRows(t).length) return "The table <b>" + esc(t.name) + "</b> has no row. Write one row from the story.";
+  }
+  return "";
+}
+function idsCheck(ans){
+  var ts = ans.tables;
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), seen = {};
+    if (idc < 0) { if (isMiddle(t, i, ts)) continue; return "The table <b>" + esc(t.name) + "</b> has no id. Every row gets a number of its own: add a column called <b>id</b>."; }
+    var rows = filledRows(t);
+    for (var r = 0; r < rows.length; r++) {
+      var v = alnum(rows[r][idc]);
+      if (!v) return "A row in <b>" + esc(t.name) + "</b> has no id. Give it a number of its own.";
+      if (seen[v]) return "Two rows in <b>" + esc(t.name) + "</b> have id " + esc(rows[r][idc]) + ". An id is never used twice in the same table. If one order needs two rows, the second row belongs in a table in the middle.";
+      seen[v] = true;
+    }
+  }
+  return "";
+}
+// Every pointer that is filled in must lead to a row.
+function brokenCheck(ans){
+  var ts = ans.tables;
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i];
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      if (!isPointer(t, i, ci, ts)) continue;
+      var tg = targetOf(t.cols[ci], ts), rows = filledRows(t);
+      for (var r = 0; r < rows.length; r++) {
+        var v = rows[r][ci];
+        if (alnum(v) && rowById(ts[tg], tg, ts, v) < 0) return "Follow <b>" + esc(t.cols[ci]) + " " + esc(v) + "</b> in " + esc(t.name) + ": there is no row with id " + esc(v) + " in <b>" + esc(ts[tg].name) + "</b>. Every id must lead to a row.";
+      }
+    }
+  }
+  return "";
+}
+function allRows(ans){
+  var out = [];
+  ans.tables.forEach(function(t, ti){ filledRows(t).forEach(function(r){ out.push({ t: ti, cells: r.map(norm), raw: r }); }); });
+  return out;
+}
+function has(row, fn){ return row.cells.some(fn); }
+function first(rows, fn){ for (var i = 0; i < rows.length; i++) if (fn(rows[i])) return rows[i]; return null; }
+
+// Does row "from" hold a pointer to row "to"? A column like customer_id whose value is the id of "to".
+// A pointer whose name matches no table (customer_id when the table is called users) still counts.
+function pointsAt(ans, from, to){
+  var ts = ans.tables, ft = ts[from.t], tt = ts[to.t], tid = idColOf(tt, to.t, ts);
+  if (tid < 0) return false;
+  var want = alnum(to.raw[tid]);
+  return ft.cols.some(function(c, ci){
+    if (!ptrPrefix(c) || ci === idColOf(ft, from.t, ts)) return false;
+    var tg = targetOf(c, ts);
+    if (tg >= 0 && tg !== to.t) return false;
+    return alnum(from.raw[ci]) === want;
+  });
+}
+// Why "from" does not point at "to", in words.
+function linkMsg(ans, from, to, who, colHint){
+  var ts = ans.tables, ft = ts[from.t], tt = ts[to.t], tid = idColOf(tt, to.t, ts), want = to.raw[tid];
+  for (var ci = 0; ci < ft.cols.length; ci++) {
+    var c = ft.cols[ci];
+    if (!ptrPrefix(c) || targetOf(c, ts) !== to.t || ci === idColOf(ft, from.t, ts)) continue;
+    var v = from.raw[ci];
+    if (!alnum(v)) return "<b>" + esc(c) + "</b> is empty. Put the id of " + who + " in it: " + esc(want) + ".";
+    var hit = rowById(tt, to.t, ts, v);
+    return "Follow <b>" + esc(c) + " " + esc(v) + "</b>: " + (hit >= 0 ? "in " + esc(tt.name) + " it leads to <b>" + esc(rowLabel(tt, to.t, ts, hit).replace(/\.$/, "")) + "</b>." : "there is no row with id " + esc(v) + " in " + esc(tt.name) + ".") + " It should lead to " + who + ".";
+  }
+  for (var cj = 0; cj < ft.cols.length; cj++) {
+    var cn = ft.cols[cj];
+    if (cj !== idColOf(ft, from.t, ts) && stemMatch(alnum(cn), tt.name) && alnum(from.raw[cj]) === alnum(want))
+      return "The id of " + who + " is in a column called <b>" + esc(cn) + "</b>. Name a pointer after what it points at: <b>" + colHint + "</b>.";
+  }
+  return "Which cell of the order says it is " + who + "? Add a pointer: a <b>" + colHint + "</b> column, with the id of " + who + ".";
+}
+
+
+/* ====================================================================
+   Lists in a cell, numbered columns, and tables in the middle
+   ==================================================================== */
+
+// A table made of two or more pointers (and facts about the link) needs no id of its own.
+function isMiddle(t, ti, ts){ return idColOf(t, ti, ts) < 0 && t.cols.filter(function(c){ return ptrPrefix(c); }).length >= 2; }
+function splitList(v){ return norm(v).split(/\s*(?:,|;|\+|&|\/|\band\b|\bes\b)\s*/).filter(function(x){ return x; }); }
+function bare(part){ return part.replace(/^\d+\s*(x|×|\*|db|pcs)?\s*/, "").replace(/\s*(x|×|\*)?\s*\d+\s*(db|pcs|s|sec|mp)?$/, "").trim(); }
+// Every name-like cell of the other tables: Sonkás, Tóth Bence, …
+function nameSet(ts, skip){
+  var s = {};
+  ts.forEach(function(t, ti){ if (ti === skip) return; filledRows(t).forEach(function(r){ r.forEach(function(v){ var n = norm(v); if (n.length >= 3 && /[a-z]/.test(n)) s[n] = true; }); }); });
+  return s;
+}
+function listCheck(ans){
+  var ts = ans.tables;
+  for (var ti = 0; ti < ts.length; ti++) {
+    var t = ts[ti], idc = idColOf(t, ti, ts), stems = {};
+    t.cols.forEach(function(c){
+      var a = alnum(c); if (a !== "id" && /id$/.test(a)) a = a.slice(0, -2);
+      var m = a.match(/^([a-z]+?)(id)?(\d+)$/); if (!m) return;
+      (stems[m[1]] = stems[m[1]] || []).push(c);
+    });
+    for (var st in stems) if (stems[st].length >= 2)
+      return "<b>" + esc(t.name) + "</b> has numbered columns: <b>" + stems[st].map(esc).join("</b>, <b>") + "</b>. That is a list spread sideways: the next one needs a new column. Ask both ways, and make a table in the middle.";
+    var names = nameSet(ts, ti), rows = filledRows(t);
+    for (var r = 0; r < rows.length; r++) for (var ci = 0; ci < t.cols.length; ci++) {
+      if (ci === idc) continue;
+      var v = String(rows[r][ci] == null ? "" : rows[r][ci]).trim(), parts = splitList(v);
+      if (parts.length < 2) continue;
+      if (ptrPrefix(t.cols[ci]))
+        return "Follow <b>" + esc(t.cols[ci]) + " " + esc(v) + "</b> in " + esc(t.name) + ": no row has the id \"" + esc(v) + "\". One cell holds one id. When one cell is not enough, ask both ways: it needs a table in the middle.";
+      if (/^\d+(\s*[,;+]\s+\d+)+$/.test(v) || /^\d+(\s*[,;]\s*\d+){2,}$/.test(v))
+        return "<b>" + esc(t.name) + "." + esc(t.cols[ci]) + "</b> holds a list: \"" + esc(v) + "\". One cell holds one value. Ask both ways, and make a table in the middle.";
+      if (parts.filter(function(p){ return names[bare(p)]; }).length >= 2)
+        return "<b>" + esc(t.name) + "." + esc(t.cols[ci]) + "</b> holds a list: \"" + esc(v) + "\". Each of those is already a row in another table. One cell, one thing: ask both ways, and make a table in the middle.";
+    }
+  }
+  return "";
+}
+function designCheck(ans){ return basics(ans) || idsCheck(ans) || listCheck(ans); }
+
+function re(x){ return typeof x === "function" ? x : function(c){ return x.test(c); }; }
+var isBence = re(/bence/), isAddr = re(/kossuth/), isCash = re(/cash|keszpenz/), isCard = re(/card|kartya/);
+var isSonkas = re(/sonkas/), isMarg = re(/marg/), isNegy = re(/negy|sajt/);
+var PIZZA_KINDS = [["Sonkás", isSonkas], ["Margherita", isMarg], ["Négy sajtos", isNegy]];
+function kindIn(r, kinds){ for (var k = 0; k < kinds.length; k++) if (has(r, kinds[k][1])) return kinds[k][0]; return ""; }
+function qtyCol(t){ for (var i = 0; i < t.cols.length; i++) if (/quant|qty|^db$|darab|menny|amount|count|pcs|piece/.test(alnum(t.cols[i]))) return i; return -1; }
+// The facts of a row that are not pointers or its own id.
+function factCells(ans, row){
+  var ts = ans.tables, t = ts[row.t], idc = idColOf(t, row.t, ts);
+  return row.raw.filter(function(v, ci){ return ci !== idc && !ptrPrefix(t.cols[ci]) && String(v).trim(); });
+}
+// Rows of other tables that point at "from" (an order), each followed to one of "things" (pizzas).
+// Returns { got: { Sonkás: 2, … }, n, mid } or { err }.
+function itemsOf(ans, from, things, kinds, word, ptrHint){
+  var ts = ans.tables, rows = allRows(ans), skip = {}, got = {}, n = 0, mid = "";
+  skip[from.t] = true; things.forEach(function(x){ skip[x.t] = true; });
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i]; if (skip[r.t] || !pointsAt(ans, r, from)) continue;
+    var t = ts[r.t], to = first(things, function(x){ return pointsAt(ans, r, x); });
+    if (!to) {
+      var br = brokenCheck(ans); if (br) return { err: br };
+      if (kindIn(r, kinds)) return { err: "<b>" + esc(t.name) + "</b> copies the " + word + "'s name. Point at it instead: <b>" + ptrHint + "</b>, with its id." };
+      return { err: "A row in <b>" + esc(t.name) + "</b> points at " + esc(from.raw[idColOf(ts[from.t], from.t, ts)]) + " but at no " + word + ". Which " + word + " is it? Add <b>" + ptrHint + "</b>." };
+    }
+    var qc = qtyCol(t), q = 1;
+    if (qc >= 0) { if (!digits(r.raw[qc])) return { err: "A row in <b>" + esc(t.name) + "</b> has no " + esc(t.cols[qc]) + ". How many of that " + word + "?" }; q = Number(digits(r.raw[qc])); }
+    var k = kindIn(to, kinds); got[k] = (got[k] || 0) + q; n++; mid = t.name;
+  }
+  return { got: got, n: n, mid: mid };
+}
+function sameItems(a, b){ var k; for (k in a) if (a[k] !== (b[k] || 0)) return false; for (k in b) if (b[k] !== (a[k] || 0)) return false; return true; }
+function fmtItems(g){ var ks = Object.keys(g); return ks.length ? ks.map(function(k){ return g[k] + " " + esc(k); }).join(", ") : "no pizzas"; }
+
+function fridayCheck(ans){
+  var b = designCheck(ans); if (b) return b;
+  var ts = ans.tables, rows = allRows(ans);
+  var pz = rows.filter(function(r){ return kindIn(r, PIZZA_KINDS) && r.cells.some(function(c){ return /^(2490|2990|3290)$/.test(digits(c)); }) && idColOf(ts[r.t], r.t, ts) >= 0; });
+  if (!pz.length) return "Where are the pizzas? Each one is a row with its id, its name and its price.";
+  var o92 = first(rows, function(r){ return has(r, re(/19[:.]10/)); });
+  if (!o92) return "Replay step 1: Bence orders at 19:10. Point at the order's row: a row in orders that says when.";
+  var ot = ts[o92.t];
+  for (var ci = 0; ci < ot.cols.length; ci++) {
+    var c = ot.cols[ci], tg = targetOf(c, ts);
+    if (ci === idColOf(ot, o92.t, ts)) continue;
+    if (ptrPrefix(c) && (/^pizz/.test(ptrPrefix(c)) || pz.some(function(x){ return x.t === tg; })))
+      return "<b>" + esc(ot.name) + "</b> still has <b>" + esc(c) + "</b>. One cell holds one pizza, and Bence ordered two kinds. Move it into a table in the middle, next to the order's id (slide 5).";
+    if (qtyCol({ cols: [c] }) === 0)
+      return "<b>" + esc(ot.name) + "</b> still has <b>" + esc(c) + "</b>. How many of which pizza? The quantity is about one pizza in one order: it belongs in the table in the middle.";
+  }
+  if (kindIn(o92, PIZZA_KINDS)) return "The order's row copies pizza names. Let a table in the middle point at the pizzas.";
+  var cust = first(rows, function(r){ return r.t !== o92.t && has(r, isBence) && has(r, isAddr); });
+  if (!cust) return "Replay step 1: Tóth Bence from Kossuth Lajos u. 12. Where is he, with his id?";
+  if (!pointsAt(ans, o92, cust)) return linkMsg(ans, o92, cust, "the Bence of Kossuth Lajos u. 12", "customer_id");
+  if (!has(o92, isCard)) return "Replay step 2: he pays by card. Which cell of his order's row says so?";
+  var it = itemsOf(ans, o92, pz, PIZZA_KINDS, "pizza", "pizza_id"); if (it.err) return it.err;
+  if (!it.n) return "Replay step 1: follow Bence's order (19:10). Which rows say which pizzas are in it? Make a table in the middle: the order's id, the pizza's id and the quantity.";
+  if (!sameItems(it.got, { "Sonkás": 2, "Margherita": 1 })) return "Replay step 1: follow Bence's order through <b>" + esc(it.mid) + "</b>: you get " + fmtItems(it.got) + ". The story says 2 Sonkás and 1 Margherita.";
+  var o93 = first(rows, function(r){ return has(r, re(/19[:.]25/)); });
+  if (!o93) return "Replay step 3: Molnár Dóra orders at 19:25. Her order is a row of its own in <b>" + esc(ot.name) + "</b>.";
+  if (o93.t !== o92.t) return "Dóra's order (19:25) and Bence's order (19:10) are in different tables. Both are orders: two rows in one table.";
+  var dora = first(rows, function(r){ return r.t !== o92.t && has(r, re(/dora|molnar/)); });
+  if (!dora) return "Replay step 3: where is Molnár Dóra, with her id?";
+  if (!pointsAt(ans, o93, dora)) return linkMsg(ans, o93, dora, "Dóra", "customer_id");
+  if (!has(o93, isCash)) return "Replay step 3: she pays cash. Which cell of her order's row says so?";
+  it = itemsOf(ans, o93, pz, PIZZA_KINDS, "pizza", "pizza_id"); if (it.err) return it.err;
+  if (!it.n) return "Replay step 3: follow Dóra's order (19:25). Which rows in the table in the middle say which pizzas are in it?";
+  if (!sameItems(it.got, { "Négy sajtos": 1, "Margherita": 2 })) return "Replay step 3: follow Dóra's order through <b>" + esc(it.mid) + "</b>: you get " + fmtItems(it.got) + ". The story says 1 Négy sajtos and 2 Margherita.";
+  return brokenCheck(ans);
+}
+
+// Two things linked through a table in the middle: the rows (not in A's or B's table) that point at both.
+function linkRows(ans, a, b){ return allRows(ans).filter(function(r){ return r.t !== a.t && r.t !== b.t && pointsAt(ans, r, a) && pointsAt(ans, r, b); }); }
+
+var EXERCISES = [["Squat", re(/squat|guggol/), re(/leg|lab/)], ["Push-up", re(/push|fekvo/), re(/chest|mell/)], ["Plank", re(/plank|deszka/), re(/core|has|torzs/)]];
+var WORKOUTS = [["Monday", re(/mon|hetf|12-0?1\b|\b1 dec|dec(ember)? 0?1\b|12\. ?0?1\b/), 2], ["Thursday", re(/thu|csut|12-0?4\b|\b4 dec|dec(ember)? 0?4\b|12\. ?0?4\b/), 3]];
+var SETS = [["Monday", "Squat", "3", "10"], ["Monday", "Push-up", "3", "15"], ["Thursday", "Squat", "4", "8"], ["Thursday", "Plank", "3", "60"]];
+
+function workoutCheck(ans){
+  var b = designCheck(ans); if (b) return b;
+  var ts = ans.tables, rows = allRows(ans), ex = {}, wo = {};
+  var hasId = function(r){ return idColOf(ts[r.t], r.t, ts) >= 0; };
+  var exKinds = EXERCISES.map(function(e){ return [e[0], e[1]]; });
+  for (var i = 0; i < EXERCISES.length; i++) {
+    var e = EXERCISES[i], r = first(rows, function(x){ return hasId(x) && has(x, e[1]) && has(x, e[2]); });
+    if (!r) return "Replay step 1: where is <b>" + e[0] + "</b>, with its muscle group? Give the exercises a table: one row each, with an id.";
+    var copies = rows.filter(function(x){ return x.t === r.t && has(x, e[1]); }).length;
+    if (copies > 1) return "<b>" + e[0] + "</b> is in " + esc(ts[r.t].name) + " " + copies + " times. One exercise, one row: the workouts point at it.";
+    ex[e[0]] = r;
+  }
+  var exT = ex.Squat.t;
+  for (var w = 0; w < WORKOUTS.length; w++) {
+    var W0 = WORKOUTS[w], wr = first(rows, function(x){ return x.t !== exT && hasId(x) && has(x, W0[1]) && !isMiddle(ts[x.t], x.t, ts); });
+    if (!wr) return "Replay step " + W0[2] + ": Lili's " + W0[0] + " workout is something that happens. Give it a row in a table of workouts, with an id and the day.";
+    if (kindIn(wr, exKinds)) return "The " + W0[0] + " workout's row copies exercise names. One workout, many exercises; one exercise, many workouts. Ask both ways.";
+    wo[W0[0]] = wr;
+  }
+  for (var k = 0; k < SETS.length; k++) {
+    var S0 = SETS[k], step = S0[0] === "Monday" ? 2 : 3, lr = linkRows(ans, wo[S0[0]], ex[S0[1]]);
+    if (!lr.length) return "Replay step " + step + ": follow Lili's " + S0[0] + " workout through the table in the middle. Where is " + S0[1] + "? Add a row that points at both.";
+    var facts = factCells(ans, lr[0]), nums = facts.map(digits), both = new RegExp("(^|\\D)" + S0[2] + "\\D+" + S0[3] + "(\\D|$)");
+    if ((nums.indexOf(S0[2]) < 0 || nums.indexOf(S0[3]) < 0) && !facts.some(function(f){ return both.test(norm(f)); })) return S0[0] + "'s " + S0[1] + ": " + S0[2] + " sets of " + S0[3] + ". Which cells of that row say so? Sets and reps are about this exercise in this workout: they live on the link.";
+  }
+  for (var w2 in wo) {
+    var midRows = allRows(ans).filter(function(x){ return x.t !== exT && x.t !== wo[w2].t && pointsAt(ans, x, wo[w2]); });
+    for (var m = 0; m < midRows.length; m++) {
+      var to = first(EXERCISES, function(e){ return pointsAt(ans, midRows[m], ex[e[0]]); });
+      if (!to) return "A row in <b>" + esc(ts[midRows[m].t].name) + "</b> points at the " + w2 + " workout but at no exercise.";
+      if (!SETS.some(function(s){ return s[0] === w2 && s[1] === to[0]; })) return "Follow the " + w2 + " workout: it has " + to[0] + ", but Lili didn't do " + to[0] + " on " + w2 + ".";
+    }
+  }
+  return brokenCheck(ans);
+}
+
+var MEMBERS = [["Szabó Márk", re(/mark|szabo/)], ["Kovács Lili", re(/lili|kovacs/)]];
+var EVENTS = [["the training", re(/train|edzes/), re(/10[:.]00/), re(/gym|terem/), 1], ["the tournament", re(/tourn|verseny|torna\b|kupa/), re(/14[:.]00/), re(/park/), 2]];
+var SIGNUPS = [["Szabó Márk", "the training", true, 3], ["Szabó Márk", "the tournament", false, 3], ["Kovács Lili", "the tournament", true, 4]];
+var YES = /^(yes|y|true|igen|i|paid|fizetett|fizetve|kifizetve|1|x|ok|done)$/, NO = /^(no|n|false|nem|not paid|unpaid|not yet|meg nem|nincs|0|-)$/;
+
+function clubCheck(ans){
+  var b = designCheck(ans); if (b) return b;
+  var ts = ans.tables, rows = allRows(ans), mem = {}, ev = {};
+  var hasId = function(r){ return idColOf(ts[r.t], r.t, ts) >= 0; };
+  var evKinds = EVENTS.map(function(e){ return [e[0], e[1]]; }), memKinds = MEMBERS;
+  for (var i = 0; i < EVENTS.length; i++) {
+    var E = EVENTS[i], r = first(rows, function(x){ return hasId(x) && has(x, E[1]); });
+    if (!r) r = first(rows, function(x){ return hasId(x) && has(x, E[2]); });
+    if (!r) return "Replay step " + E[4] + ": " + E[0] + " is something that happens. Give it a row in a table of events, with an id.";
+    if (!has(r, E[1])) return "Replay step " + E[4] + ": which cell of the row says it is " + E[0] + "?";
+    if (!has(r, E[2]) || !has(r, E[3])) return "Replay step " + E[4] + ": when and where is " + E[0] + "? Those facts go in its row.";
+    if (!r.cells.some(function(c){ return digits(c) === "500"; })) return "Each event costs 500 Ft. That is a fact about the event: which cell of " + E[0] + "'s row says so?";
+    if (kindIn(r, memKinds)) return "The row of " + E[0] + " copies people's names. One event, many people; one person, many events. Ask both ways.";
+    ev[E[0]] = r;
+  }
+  for (var j = 0; j < MEMBERS.length; j++) {
+    var M = MEMBERS[j], mr = first(rows, function(x){ return hasId(x) && x.t !== ev["the training"].t && has(x, M[1]); });
+    if (!mr) return "Where is " + M[0] + ", with an id? The club must remember its members.";
+    if (kindIn(mr, evKinds)) return M[0] + "'s row copies the events. One person, many events; one event, many people. Ask both ways.";
+    mem[M[0]] = mr;
+  }
+  for (var k = 0; k < SIGNUPS.length; k++) {
+    var S0 = SIGNUPS[k], lr = linkRows(ans, mem[S0[0]], ev[S0[1]]);
+    var who = S0[0].split(" ")[1];
+    if (!lr.length) return "Replay step " + S0[3] + ": " + who + " signs up for " + S0[1] + ". Which row points at both? Make a table in the middle.";
+    var facts = factCells(ans, lr[0]).map(norm);
+    if (!facts.length) return "Who has paid? It is a fact about one sign-up: add a column to the table in the middle.";
+    var y = facts.some(function(f){ return YES.test(f); }), n = facts.some(function(f){ return NO.test(f); });
+    if (!y && !n) return who + "'s sign-up for " + S0[1] + ": has " + (who === "Lili" ? "she" : "he") + " paid? Write yes or no.";
+    if (y !== S0[2]) return "Follow " + who + "'s sign-up for " + S0[1] + ": it says " + (y ? "paid" : "not paid") + ". The story says " + (S0[2] ? "paid" : "not yet") + ".";
+  }
+  if (linkRows(ans, mem["Kovács Lili"], ev["the training"]).length) return "Lili signed up for the tournament only. Her row for the training should go.";
+  return brokenCheck(ans);
+}
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+var CUST = TB("customers", ["id", "name", "phone", "address"], [["7", "Molnár Dóra", "+36 70 222 3344", "Ady Endre u. 5."], ["12", "Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12."], ["31", "Tóth Bence", "+36 20 987 6543", "Petőfi u. 3."]]);
+var PIZ = TB("pizzas", ["id", "name", "size", "price"], [["1", "Margherita", "32", "2490"], ["2", "Sonkás", "32", "2990"], ["3", "Négy sajtos", "32", "3290"]]);
+var ORD92 = TB("orders", ["id", "customer_id", "ordered_at", "paid_with"], [["92", "12", "2026-12-04 19:10", "card"]]);
+var ORD_COLS = ["id", "customer_id", "ordered_at", "paid_with"];
+var ORDS = TB("orders", ORD_COLS, [["92", "12", "2026-12-04 19:10", "card"], ["93", "7", "2026-12-04 19:25", "cash"]]);
+var ITEMS = TB("order_items", ["order_id", "pizza_id", "quantity"], [["92", "2", "2"], ["92", "1", "1"], ["93", "3", "1"], ["93", "1", "2"]]);
+
+var SPOT_SHOW = [
+  TB("orders", ["id", "customer_id", "pizza_ids", "paid_with"], [["92", "12", "2, 2, 1", "card"]]),
+  TB("orders, try 2", ["id", "customer_id", "pizza1", "pizza2", "pizza3"], [["92", "12", "2", "2", "1"]]),
+  TB("customers", ["id", "name", "phone", "address"], [["12", "Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12., Budapest"]]),
+  TB("pizzas", ["id", "name", "price", "toppings"], [["2", "Sonkás", "2990", "ham, cheese, tomato"]])
+];
+var SPOT = [
+  ["<code>orders.pizza_ids</code>: <b>2, 2, 1</b>", 1],
+  ["<code>orders, try 2</code>: <b>pizza1, pizza2, pizza3</b>", 1],
+  ["<code>customers.address</code>: <b>Kossuth Lajos u. 12., Budapest</b>", 0, "The address has a comma, but it is one address: one fact about Bence. One cell is right for it."],
+  ["<code>customers.phone</code>: <b>+36 30 555 1234</b>", 0, "The spaces only make the number easy to read. One phone number, one cell."],
+  ["<code>pizzas.toppings</code>: <b>ham, cheese, tomato</b>", 1],
+  ["<code>orders.paid_with</code>: <b>card</b>", 0, "One way of paying for one order. Not a list."]
+];
+var BOTH = [
+  ["<b>An order and a pizza</b> at Szelet", 1],
+  ["<b>A customer and an order</b> at Szelet", 0, "One order, how many customers? One. Many one way, one the other: a pointer on the many side (<code>orders.customer_id</code>). No table in the middle."],
+  ["<b>A workout and an exercise</b> in a gym app", 1],
+  ["<b>A post and a comment</b> on Instagram", 0, "One comment, how many posts? One. So <code>comments</code> gets <code>post_id</code>. No table in the middle."],
+  ["<b>A person and an event</b> in a club's app", 1],
+  ["<b>A student and a class</b> like 13F", 0, "One student, how many classes like 13F? One. So <code>students</code> gets <code>class_id</code>. No table in the middle."],
+  ["<b>A card and a trade</b> in a card swap app, where one trade can swap several cards", 1]
+];
+var COUNT_SHOW = [
+  TB("pizzas", ["id", "name"], [["1", "Margherita"], ["2", "Sonkás"], ["3", "Négy sajtos"]]),
+  TB("orders", ["id", "customer_id", "ordered_at"], [["92", "12", "2026-12-04 19:10"], ["93", "7", "2026-12-04 19:25"], ["94", "31", "2026-12-04 19:40"], ["95", "7", "2026-12-04 20:15"]]),
+  TB("order_items", ["order_id", "pizza_id", "quantity"], [["92", "2", "2"], ["92", "1", "1"], ["93", "3", "1"], ["93", "1", "2"], ["94", "2", "1"], ["95", "2", "2"], ["95", "3", "1"]])
+];
+var COUNT = [
+  ["3 Sonkás", 0, "3 is how many rows say pizza_id 2. But a row is not always one pizza: order 92's row says quantity 2. Add up the quantity."],
+  ["5 Sonkás", 1],
+  ["2 Sonkás", 0, "2 is the Sonkás's id, not a count. Find every row with pizza_id 2, and add up its quantity."],
+  ["7 Sonkás", 0, "7 is every row in order_items, all kinds of pizza. Only the rows with pizza_id 2 are Sonkás."],
+  ["10 Sonkás", 0, "10 is every pizza sold on Friday, all kinds. Only the rows with pizza_id 2 are Sonkás."]
+];
+var MATE = [
+  TB("customers", ["id", "name"], [["7", "Molnár Dóra"], ["12", "Tóth Bence"], ["31", "Tóth Bence"]]),
+  TB("orders", ["id", "customer_id", "ordered_at", "extras"], [["92", "12", "2026-12-04 19:10", ""], ["93", "7", "2026-12-04 19:25", "cola, cola, ketchup"], ["94", "31", "2026-12-04 19:40", ""]]),
+  TB("pizzas", ["id", "name", "price", "quantity", "order_id"], [["1", "Margherita", "2490", "1", "92"], ["2", "Sonkás", "2990", "2", "92"], ["4", "Margherita", "2490", "2", "93"], ["5", "Négy sajtos", "3290", "1", "93"], ["6", "Sonkás", "3090", "1", "94"]])
+];
+var MATE_OPTS = [
+  ["<code>pizzas.order_id</code>: a pizza row can be in only one order, so every new order makes a new copy of the pizza.", 1],
+  ["The Sonkás is in pizzas twice, at 2 990 and at 3 090. Which price is right?", 1],
+  ["<code>orders.extras</code> holds a list: cola, cola, ketchup.", 1],
+  ["Order 94 points at customer 31, and there is no customer 31.", 0, "Click it: customer 31 is the other Tóth Bence. It leads to a row."],
+  ["<code>quantity</code> should be in orders.", 0, "Order 92 has 2 Sonkás and 1 Margherita: which quantity would orders hold? The quantity is about one pizza in one order. It belongs to the link."],
+  ["The pizza ids skip 3: they should be 1, 2, 3, 4, 5.", 0, "An id only has to be different in its table and never change. Gaps are fine."]
+];
+
+function chooseCheck(opts, need){
+  return function(ans){
+    var sel = ans.sel, right = 0;
+    if (!sel.length) return "Nothing is ticked yet.";
+    for (var i = 0; i < sel.length; i++) { if (!opts[sel[i]][1]) return opts[sel[i]][2]; right++; }
+    if (right < need) return right + " of " + need + " found.";
+    return "";
+  };
+}
+
+function basketCheck(ans){
+  var t = ans.tables[0], rows = filledRows(t), sum = {};
+  var l = listCheck({ tables: [CUST, PIZ, ORD92, t] }); if (l) return l;
+  if (!rows.length) return "<b>order_items</b> is empty. Bence's order is 92: write one row for each kind of pizza in it.";
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i], oid = alnum(r[0]), pid = alnum(r[1]);
+    if (!oid) return "A row has no order_id. Which order is it about?";
+    if (oid !== "92") return oid === "12" ? "Follow order_id 12: there is no order 12. 12 is Bence's id in customers. order_id holds the order's id: look it up in orders." : "Follow order_id " + esc(r[0]) + ": there is no order with that id. Bence's order is in orders.";
+    if (!pid) return "A row has no pizza_id. Which pizza is it?";
+    if (/[a-z]/.test(norm(r[1]))) return "pizza_id holds an id, not a name. Find the pizza in pizzas and use its id.";
+    if (["1", "2", "3"].indexOf(pid) < 0) return "Follow pizza_id " + esc(r[1]) + ": no pizza has that id.";
+    if (!digits(r[2])) return "A row has no quantity: how many of that pizza?";
+    sum[pid] = (sum[pid] || 0) + Number(digits(r[2]));
+  }
+  if (sum["3"]) return "Follow pizza_id 3: it is a Négy sajtos. Bence didn't order one.";
+  if ((sum["2"] || 0) !== 2) return "Follow your rows: order 92 gets " + (sum["2"] || 0) + " Sonkás. The story says 2.";
+  if ((sum["1"] || 0) !== 1) return "Follow your rows: order 92 gets " + (sum["1"] || 0) + " Margherita. The story says 1.";
+  return "";
+}
+
+var LESSONS = [
+  { title: "Spot the list", kind: "choose", opts: SPOT, need: 3,
+    show: SPOT_SHOW, showTitle: "Szelet's tables, after two tries at Bence's order", optsTitle: "Tick every place that holds a list",
+    do: P("in the first orders table, how would the app count today's Sonkás?") + "Bence wants 2 Sonkás and 1 Margherita in one order. Your teammates tried two ways to write it down. Tick every place that holds a <b>list</b>.",
+    sub: "A list: several things of the same kind in one place. A comma alone does not make a list.",
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [0, 1, 4] },
+    hints: ["Look at each cell: does it hold one thing, or several things of the same kind?", "Commas alone don't make a list. An address is one fact. Three pizza ids are three things.", "Numbered columns (pizza1, pizza2, pizza3) are a list too, spread sideways. And look at the pizzas table."],
+    check: function(ans){ var m = chooseCheck(SPOT, 3)(ans); return m && /found/.test(m) ? m + " Read every cell of every table, the pizzas too." : m; },
+    after: "Three lists. pizza_ids and pizza1 to pizza3 are the same list, written two ways. toppings is one too: one pizza has many toppings, and cheese is on many pizzas. The address and the phone are one fact each, even with a comma or spaces." },
+
+  { title: "Ask both ways", kind: "choose", opts: BOTH, need: 4, story: ASK,
+    optsTitle: "Tick every pair that needs a table in the middle",
+    do: P("one Sonkás on the menu: how many orders can it be in?") + "For each pair, ask both ways. Tick every pair that is <b>many both ways</b>: it needs a table in the middle.",
+    sub: "One A: how many B? One B: how many A? The left side shows how.",
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [0, 2, 4, 6] },
+    hints: ["Read each pair both ways: one A, how many B? One B, how many A?", "Customer and order: one order, how many customers? One. That pair is one-to-many: a pointer is enough.", "Four pairs are many both ways."],
+    check: function(ans){ var m = chooseCheck(BOTH, 4)(ans); return m && /found/.test(m) ? m + " Ask both ways for every pair." : m; },
+    after: "Many both ways: order and pizza, workout and exercise, person and event, card and trade. Each needs a table in the middle. The other three are one-to-many: a pointer on the many side is enough." },
+
+  { title: "Bence's basket", kind: "grid", lockNames: true, lockCols: true,
+    given: [CUST, PIZ, ORD92], showTitle: "Szelet's tables", workTitle: "The table in the middle",
+    do: P("how many rows does order 92 need: 1, 2 or 3?") + "Bence's order is in <code>orders</code>, with no pizzas in it. Fill in <code>order_items</code>: which pizzas are in his order, and how many of each?",
+    sub: "Story step 1 is on the left. Click a yellow cell: the row it points at lights up. <b>+ row</b> adds a row.",
+    start: function(){ return { tables: [TB("order_items", ["order_id", "pizza_id", "quantity"], [blank(3), blank(3)])] }; },
+    solution: { tables: [TB("order_items", ["order_id", "pizza_id", "quantity"], [["92", "2", "2"], ["92", "1", "1"]])] },
+    hints: ["Bence's order has the id 92 in orders. Every row in order_items starts with order_id 92.", "One row per kind of pizza: one for the Sonkás, one for the Margherita. Look up their ids in pizzas.", "quantity says how many of that pizza: 2 Sonkás, 1 Margherita."],
+    check: basketCheck,
+    after: "Two rows: one per kind of pizza, and quantity says how many. <code>orders</code> did not change: no pizza in it at all. A 4th pizza? One more row, no new column." },
+
+  { title: "Count the Sonkás", kind: "choose", opts: COUNT, need: 1,
+    show: COUNT_SHOW, showTitle: "Szelet's tables on Friday 4 December", optsTitle: "How many Sonkás did Szelet sell on Friday?",
+    do: P("is the answer the number of rows?") + "The boss asks: how many Sonkás did Szelet sell on Friday 4 December? Follow the ids and tick the answer.",
+    sub: "Click a yellow cell: the row it points at lights up.",
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [1] },
+    hints: ["Click each pizza_id in order_items: which rows are Sonkás?", "The row 92 · 2 · 2 means: order 92, Sonkás, quantity 2. That row is 2 pizzas, not 1.", "Add up quantity in the rows where pizza_id is 2."],
+    check: function(ans){ var m = chooseCheck(COUNT, 1)(ans); return m === "Nothing is ticked yet." ? "Nothing is ticked yet. Start with the rows where pizza_id is 2." : (!m && ans.sel.length > 1 ? "Tick one answer." : m); },
+    after: "5: three rows say pizza_id 2, and their quantities are 2 + 1 + 2. With a table in the middle, counting is reading one column. With \"2, 2, 1\" in a cell, nobody could count it." },
+
+  { title: "All of Friday", kind: "grid", alsoDone: [0, 1, 2], boss: true,
+    do: P("which columns does orders lose?") + "These are Szelet's tables from before: one <code>pizza_id</code> per order. Change them so that both of Friday's orders fit, with every pizza in them.",
+    sub: "<b>Confident? Start here.</b> Check replays the story and follows every id. Any table and column names are fine. If this passes first, tasks 1 to 3 are done too.",
+    start: function(){ return { tables: [clone(CUST), clone(PIZ), TB("orders", ["id", "customer_id", "pizza_id", "quantity", "ordered_at", "paid_with"], [["92", "12", "2", "2", "2026-12-04 19:10", "card"]])] }; },
+    solution: { tables: [clone(CUST), clone(PIZ), clone(ORDS), clone(ITEMS)] },
+    hints: ["Four tables: customers, pizzas, orders, and a table in the middle, for example order_items.", "orders loses pizza_id and quantity. Each order keeps its id, customer_id, the time and how it is paid.", "The middle table has one row per kind of pizza in an order: order_id, pizza_id, quantity. Order 92 needs two rows, and order 93 two."],
+    check: fridayCheck,
+    after: "<code>orders</code> holds no pizza now. Each order is one row, its pizzas are rows in the middle, and the quantity sits on the link. Follow 92 or 93 through the middle table, and you get the story back." },
+
+  { title: "A teammate's design", kind: "choose", detective: true, opts: MATE_OPTS, need: 3,
+    show: MATE, showTitle: "Your teammate's tables", optsTitle: "Tick the three real problems",
+    do: "Your teammate made Friday's orders without a table in the middle. Every id leads to a row, so nothing turns red. Ask both ways, and tick the <b>three</b> real problems.",
+    sub: "Click every yellow cell. How many times is each pizza in pizzas?",
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [0, 1, 2] },
+    hints: ["Click order_id in every pizzas row. How many orders can one pizza row belong to?", "Find every Sonkás in pizzas. Compare the prices.", "Read every cell of orders. Does one cell hold more than one thing?"],
+    check: function(ans){ var m = chooseCheck(MATE_OPTS, 3)(ans); return m === "Nothing is ticked yet." ? "Nothing is ticked yet. Start by asking both ways: one order, how many pizzas? One pizza, how many orders?" : m; },
+    after: "The pointer sat on the pizza, so every order needed its own copy of the pizza, and the copies drifted apart (2 990 and 3 090). Many both ways means a table in the middle. And extras is a list in a cell: the same problem again." },
+
+  { title: "Extra A: the gym app", kind: "grid", extra: true, story: WORKOUT,
+    do: "A new story is on the left. Make the tables, each with an id, and write in both workouts.",
+    sub: "No hints. Ask both ways: one workout, how many exercises? One exercise, how many workouts?",
+    start: function(){ return { tables: [TB("", ["id", ""], [blank(2)])] }; },
+    solution: { tables: [
+      TB("exercises", ["id", "name", "muscle"], [["1", "Squat", "legs"], ["2", "Push-up", "chest"], ["3", "Plank", "core"]]),
+      TB("workouts", ["id", "day"], [["1", "Monday 1 December"], ["2", "Thursday 4 December"]]),
+      TB("workout_exercises", ["workout_id", "exercise_id", "sets", "reps"], [["1", "1", "3", "10"], ["1", "2", "3", "15"], ["2", "1", "4", "8"], ["2", "3", "3", "60"]])
+    ] },
+    hints: [],
+    check: workoutCheck,
+    after: "Squat is one row, and two workouts point at it. Sets and reps sit on the link: they are about this exercise on this day, not about Squat forever." },
+
+  { title: "Extra B: the frisbee club", kind: "grid", extra: true, last: true, story: CLUB,
+    do: "Another story is on the left. Make the tables, each with an id, and write in who signed up and who has paid.",
+    sub: "No hints. Where does \"paid\" live? Not in the members, not in the events.",
+    start: function(){ return { tables: [TB("", ["id", ""], [blank(2)])] }; },
+    solution: { tables: [
+      TB("members", ["id", "name"], [["1", "Szabó Márk"], ["2", "Kovács Lili"]]),
+      TB("events", ["id", "name", "starts_at", "place", "price"], [["1", "training", "2026-12-12 10:00", "gym hall", "500"], ["2", "tournament", "2026-12-13 14:00", "park", "500"]]),
+      TB("signups", ["member_id", "event_id", "paid"], [["1", "1", "yes"], ["1", "2", "no"], ["2", "2", "yes"]])
+    ] },
+    hints: [],
+    check: clubCheck,
+    after: "\"paid\" can't live in members (Márk has paid once and not once) or in events (Lili paid for the tournament, Márk didn't). It is about one sign-up: the table in the middle." }
+];
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "db-no-lists-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, work: {}, msg: {}, checked: {} }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var UI = { note: "", prepView: "solution", follow: null };
+var primerIdx = 0, showSay = PREP;
+function L(){ return LESSONS[S.i]; }
+function W(){ if (!S.work[S.i]) S.work[S.i] = L().start(); return S.work[S.i]; }
+
+/* ====================================================================
+   The work area
+   ==================================================================== */
+
+// Every table on screen that pointers can lead to: the given ones, then theirs.
+var VIEW = [];
+function addView(t){ VIEW.push(t); return VIEW.length - 1; }
+
+function roTable(t, live){
+  var v = live ? addView(t) : -1;
+  var h = '<div class="tcard"' + (v >= 0 ? ' data-v="' + v + '"' : "") + '><div class="thead"><span class="tname">' + esc(t.name) + '</span></div><table class="g"><tr>';
+  t.cols.forEach(function(c){ h += '<th><span class="cn">' + esc(c) + '</span></th>'; });
+  h += '</tr>';
+  t.rows.forEach(function(r, ri){ h += '<tr>' + r.map(function(val, ci){ return '<td class="ro' + (val === "" ? " empty" : "") + '" data-r="' + ri + '" data-c="' + ci + '">' + esc(val) + '</td>'; }).join("") + '</tr>'; });
+  return h + '</table></div>';
+}
+function roTables(ts, live){ return '<div class="ro-tables">' + ts.map(function(t){ return roTable(t, live); }).join("") + '</div>'; }
+
+// Inputs grow with what is typed, so long values stay readable.
+function wch(v, min){ return ' style="width:' + Math.max(min, String(v).length + 2) + 'ch"'; }
+function gridHtml(ans, les){
+  var h = '<div class="designer">', ro = les.roCols || [];
+  ans.tables.forEach(function(t, ti){
+    h += '<div class="tcard" data-v="' + addView(t) + '"><div class="thead">';
+    h += les.lockNames ? '<span class="tname">' + esc(t.name) + '</span>' : '<input class="tname-in" data-k="name" data-t="' + ti + '" value="' + esc(t.name) + '" placeholder="table name" aria-label="Table name">';
+    if (!les.lockNames) h += '<button class="x" data-act="deltable" data-t="' + ti + '" title="Delete this table">✕ table</button>';
+    h += '</div><table class="g"><tr>';
+    t.cols.forEach(function(c, ci){
+      h += les.lockCols ? '<th><span class="cn">' + esc(c) + '</span></th>' :
+        '<th><div class="colx"><input data-k="col" data-t="' + ti + '" data-c="' + ci + '" value="' + esc(c) + '"' + wch(c, 10) + ' placeholder="column" aria-label="Column name"><button class="x" data-act="delcol" data-t="' + ti + '" data-c="' + ci + '" title="Delete this column">✕</button></div></th>';
+    });
+    if (!les.lockCols) h += '<th class="side"><button class="add" style="margin:0" data-act="addcol" data-t="' + ti + '">+ column</button></th>';
+    h += '</tr>';
+    t.rows.forEach(function(r, ri){
+      h += '<tr>';
+      r.forEach(function(v, ci){
+        h += ro.indexOf(ci) >= 0 ? '<td class="ro" data-r="' + ri + '" data-c="' + ci + '">' + esc(v) + '</td>' :
+          '<td data-r="' + ri + '" data-c="' + ci + '"><input data-k="cell" data-t="' + ti + '" data-r="' + ri + '" data-c="' + ci + '" value="' + esc(v) + '"' + wch(v, 12) + ' aria-label="' + esc((t.cols[ci] || "cell") + ", row " + (ri + 1)) + '"></td>';
+      });
+      if (!les.lockRows && t.rows.length > 1) h += '<td class="side"><button class="x" data-act="delrow" data-t="' + ti + '" data-r="' + ri + '" title="Delete this row">✕</button></td>';
+      h += '</tr>';
+    });
+    h += '</table>';
+    if (!les.lockRows) h += '<button class="add" data-act="addrow" data-t="' + ti + '">+ row</button>';
+    h += '</div>';
+  });
+  if (!les.lockNames) h += '<button class="add big" data-act="addtable">+ table</button>';
+  return h + '</div>';
+}
+
+function solutionHtml(les){
+  var h = '<div class="solbox"><h4>Solution: type it in yourself (paste is off)</h4>';
+  if (les.kind === "grid") h += roTables(les.solution.tables, false);
+  else h += '<p>The right ones:</p><ul>' + les.solution.sel.map(function(i){ return "<li>" + les.opts[i][0] + "</li>"; }).join("") + '</ul>';
+  return h + '</div>';
+}
+
+var FOLLOW_TIP = '<span class="dim">Click a yellow cell: the row it points at lights up.</span>';
+function renderWork(){
+  var les = L(), ans = W(), h = '<div class="follow" id="follow">' + FOLLOW_TIP + '</div>', shown = les.given || les.show;
+  VIEW = [];
+  if (S.sol[S.i] && !S.done[S.i]) h += solutionHtml(les);
+  if (shown) h += '<h4>' + esc(les.showTitle) + '</h4>' + roTables(shown, true);
+  if (les.kind === "grid") {
+    if (shown) h += '<h4 style="margin-top:18px">' + esc(les.workTitle) + '</h4>';
+    h += gridHtml(ans, les);
+  } else {
+    h += '<h4 style="margin-top:18px">' + esc(les.optsTitle) + '</h4><div class="opts">' + les.opts.map(function(o, i){ var on = ans.sel.indexOf(i) >= 0; return '<label class="opt' + (on ? " on" : "") + '"><input type="checkbox" data-act="opt" data-i="' + i + '"' + (on ? " checked" : "") + '><span>' + o[0] + '</span></label>'; }).join("") + '</div>';
+  }
+  $("ws").innerHTML = h;
+  decorate();
+}
+
+// Colour every pointer column, and light up the row the chosen cell points at.
+function decorate(){
+  var cards = $("ws").querySelectorAll(".tcard[data-v]");
+  var cellAt = function(card, r, c){ var tr = card.querySelectorAll("table.g tr")[r + 1]; return tr ? tr.querySelectorAll("td:not(.side)")[c] : null; };
+  Array.prototype.forEach.call(cards, function(card){
+    var vi = Number(card.dataset.v), t = VIEW[vi], trs = card.querySelectorAll("table.g tr"), ths = trs[0].querySelectorAll("th:not(.side)");
+    t.cols.forEach(function(c, ci){
+      var on = isPointer(t, vi, ci, VIEW);
+      if (ths[ci]) ths[ci].classList.toggle("ptr", on);
+      for (var r = 1; r < trs.length; r++) { var td = trs[r].querySelectorAll("td:not(.side)")[ci]; if (td) { td.classList.toggle("ptr", on); td.classList.remove("broken", "from"); } }
+    });
+    for (var r = 1; r < trs.length; r++) trs[r].classList.remove("hit");
+  });
+  var f = UI.follow, out = FOLLOW_TIP;
+  if (f && VIEW[f.v] && VIEW[f.v].rows[f.r] && isPointer(VIEW[f.v], f.v, f.c, VIEW)) {
+    var t = VIEW[f.v], col = t.cols[f.c], val = t.rows[f.r][f.c], tg = targetOf(col, VIEW), tt = VIEW[tg];
+    var from = cellAt($("ws").querySelector('.tcard[data-v="' + f.v + '"]'), f.r, f.c);
+    if (alnum(val)) {
+      var hit = rowById(tt, tg, VIEW, val), card = $("ws").querySelector('.tcard[data-v="' + tg + '"]');
+      if (hit >= 0) {
+        if (card) card.querySelectorAll("table.g tr")[hit + 1].classList.add("hit");
+        if (from) from.classList.add("from");
+        out = '<span class="lead">' + esc(col) + ' ' + esc(val) + ' →</span> <code>' + esc(tt.name) + '</code>, the row with id ' + esc(val) + ': <b>' + esc(rowLabel(tt, tg, VIEW, hit)) + '</b>';
+      } else {
+        if (from) from.classList.add("broken");
+        out = '<span class="broken">' + esc(col) + ' ' + esc(val) + ' → there is no row with id ' + esc(val) + ' in ' + esc(tt.name) + '.</span>';
+      }
+    } else out = '<span class="dim">' + esc(col) + ' is empty here: it points at nothing yet.</span>';
+  }
+  var box = $("follow"); if (box) box.innerHTML = out;
+}
+function followCell(td){
+  var card = td.closest(".tcard[data-v]"); if (!card || td.dataset.r === undefined) return;
+  UI.follow = { v: Number(card.dataset.v), r: Number(td.dataset.r), c: Number(td.dataset.c) };
+  decorate();
+}
+
+$("ws").addEventListener("input", function(e){
+  var el = e.target, k = el.dataset.k; if (!k) return;
+  var t = W().tables[Number(el.dataset.t)];
+  if (k === "name") t.name = el.value;
+  else if (k === "col") t.cols[Number(el.dataset.c)] = el.value;
+  else if (k === "cell") t.rows[Number(el.dataset.r)][Number(el.dataset.c)] = el.value;
+  if (k !== "name") el.style.width = Math.max(k === "col" ? 10 : 12, el.value.length + 2) + "ch";
+  save(); decorate();
+});
+$("ws").addEventListener("focusin", function(e){ var td = e.target.closest("td[data-r]"); if (td) followCell(td); });
+$("ws").addEventListener("change", function(e){
+  var el = e.target;
+  if (el.dataset.act === "opt") { toggleSel(Number(el.dataset.i)); }
+});
+$("ws").addEventListener("click", function(e){
+  var td = e.target.closest("td.ro[data-r]"); if (td) { followCell(td); return; }
+  var b = e.target.closest("[data-act]"); if (!b || b.dataset.act === "opt") return;
+  var a = b.dataset.act, ans = W(), t = ans.tables ? ans.tables[Number(b.dataset.t)] : null;
+  if (a === "addtable") ans.tables.push(TB("", ["id", ""], [blank(2)]));
+  else if (a === "deltable") ans.tables.splice(Number(b.dataset.t), 1);
+  else if (a === "addcol") { t.cols.push(""); t.rows.forEach(function(r){ r.push(""); }); }
+  else if (a === "delcol") { var c = Number(b.dataset.c); if (t.cols.length > 1) { t.cols.splice(c, 1); t.rows.forEach(function(r){ r.splice(c, 1); }); } }
+  else if (a === "addrow") t.rows.push(blank(t.cols.length));
+  else if (a === "delrow") { if (t.rows.length > 1) t.rows.splice(Number(b.dataset.r), 1); }
+  UI.follow = null;
+  save(); renderWork();
+  if (a === "addtable") { var ins = $("ws").querySelectorAll(".tname-in"); if (ins.length) ins[ins.length - 1].focus(); }
+});
+function toggleSel(i){ var s = W().sel, k = s.indexOf(i); if (k >= 0) s.splice(k, 1); else s.push(i); s.sort(function(a, b){ return a - b; }); save(); renderWork(); }
+// While the solution is open, they type it: no pasting.
+$("ws").addEventListener("paste", function(e){
+  if (S.sol[S.i] && !S.done[S.i]) { e.preventDefault(); UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); }
+});
+
+/* ====================================================================
+   Checking
+   ==================================================================== */
+
+function checkNow(){
+  var idx = S.i, les = LESSONS[idx], ans = W(), msg = les.check(ans), key = JSON.stringify(ans), hadSol = !!S.sol[idx];
+  S.checked[idx] = true; S.msg[idx] = msg; UI.note = "";
+  if (!msg) {
+    if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+    S.sol[idx] = false;
+    (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+  } else if (S.lastTried[idx] !== key && key !== JSON.stringify(les.start())) {
+    S.lastTried[idx] = key; S.tries[idx] = (S.tries[idx] || 0) + 1;
+  }
+  save(); renderStrip(); renderDots();
+  // Grids keep their focus while typing; the rest redraw.
+  if (les.kind !== "grid" || PREP || hadSol !== !!S.sol[idx]) renderWork();
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints.length;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function renderStrip(){
+  var les = L(), done = !!S.done[S.i], msg = S.msg[S.i], r = "";
+  $("t-kicker").textContent = "Lesson D3 · Task " + (S.i + 1) + " of " + N + (les.boss ? " · Confident? Start here" : les.detective ? " · Detective" : les.extra ? " · Extra" : "") + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? "The solution is above your work. Type it in, then <b>Check</b>." : les.sub;
+  if (!S.checked[S.i] && !done) r = '<span class="dim">Fill it in, then press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</span>';
+  else if (S.checked[S.i] && msg) r = '<span class="no">✗ Not yet.</span> ' + msg;
+  else if (done) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    return renderStripNote();
+  }
+  act.appendChild(button("Check", "btn primary", checkNow));
+  if (done && !msg) { if (S.i < N - 1) act.appendChild(button("Next task →", "btn", function(){ gotoTask(S.i + 1); })); }
+  else if (!S.sol[S.i]) act.appendChild(button(hs.solutionNext ? "Show solution" : (hs.len ? "Stuck? Hint" : "Stuck?"), "btn", stuck));
+  renderStripNote();
+}
+function renderStripNote(){ var n = $("t-note"); n.classList.toggle("hidden", !UI.note); n.textContent = UI.note; }
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: change something and press Check. Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+// ?prep only: flip between the task's start and its solution.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  S.work[S.i] = UI.prepView === "task" ? L().start() : clone(L().solution);
+  checkNow();
+}
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); UI.note = ""; UI.follow = null;
+  if (PREP) { UI.prepView = "solution"; S.work[S.i] = clone(L().solution); renderAll(); checkNow(); return; }
+  save(); renderAll();
+}
+function renderAll(){
+  renderDots(); renderStrip();
+  $("story").innerHTML = L().story || SZELET;
+  renderWork();
+}
+$("l-again").onclick = function(){
+  if (!confirm("Start this task again? What you wrote in this task is lost.")) return;
+  S.work[S.i] = L().start(); S.checked[S.i] = false; S.msg[S.i] = ""; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your work and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); checkNow(); }
+});
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var Pr = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + LESSON + ' · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(Pr.title) + '</h2>' +
+    '<div class="art">' + ART[Pr.art]() + '</div>' +
+    '<p>' + Pr.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(Pr.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook: lets an automated check run an answer against a task without the UI.
+window.__D3 = { LESSONS: LESSONS, PRIMER: PRIMER, ART: ART, PREP: PREP, gotoTask: gotoTask, state: function(){ return S; },
+  check: function(i, ans){ return LESSONS[i].check(ans); }, start: function(i){ return LESSONS[i].start(); }, solution: function(i){ return clone(LESSONS[i].solution); },
+  targetOf: targetOf, listCheck: listCheck, follow: function(){ return $("follow") ? $("follow").textContent : ""; } };
+
+document.title = LESSON;
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
