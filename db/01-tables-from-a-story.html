@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson D1 · Tables from a story</title>
+<style>
+:root{
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button,input{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #c9ced6;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+
+/* ===== practice: the story beside the work ===== */
+.work{flex:1;display:grid;grid-template-columns:minmax(280px,34fr) 66fr;min-height:0}
+.storyp{background:#fffdf5;border-right:1px solid #e8dfc0;overflow:auto;padding:16px 18px}
+.storyp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#8a6d1f}
+.storyp p{margin:6px 0;font-size:15px;line-height:1.55}
+.storyp ol{margin:6px 0;padding-left:22px;font-size:15px;line-height:1.55}
+.storyp li{margin:4px 0}
+.storyp .menu{margin-top:12px;border-top:1px dashed #e0d5ad;padding-top:8px}
+.storyp table{border-collapse:collapse;font-size:14px}
+.storyp td{padding:2px 12px 2px 0}
+.ws{overflow:auto;padding:16px 18px 60px;background:#fff}
+
+/* tables they fill in */
+.designer{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tcard{border:1px solid #c7d2fe;border-radius:10px;background:#fff;padding:8px 10px 10px;max-width:100%;overflow-x:auto}
+.tcard .thead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tname{font:700 15px ui-monospace,Consolas,monospace;color:var(--ink)}
+input.tname-in{font:700 15px ui-monospace,Consolas,monospace;border:1px dashed #9aa5b8;border-radius:6px;padding:3px 6px;width:170px}
+table.g{border-collapse:collapse}
+table.g th{background:#eef3fc;border:1px solid #c7d2fe;padding:0;text-align:left;font:600 13px ui-monospace,Consolas,monospace;vertical-align:top}
+table.g th .cn{display:block;padding:5px 8px}
+table.g td{border:1px solid #d6d9de;padding:0}
+table.g td.ro{padding:5px 8px;font-size:14px}
+table.g input{border:0;padding:5px 8px;width:12ch;max-width:320px;background:transparent;font-size:14px;outline:none}
+table.g th input{font:600 13px ui-monospace,Consolas,monospace}
+table.g input:focus{background:#fffbe6;box-shadow:inset 0 0 0 2px #f2b04a}
+table.g td input{background:#fffdf0}
+table.g td.empty{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#f3f4f6 4px,#f3f4f6 8px);min-width:60px}
+table.g td.side,table.g th.side{border:0;background:none;padding:0 0 0 4px;vertical-align:middle}
+.x{border:0;background:none;color:#9aa0a6;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
+.x:hover{color:var(--bad);background:#fff0f0}
+.add{border:1px dashed #9aa5b8;background:#fff;color:#475569;border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer;margin-top:6px}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+.add.big{padding:8px 14px;font-size:14px;align-self:center}
+.colx{display:flex;align-items:center}
+
+/* pick the words, tick the problems */
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.chip{border:2px solid #c7d2fe;border-radius:20px;padding:6px 14px;background:#fff;font-size:15px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:#dbeafe;border-color:var(--accent);font-weight:700}
+.chip.on::before{content:"▦ ";color:var(--accent)}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:14px;max-width:720px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid #d6d9de;border-radius:10px;padding:9px 12px;cursor:pointer;font-size:15px;background:#fff}
+.opt:hover{border-color:var(--accent)}
+.opt.on{border-color:var(--accent);background:#eef3fc}
+.opt input{margin-top:4px}
+.ws h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ro-tables{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.solbox{border:2px solid #f2b04a;background:#fffaf0;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.solbox h4{color:var(--warn)}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work{grid-template-columns:1fr;display:block;overflow:auto}
+  .storyp{border-right:0;border-bottom:1px solid #e8dfc0}
+  #practice{height:auto;min-height:100%}
+  html,body{height:auto}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+  <div class="work">
+    <div class="storyp" id="story"></div>
+    <div class="ws" id="ws"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+// ?prep: the teacher flips through the solutions. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+var LESSON = "Lesson D1 · Tables from a story";
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+// For comparing what they typed: no accents, lower case, single spaces.
+function norm(s){ return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+function digits(s){ return String(s == null ? "" : s).replace(/\D/g, ""); }
+function alnum(s){ return norm(s).replace(/[^a-z0-9]/g, ""); }
+
+/* ====================================================================
+   The stories. Shown on the left, next to every task.
+   ==================================================================== */
+
+var SZELET =
+  '<h3>The story</h3>' +
+  '<p><b>Szelet</b> is a small pizza place next to the school. Today orders come by phone and go on paper slips. Slips get lost, and the courier can\'t read the address. The owner wants an app.</p>' +
+  '<ol>' +
+  '<li>Friday 27 November, 19:40. Tóth Bence orders on his phone: 2 Sonkás pizzas (32 cm, 2 990 Ft each).</li>' +
+  '<li>He gives his phone number, +36 30 555 1234, and his address, Kossuth Lajos u. 12. He will pay cash at the door.</li>' +
+  '<li>The kitchen sees the new order and starts it.</li>' +
+  '<li>20:05. The courier, Varga Zoltán (+36 20 444 5566), takes the order.</li>' +
+  '<li>20:20. Bence gets his pizzas. The order is marked delivered.</li>' +
+  '</ol>' +
+  '<div class="menu"><h3>The menu</h3><table>' +
+  '<tr><td>Margherita</td><td>32 cm</td><td>2 490 Ft</td></tr>' +
+  '<tr><td>Sonkás</td><td>32 cm</td><td>2 990 Ft</td></tr>' +
+  '<tr><td>Négy sajtos</td><td>32 cm</td><td>3 290 Ft</td></tr></table></div>';
+
+var DRIVING =
+  '<h3>A new story</h3>' +
+  '<p><b>Kormány Autósiskola</b> is a driving school. Today the instructors keep a paper diary in the car.</p>' +
+  '<ol>' +
+  '<li>Tuesday, 15:00. Kovács Lili has her 7th driving lesson.</li>' +
+  '<li>Her instructor is Nagy Péter.</li>' +
+  '<li>The car is a white Suzuki Swift, plate ABC-123.</li>' +
+  '<li>They drive 90 minutes.</li>' +
+  '<li>After the lesson Péter writes a note about it: "roundabouts still scary".</li>' +
+  '</ol>';
+
+/* ====================================================================
+   The slides: why first. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + esc(label) + '">' + inner + '</svg>'; }
+function PILL(x, y, w, txt, fill, stroke, col, size){ return R(x, y, w, 26, { rx: 13, fill: fill, stroke: stroke, sw: 2 }) + T(x + w / 2, y + 17, esc(txt), { anchor: "middle", bold: true, size: size || 12, fill: col }); }
+
+// A table drawn as a grid. o.hl = ["row,col", ...] cells in yellow, o.hlRow = a whole row, o.bad = red header.
+function colWs(cols, rows){ return cols.map(function(c, j){ var m = c.length * 7.4; rows.forEach(function(r){ m = Math.max(m, String(r[j]).length * 6.9); }); return Math.round(m + 16); }); }
+function gridW(cols, rows){ return colWs(cols, rows).reduce(function(a, b){ return a + b; }, 0); }
+function GRID(x, y, name, cols, rows, o){
+  o = o || {};
+  var ws = colWs(cols, rows), s = "", W = gridW(cols, rows), hl = o.hl || [];
+  if (name) s += T(x, y - 6, esc(name), { bold: true, mono: true, size: 13, fill: o.bad ? RED : INK });
+  var cx = x;
+  cols.forEach(function(c, j){
+    s += R(cx, y, ws[j], 22, { rx: 0, fill: o.bad ? "#fff0f0" : "#eef3fc", stroke: o.bad ? "#f5b5b0" : "#c7d2fe" }) + T(cx + 7, y + 15, esc(c), { mono: true, bold: true, size: 11.5, fill: o.bad ? RED : INK });
+    cx += ws[j];
+  });
+  rows.forEach(function(r, i){
+    var yy = y + 22 + i * 22; cx = x;
+    r.forEach(function(v, j){
+      var on = hl.indexOf(i + "," + j) >= 0 || o.hlRow === i, empty = v === "";
+      s += R(cx, yy, ws[j], 22, { rx: 0, fill: on ? "#fef3c7" : empty ? "#f3f4f6" : "#fff", stroke: "#d6d9de" }) + T(cx + 7, yy + 15, esc(v), { size: 12, bold: on, fill: o.dimRows && o.dimRows.indexOf(i) >= 0 ? "#9aa0a6" : INK });
+      cx += ws[j];
+    });
+  });
+  if (o.cross) s += '<line x1="' + (x - 4) + '" y1="' + (y - 2) + '" x2="' + (x + W + 4) + '" y2="' + (y + 22 + rows.length * 22 + 4) + '" stroke="' + RED + '" stroke-width="2.5"/>';
+  return s;
+}
+
+var ART = {
+  wolt: function(){
+    var s = "";
+    s += R(8, 8, 132, 196, { rx: 18, fill: "#fff", stroke: "#cfd6df", sw: 2 }) + R(52, 16, 44, 6, { rx: 3, fill: "#e5e7eb", stroke: "#e5e7eb" });
+    s += T(74, 46, "Szelet", { anchor: "middle", bold: true, size: 14 });
+    s += R(20, 58, 108, 34, { rx: 8, fill: "#fffaf0", stroke: "#f0a500", sw: 2 }) + T(74, 80, "2 × Sonkás", { anchor: "middle", bold: true, size: 12 });
+    s += R(20, 104, 108, 30, { rx: 15, fill: A, stroke: A }) + T(74, 123, "Order", { anchor: "middle", bold: true, size: 13, fill: "#fff" });
+    s += T(74, 160, "✓ Order placed", { anchor: "middle", bold: true, size: 12, fill: GRN });
+    s += T(74, 180, "on the way…", { anchor: "middle", size: 12, fill: MUT });
+    s += ARROW(146, 112, 182, 112, A) + T(164, 100, "1 row", { anchor: "middle", bold: true, size: 11, fill: A });
+    var rows = [["Kiss Dóra", "Margherita", "1", "19:12", "delivered"], ["you", "Sonkás", "2", "19:40", "on the way"], ["Nagy Ádám", "Négy sajtos", "1", "19:41", "new"]];
+    s += GRID(190, 58, "orders", ["customer", "pizza", "quantity", "time", "status"], rows, { hlRow: 1, dimRows: [0, 2] });
+    s += T(190, 168, "… and a few million more rows", { size: 12, fill: MUT });
+    s += PILL(8, 222, 226, "Concept v2, Monday: tables + rows", "#eef3fc", "#c7d2fe", A, 11);
+    s += PILL(242, 222, 156, "Defence: database 5 pts", "#eef3fc", "#c7d2fe", A, 11);
+    s += PILL(406, 222, 226, "May: the backend reads one, 15 pts", "#eef3fc", "#c7d2fe", A, 11);
+    return svg(256, "A phone orders 2 Sonkás pizzas. The app writes one new row into the orders table: you, Sonkás, 2, 19:40, on the way, between other customers' rows. Below: concept v2 on Monday needs tables and rows, the database is 5 points at the defence, and in May the backend task reads a database for 15 points", s);
+  },
+  grid: function(){
+    var rows = [["Margherita", "32", "2490"], ["Sonkás", "32", "2990"], ["Négy sajtos", "32", "3290"]], s = "";
+    s += GRID(16, 40, "pizzas", ["name", "size", "price"], rows, { hl: ["1,2"] });
+    var w = gridW(["name", "size", "price"], rows), x = 16 + w;
+    s += ARROW(x + 34, 51, x + 6, 51, A) + T(x + 40, 55, "one column = one fact (the price)", { bold: true, size: 12, fill: A });
+    s += '<line x1="' + (x + 8) + '" y1="95" x2="' + (x + 30) + '" y2="95" stroke="' + AMB + '" stroke-width="2"/>' + T(x + 40, 99, "one row = one real thing (the Sonkás)", { bold: true, size: 12, fill: AMB });
+    s += T(16, 150, "2990: which pizza? Sonkás. Which fact? Its price.", { size: 12.5 });
+    s += T(16, 180, "the same list, as you know it from JavaScript", { bold: true, size: 12, fill: MUT });
+    s += R(8, 188, 624, 96, { fill: "#15181f", stroke: "#15181f" });
+    ['[', '  { name: "Margherita",  size: 32, price: 2490 },', '  { name: "Sonkás",      size: 32, price: 2990 },', '  { name: "Négy sajtos", size: 32, price: 3290 }', ']'].forEach(function(l, i){
+      s += T(20, 206 + i * 17, esc(l), { mono: true, size: 12, fill: i === 2 ? "#fde68a" : "#e5e7eb" });
+    });
+    s += T(620, 240, "each object = a row", { anchor: "end", bold: true, size: 12, fill: "#93c5fd" }) + T(620, 258, "each key = a column", { anchor: "end", bold: true, size: 12, fill: "#93c5fd" });
+    return svg(292, "The pizzas table: columns name, size and price, three rows, one per pizza. One column is one fact, one row is one real thing. The cell 2990 is the price of the Sonkás. Below, the same data as a JavaScript list of objects: each object is a row, each key is a column", s);
+  },
+  mark: function(){
+    var s = R(8, 6, 624, 44, { rx: 6, fill: "#fffdf5", stroke: "#e8dfc0" });
+    s += T(18, 24, "19:40. Tóth Bence orders 2 Sonkás (32 cm, 2 990 Ft). Phone +36 30 555 1234,", { size: 12.5 });
+    s += T(18, 42, "Kossuth Lajos u. 12. He pays cash. The kitchen starts it.", { size: 12.5 });
+    s += T(16, 74, "a thing → a table", { bold: true, size: 12, fill: A }) + T(226, 74, "a fact → a column", { bold: true, size: 12, fill: AMB }) + T(470, 74, "never needed → nothing", { bold: true, size: 12, fill: MUT });
+    s += PILL(16, 84, 96, "Tóth Bence", "#dbeafe", A, A) + PILL(118, 84, 74, "Sonkás", "#dbeafe", A, A);
+    s += PILL(226, 84, 60, "phone", "#fef3c7", AMB, AMB) + PILL(292, 84, 70, "address", "#fef3c7", AMB, AMB) + PILL(368, 84, 52, "32", "#fef3c7", AMB, AMB) + PILL(226, 116, 60, "2990", "#fef3c7", AMB, AMB);
+    s += PILL(470, 84, 100, "the kitchen", "#f3f4f6", "#cfd6df", MUT);
+    s += PILL(292, 116, 128, "2 · cash → slide 4", "#f5f3ff", "#7c3aed", "#6d28d9");
+    s += GRID(16, 176, "customers", ["name", "phone", "address"], [["", "", ""]]);
+    s += GRID(330, 176, "pizzas", ["name", "size", "price"], [["", "", ""]]);
+    return svg(228, "The story, marked. Things become tables: Tóth Bence and Sonkás. Facts become columns: phone, address, 32, 2990. The kitchen is never needed, so it is nothing. 2 and cash wait for slide 4. Below, two empty tables: customers with name, phone, address, and pizzas with name, size, price", s);
+  },
+  happens: function(){
+    var cols = ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"];
+    var rows = [["Tóth Bence", "Sonkás", "2", "19:40", "cash", "", "new"], ["Tóth Bence", "Sonkás", "2", "19:40", "cash", "Varga Zoltán", "on the way"], ["Tóth Bence", "Sonkás", "2", "19:40", "cash", "Varga Zoltán", "delivered"]];
+    var s = T(16, 18, "one order, one row, three moments", { bold: true, size: 13, fill: A });
+    s += GRID(62, 50, "orders", cols, rows.slice(0, 1), {});
+    s += GRID(62, 120, "", cols, rows.slice(1, 2), { hl: ["0,5", "0,6"] });
+    s += GRID(62, 190, "", cols, rows.slice(2, 3), { hl: ["0,6"] });
+    s += T(10, 87, "19:40", { bold: true, size: 13 }) + T(10, 157, "20:05", { bold: true, size: 13 }) + T(10, 227, "20:20", { bold: true, size: 13 });
+    s += ARROW(320, 98, 320, 116) + ARROW(320, 168, 320, 186);
+    s += T(16, 262, "Bence and the Sonkás were there yesterday too. The new thing is the order.", { bold: true, size: 12.5, fill: INK });
+    return svg(272, "The same row of the orders table at three moments. 19:40: Tóth Bence, Sonkás, 2, 19:40, cash, no courier yet, status new. 20:05: the courier Varga Zoltán is filled in and the status is on the way. 20:20: the status is delivered. It is one row that changes, not three rows", s);
+  },
+  nottable: function(){
+    var s = "";
+    s += T(16, 18, "a screen", { bold: true, size: 13, fill: RED });
+    s += GRID(16, 44, "homepage", ["title", "banner"], [["Szelet", "pizza.jpg"]], { bad: true, cross: true });
+    s += ARROW(80, 96, 80, 124, MUT) + T(16, 144, "It shows rows from", { size: 12 }) + T(16, 160, "other tables.", { size: 12 }) + T(16, 180, "Not data.", { bold: true, size: 12, fill: GRN });
+    s += T(180, 18, "a fact", { bold: true, size: 13, fill: RED });
+    s += GRID(180, 44, "phones", ["number"], [["+36 30 555 1234"]], { bad: true, cross: true });
+    s += ARROW(240, 96, 240, 124, MUT);
+    s += GRID(180, 148, "customers", ["name", "phone"], [["Tóth Bence", "+36 30 555 1234"]], { hl: ["0,1"] });
+    s += T(392, 18, "same columns", { bold: true, size: 13, fill: RED });
+    s += GRID(392, 44, "admins", ["name", "email"], [["Kiss Réka", "reka@szelet.hu"]], { bad: true });
+    s += GRID(392, 108, "cooks", ["name", "email"], [["Papp Ádám", "adam@szelet.hu"]], { bad: true });
+    s += ARROW(460, 156, 460, 176, MUT);
+    s += GRID(392, 196, "staff", ["name", "email", "job"], [["Kiss Réka", "reka@szelet.hu", "admin"], ["Papp Ádám", "adam@szelet.hu", "cook"]], { hl: ["0,2", "1,2"] });
+    return svg(270, "Three things that look like tables and are not. homepage is a screen: it shows rows from other tables. phones holds a fact: the phone is a column of customers. admins and cooks have the same columns: they are one staff table with a job column", s);
+  },
+  replay: function(){
+    var steps = [["Read the story", 110], ["Mark things and facts", 160], ["Write one row each", 146], ["Replay ★", 82, 1], ["Add what's missing", 140]], s = "", x = 4;
+    steps.forEach(function(st, i){
+      var nw = st[2];
+      s += R(x, 8, st[1] - 14, 30, { rx: 15, fill: nw ? "#dcfce7" : "#eef3fc", stroke: nw ? GRN : "#c7d2fe", sw: 2 }) + T(x + (st[1] - 14) / 2, 28, esc(st[0]), { anchor: "middle", bold: true, size: 11.5, fill: nw ? GRN : A });
+      if (i < steps.length - 1) s += ARROW(x + st[1] - 13, 23, x + st[1] - 2, 23);
+      x += st[1];
+    });
+    s += '<path d="M 570 39 V 50 H 40 V 45" fill="none" stroke="#9aa0a6" stroke-width="2"/><path d="M 40 39 L 35 47 L 45 47 z" fill="#9aa0a6"/>';
+    var rows = [["Bence orders 2 Sonkás at 19:40", "✓", "a new row in orders", GRN], ["his phone and address", "✓", "his row in customers", GRN], ["Varga Zoltán takes it at 20:05", "✗", "no column for when: add taken_at, or skip it", RED], ["delivered at 20:20", "✓", "status, in the same row", GRN]];
+    s += R(8, 64, 624, 26, { rx: 0, fill: "#f9fafb", stroke: LINE }) + T(18, 81, "Story step", { bold: true, size: 12 }) + T(238, 81, "Where is it written?", { bold: true, size: 12 });
+    rows.forEach(function(r, i){
+      var y = 90 + i * 30;
+      s += R(8, y, 624, 30, { rx: 0, fill: "#fff", stroke: LINE }) + T(18, y + 19, esc(r[0]), { size: 12.5 }) + T(238, y + 19, r[1], { bold: true, size: 14, fill: r[3] }) + T(256, y + 19, esc(r[2]), { size: 12.5, fill: r[1] === "✗" ? RED : INK });
+    });
+    return svg(214, "The designer's loop: read the story, mark things and facts, write one row each, replay (new today), add what's missing, again. Replay table: Bence orders, a new row in orders. His phone and address, his row in customers. Varga Zoltán takes it at 20:05: no column for when, so add taken_at or decide it is not needed. Delivered at 20:20: status in the same row", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Your Wolt order is one row", art: "wolt",
+    body: "When you order on Wolt, nothing magic happens. The app writes <b>one line into a table</b>: who, what, when, where. Wolt remembers four kinds of things: restaurants, dishes, couriers and orders. Each one is a table.<br><br>Your project needs the same. Concept v2, due <b>Monday 30 November</b>: every table, its columns, and one example row from your story. At the defence, the database is 5 points and you hand in its diagram. In May, the backend task (15 points) reads a database.",
+    say: "Ask what Wolt has to remember about their last order. Write the answers on the board as they come. That list is already the orders table." },
+  { title: "A table holds one kind of thing", art: "grid",
+    body: "<b>One row = one real thing.</b> <b>One column = one fact</b> about it. Every row has the same columns.<br><br>You know the bottom part already: a list of objects of the same shape. A table is the same thing drawn as a grid. Each object is a row, each key is a column.",
+    say: "Point at 2990 and ask: which pizza, which fact? (Sonkás, its price.) Every cell answers \"which thing, which fact\"." },
+  { title: "From the story: things and facts", art: "mark",
+    body: "Read the story and mark what the app must remember. A <b>thing</b> gets a table. A <b>fact about a thing</b> is a column. What the app never needs to look up is nothing.<br><br>The phone number is not a table: it is a fact about Bence. The kitchen is not a table: there is one kitchen, and the app never looks it up.",
+    say: "Ask where 2 and cash go. Not Bence (tomorrow he orders 1 and pays by card), not the pizza. They belong to this order. Next slide." },
+  { title: "What happens is a table too", art: "happens",
+    body: "The new thing at 19:40 is <b>the order</b>. Something that happens and must be remembered is a thing: an order, a booking, a delivery, a lesson. It gets a table, and every time it happens, a new row.<br><br>A design with only people in it (users, admins, couriers) can't remember anything that happened. It knows who exists, not what they did.",
+    say: "The courier cell is empty at 19:40. Ask what changes in this row at 20:05 and at 20:20. (The same row gets the courier, then delivered. Not a new row.)" },
+  { title: "Not a table", art: "nottable",
+    body: "Three things that look like tables and are not.<br><b>A screen</b> is not data: the homepage <i>shows</i> rows from tables. <b>A fact</b> is a column of the thing it belongs to. <b>Same columns = same kind of thing</b>: admins and cooks are both staff, so one <span class=\"mono\">staff</span> table with a <span class=\"mono\">job</span> column.",
+    say: "Ask which of their own concept tables is really a screen. (Most teams have one.)" },
+  { title: "Check it: replay the story", art: "replay",
+    body: "Don't guess if your tables are good. <b>Replay the story</b>: go one step at a time and point at the row where it is written. If you can't point, a table or a column is missing.<br><br>Then: the practice. The story is always on the left. Every task starts with <b>Predict first</b>. Press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) when you are done.",
+    say: "The ✗ is real. Let them decide: does the owner need to know when the courier left? Either answer is fine if they can say why. That is designing." }
+];
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+function P(q){ return '<span class="predict">Predict first: ' + q + '</span> '; }
+function TB(name, cols, rows){ return { name: name, cols: cols.slice(), rows: rows.map(function(r){ return r.slice(); }) }; }
+function blank(n){ var r = []; for (var i = 0; i < n; i++) r.push(""); return r; }
+
+// Shared checks for a design made from scratch.
+function filledRows(t){ return t.rows.filter(function(r){ return r.some(function(c){ return norm(c); }); }); }
+function basics(ans){
+  var ts = ans.tables;
+  if (!ts.length) return "Add a table first: <b>+ table</b>.";
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], n = norm(t.name);
+    if (!n) return "One of your tables has no name. Name it after the kind of thing in it: customers, pizzas, …";
+    if (/kitchen|konyha/.test(n)) return "The app never needs to look up the kitchen: there is one, and it is always there. Delete that table.";
+    if (/home ?page|screen|oldal|kepernyo/.test(n)) return "<b>" + esc(t.name) + "</b> is a screen, not data. A screen shows rows from your tables. Delete it.";
+    if (!t.cols.length || t.cols.some(function(c){ return !norm(c); })) return "The table <b>" + esc(t.name) + "</b> has a column with no name. Every column holds one fact: name it after that fact.";
+    if (!filledRows(t).length) return "The table <b>" + esc(t.name) + "</b> has no row. Columns alone remember nothing: write one row from the story.";
+  }
+  return "";
+}
+function allRows(ans){
+  var out = [];
+  ans.tables.forEach(function(t, ti){ filledRows(t).forEach(function(r){ out.push({ t: ti, cells: r.map(norm), raw: r }); }); });
+  return out;
+}
+function has(row, fn){ return row.cells.some(fn); }
+function first(rows, fn){ for (var i = 0; i < rows.length; i++) if (fn(rows[i])) return rows[i]; return null; }
+
+var isBence = function(c){ return /bence/.test(c); };
+var isSonkas = function(c){ return /sonkas/.test(c); };
+var isZoli = function(c){ return /zoltan|zoli/.test(c); };
+var isCash = function(c){ return /cash|keszpenz/.test(c); };
+var is1940 = function(c){ return /19[:.]40/.test(c); };
+var isTwo = function(c){ return digits(c) === "2" && c.length <= 6; };
+var isBencePhone = function(c){ return /305551234$/.test(digits(c)); };
+var isAddr = function(c){ return /kossuth/.test(c); };
+var isPrice = function(c){ return digits(c) === "2990"; };
+var is32 = function(c){ return digits(c) === "32"; };
+var isZoliPhone = function(c){ return /204445566$/.test(digits(c)); };
+var isDelivered = function(c){ return /deliver|kiszallit|kezbesit|atadva/.test(c); };
+
+function szeletReplay(ans){
+  var b = basics(ans); if (b) return b;
+  var rows = allRows(ans);
+  var order = first(rows, function(r){ return has(r, isBence) && has(r, isSonkas) && has(r, isTwo) && has(r, is1940); });
+  if (!order) {
+    if (!first(rows, function(r){ return has(r, isBence) && has(r, isSonkas); }))
+      return "Replay step 1: Bence orders 2 Sonkás at 19:40. Point at the row that says so. You can't: something that happens needs a table of its own (slide 4).";
+    return "Replay step 1: there is a row with Bence and the Sonkás. Does it also say how many (2) and when (19:40)? Those are facts about this order.";
+  }
+  var cust = first(rows, function(r){ return r.t !== order.t && has(r, isBence) && has(r, isBencePhone) && has(r, isAddr); });
+  if (!cust) {
+    if (has(order, isBencePhone) || has(order, isAddr)) return "Replay step 2: Bence's phone and address are in the order's row. Tomorrow he orders again: do you type them in again? They are facts about Bence. He gets his own table.";
+    return "Replay step 2: where are Bence's phone number and address? Point at the row: his name, his phone and his address, together.";
+  }
+  if (!has(order, isCash)) return "Replay step 2: he pays cash. Which row says so? It belongs to this order: next time he may pay by card.";
+  var pizza = first(rows, function(r){ return r.t !== order.t && has(r, isSonkas) && has(r, isPrice) && has(r, is32); });
+  if (!pizza) {
+    if (has(order, isPrice)) return "The price of a Sonkás is in the order's row. It is a fact about the pizza: 2990 for everybody. Give the pizzas a table of their own, with the size and the price.";
+    return "Where are the size and the price of a Sonkás? Point at the row: Sonkás, 32, 2990. A pizza is a thing: it gets its own table.";
+  }
+  var cour = first(rows, function(r){ return r.t !== order.t && has(r, isZoli) && has(r, isZoliPhone); });
+  if (!cour) return "Replay step 4: Varga Zoltán, +36 20 444 5566. Where is he written down? A courier is a thing the app must remember too.";
+  if (!has(order, isZoli)) return "Replay step 4: Zoltán takes the order. Which cell of the order's row says who took it?";
+  if (!has(order, isDelivered)) return "Replay step 5: at 20:20 the order is delivered. Which cell of the order's row says so?";
+  return "";
+}
+
+var isLili = function(c){ return /lili/.test(c); };
+var isPeter = function(c){ return /peter/.test(c); };
+var is1500 = function(c){ return /15[:.]00/.test(c); };
+var is90 = function(c){ return digits(c) === "90" && c.length <= 8; };
+var isNote = function(c){ return /roundabout|korforgalom/.test(c); };
+var isCar = function(c){ return /abc123/.test(c.replace(/[^a-z0-9]/g, "")); };
+var isSuzuki = function(c){ return /suzuki|swift/.test(c); };
+var isWhite = function(c){ return /white|feher/.test(c); };
+var isSeventh = function(c){ return /^(7|7th|7\.|seventh|hetedik)$/.test(c) || /7th|hetedik/.test(c); };
+
+function drivingReplay(ans){
+  var all = [];
+  ans.tables.forEach(function(t){ t.rows.forEach(function(r){ r.forEach(function(c){ all.push(norm(c)); }); }); });
+  if (all.some(isSeventh)) return "Don't store \"7th\". Next week it is the 8th, and somebody has to remember to change it. Count Lili's rows in the lessons table instead.";
+  var b = basics(ans); if (b) return b;
+  var rows = allRows(ans);
+  var les = first(rows, function(r){ return has(r, isLili) && has(r, isPeter); });
+  if (!les) return "Replay: Lili has a lesson with Péter on Tuesday at 15:00. Point at the row that says so. A lesson is something that happens: it gets a table of its own.";
+  if (!has(les, is1500)) return "Replay: the lesson's row says who. Does it say when (15:00)?";
+  if (!has(les, is90)) return "Replay: they drive 90 minutes. Which cell of the lesson's row says so?";
+  if (!has(les, isCar) && !has(les, isSuzuki)) return "Replay: which car did they drive? The lesson's row should say.";
+  if (!has(les, isNote)) return "Replay: Péter's note, \"roundabouts still scary\". Is it about Lili forever, or about this lesson? Put it where it belongs.";
+  if (!first(rows, function(r){ return r.t !== les.t && has(r, isCar) && has(r, isSuzuki) && has(r, isWhite); })) return "The car has facts of its own: plate, model, colour. It is a thing: give it a table, with ABC-123, Suzuki Swift and white in one row.";
+  if (!first(rows, function(r){ return r.t !== les.t && has(r, isLili); })) return "Lili is a thing the school must remember, lesson after lesson. Give the students a table.";
+  if (!first(rows, function(r){ return r.t !== les.t && has(r, isPeter); })) return "Péter is a thing the school must remember too. Give the instructors a table (or one people table with a role column).";
+  return "";
+}
+
+var MENU = [["margherita", "Margherita", 2490], ["sonkas", "Sonkás", 2990], ["negy sajtos", "Négy sajtos", 3290]];
+var PICK = [
+  ["Tóth Bence", 1, "Who orders? A person the app must remember gets a table."],
+  ["his phone number", 0, "The phone number is a fact about Bence: a column in his table, not a table."],
+  ["Sonkás", 1, "What does he order? The app must remember every pizza, with its size and price."],
+  ["Friday 19:40", 0, "Friday 19:40 is when this order happened: a column of the order."],
+  ["the order", 1, "Bence and the Sonkás were there yesterday too. What is new at 19:40? Something that happens is a table too (slide 4)."],
+  ["Kossuth Lajos u. 12.", 0, "The address is a fact about Bence: a column in his table."],
+  ["cash", 0, "Cash is how this order is paid: a column of the order."],
+  ["the kitchen", 0, "There is one kitchen, and the app never looks it up. Nothing to remember."],
+  ["Varga Zoltán", 1, "Who takes the order at 20:05? The app must remember the couriers too."],
+  ["delivered", 0, "Delivered is where the order is now: a column of the order."],
+  ["32 cm", 0, "32 cm is a fact about a pizza: a column in the pizzas table."]
+];
+var MATE = [
+  TB("admins", ["name", "email", "password"], [["Kiss Réka", "reka@szelet.hu", "••••••"]]),
+  TB("cooks", ["name", "email", "password"], [["Papp Ádám", "adam@szelet.hu", "••••••"]]),
+  TB("couriers", ["name", "email", "password"], [["Varga Zoltán", "zoli@szelet.hu", "••••••"]]),
+  TB("customers", ["name", "email", "password", "address"], [["Tóth Bence", "bence@mail.hu", "••••••", "Kossuth Lajos u. 12."]]),
+  TB("homepage", ["title", "banner_image"], [["Szelet Pizza", "banner.jpg"]])
+];
+var OPTS = [
+  ["Bence's order has nowhere to go: there is no table for orders and none for pizzas.", 1],
+  ["admins, cooks and couriers have the same columns: they should be one staff table with a job column.", 1],
+  ["homepage is a screen, not data.", 1],
+  ["The email should be a table of its own.", 0, "An email is a fact about a person: a column. Replay step 1 instead: where does Bence's order go?"],
+  ["customers should not have an address column.", 0, "The courier needs the address, and it is a fact about the customer. It is in the right place."],
+  ["Every table needs more example rows.", 0, "One example row each is enough for a design. The problem is what is missing, not how many rows."],
+  ["Passwords can't be stored in a table.", 0, "Passwords are stored, scrambled, in the people's table. That is not today's problem."]
+];
+var SZELET_SOLUTION = { tables: [
+  TB("customers", ["name", "phone", "address"], [["Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12."]]),
+  TB("pizzas", ["name", "size", "price"], [["Sonkás", "32", "2990"]]),
+  TB("couriers", ["name", "phone"], [["Varga Zoltán", "+36 20 444 5566"]]),
+  TB("orders", ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"], [["Tóth Bence", "Sonkás", "2", "2026-11-27 19:40", "cash", "Varga Zoltán", "delivered"]])
+] };
+var ORDER_COLS = ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"];
+var HOMEWORK = "<br><b>Homework:</b> the same for your own project. Every table, its columns, one row from your scenario, then replay it. That is section 6 of concept v2, due <b>Monday 30 November</b>.";
+
+var LESSONS = [
+  { title: "The menu as a table", kind: "grid", lockNames: true, lockCols: true,
+    do: P("Szelet gets 300 orders a week. How many rows will <code>pizzas</code> have?") + "Fill in the <code>pizzas</code> table from the menu: one row per pizza.",
+    sub: "The menu is on the left, under the story. <b>+ row</b> adds a row. Then press <b>Check</b>.",
+    start: function(){ return { tables: [TB("pizzas", ["name", "size", "price"], [blank(3)])] }; },
+    solution: { tables: [TB("pizzas", ["name", "size", "price"], [["Margherita", "32", "2490"], ["Sonkás", "32", "2990"], ["Négy sajtos", "32", "3290"]])] },
+    hints: ["One row is one pizza on the menu. How many pizzas are on the menu?", "Each row: the name, the size and the price of one pizza, like <b>Margherita · 32 · 2490</b>.", "A size or a price is a number: <b>32</b>, not \"32 cm\"; <b>2490</b>, not \"2 490 Ft\". Ft goes on the screen, not in the table."],
+    check: function(ans){
+      var rows = filledRows(ans.tables[0]), seen = {};
+      if (!rows.length) return "The table is empty. Write the first pizza of the menu into the first row.";
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i], n = norm(r[0]), m = null;
+        MENU.forEach(function(x){ if (n === x[0] || n.indexOf(x[0]) >= 0) m = x; });
+        if (!m) return "<b>" + esc(r[0] || "(empty)") + "</b> is not on the menu. The name column holds the name of one pizza from the menu.";
+        if (seen[m[0]]) return "<b>" + m[1] + "</b> is in the table twice. One row per pizza.";
+        seen[m[0]] = true;
+        var size = String(r[1]).trim(), price = String(r[2]).trim();
+        if (!/^\d+$/.test(size)) return "The size of the " + m[1] + ": a size is a number. Write <b>32</b>, not \"" + esc(size) + "\". The cm goes on the screen, not in the table.";
+        if (size !== "32") return "Check the size of the " + m[1] + " on the menu.";
+        if (!/^\d+$/.test(price)) return "The price of the " + m[1] + " is a number: <b>" + m[2] + "</b>, not \"" + esc(price) + "\". Ft goes on the screen; the table holds the number.";
+        if (Number(price) !== m[2]) return "Check the price of the " + m[1] + " on the menu.";
+      }
+      for (var j = 0; j < MENU.length; j++) if (!seen[MENU[j][0]]) return "<b>" + MENU[j][1] + "</b> is on the menu, but not in the table.";
+      return "";
+    },
+    after: "3 rows: one per pizza on the menu. The 300 orders don't go here, because an order is not a pizza. Orders get a table of their own (task 3)." },
+
+  { title: "Which ones get a table?", kind: "pick",
+    do: P("how many tables does Szelet need?") + "Click the things in the story that need a table of their own. The rest are columns, or nothing.",
+    sub: "A thing: the app must remember it, and it has facts of its own. Slides 3 and 4.",
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [0, 2, 4, 8] },
+    hints: ["Read the story again: who is in it, and what does he get? People and pizzas the app must remember are things.", "Is there something at 19:40 that wasn't there yesterday? Something that happens is a table too (slide 4).", "Four tables. A phone number, a time or a status is a fact about one of the four: a column."],
+    check: function(ans){
+      var sel = ans.sel;
+      if (!sel.length) return "Nothing is picked yet. Click the words that get a table.";
+      for (var i = 0; i < sel.length; i++) if (!PICK[sel[i]][1]) return "<b>" + esc(PICK[sel[i]][0]) + "</b>: " + PICK[sel[i]][2];
+      var order = [4, 0, 2, 8];
+      for (var j = 0; j < order.length; j++) if (sel.indexOf(order[j]) < 0) return (sel.length === 3 ? "Three of four. " : "") + PICK[order[j]][2];
+      return "";
+    },
+    after: "4 tables: <b>customers</b> (Tóth Bence), <b>pizzas</b> (Sonkás), <b>couriers</b> (Varga Zoltán) and <b>orders</b> (the order). The rest are columns: phone and address go with Bence, 32 cm with the pizza, Friday 19:40, cash and delivered with the order. The kitchen is nothing: the app never looks it up." },
+
+  { title: "Bence's order, at 19:40", kind: "grid", lockNames: true, lockCols: true, lockRows: true,
+    do: P("at 19:40, which cells of this row are still empty?") + "Fill in Bence's row in <code>orders</code> as it looks at 19:40, the moment he orders.",
+    sub: "Only what is true at 19:40: steps 1 and 2 of the story.",
+    start: function(){ return { tables: [TB("orders", ORDER_COLS, [blank(7)])] }; },
+    solution: { tables: [TB("orders", ORDER_COLS, [["Tóth Bence", "Sonkás", "2", "2026-11-27 19:40", "cash", "", "new"]])] },
+    hints: ["At 19:40 Bence has just pressed Order. Has a courier taken it yet? Then that cell stays empty.", "status says where the order is now. Just placed: <b>new</b>.", "Who: Tóth Bence. What: Sonkás. How many: 2. When: 19:40. Paid with: cash."],
+    check: function(ans){
+      var r = ans.tables[0].rows[0].map(norm), raw = ans.tables[0].rows[0];
+      if (!r.some(Boolean)) return "The row is empty. Start with who orders.";
+      if (!isBence(r[0])) return "customer: who orders? It's in step 1 of the story.";
+      if (!isSonkas(r[1])) return "pizza: which pizza does he order?";
+      if (!/^\d+$/.test(String(raw[2]).trim())) return "quantity is a number: how many pizzas? Write only the number.";
+      if (r[2] !== "2") return "quantity: how many pizzas does he order?";
+      if (!is1940(r[3])) return "ordered_at: when does he order? The story says the time.";
+      if (!isCash(r[4])) return "paid_with: how will he pay? Step 2.";
+      if (r[5]) return isZoli(r[5]) ? "At 19:40 nobody has taken the order yet. Zoltán takes it at <b>20:05</b>. At 19:40 the courier cell is empty." : "courier: has anybody taken the order at 19:40? Then the cell stays empty.";
+      if (!r[6]) return "status: where is the order at 19:40? It has just been placed.";
+      if (isDelivered(r[6]) || /way|uton|taken|elvitte/.test(r[6])) return "status at 19:40: is it on its way already? It has only just been placed.";
+      return "";
+    },
+    after: "The courier was empty: at 19:40 nobody has taken the order. At 20:05 that cell gets <b>Varga Zoltán</b>, and at 20:20 status becomes <b>delivered</b>. It is the same row the whole time, not a new one." },
+
+  { title: "All of Szelet", kind: "grid", alsoDone: [0, 1, 2], boss: true,
+    do: P("which step of the story will be the hardest to point at?") + "Make every table Szelet needs: a name, its columns, and one row from the story, up to 20:20.",
+    sub: "<b>Confident? Start here.</b> Check replays the story and looks for each fact in your rows. Any table and column names are fine. If this passes first, tasks 1 to 3 are done too.",
+    start: function(){ return { tables: [TB("", ["", ""], [blank(2)])] }; },
+    solution: SZELET_SOLUTION,
+    hints: ["Four kinds of things: the customer, the pizza, the courier, and what happens. One table each.", "The order's row says who, which pizza, how many, when, paid with what, which courier, and the status at 20:20.", "Facts about Bence (phone, address) go in his own table, not in the order. The price goes with the pizza."],
+    check: szeletReplay,
+    after: "Every step of the story points at a row: that is a design. The order's row writes out <b>Tóth Bence</b> and <b>Sonkás</b> by name. Next lesson shows what goes wrong with that, and how ids fix it." },
+
+  { title: "A teammate's design", kind: "choose", detective: true,
+    do: "Your teammate made Szelet's tables. They look neat. Replay the story on them and tick the <b>three</b> real problems.",
+    sub: "Each table has an example row. Nothing looks wrong until you replay the story.",
+    show: MATE,
+    start: function(){ return { sel: [] }; },
+    solution: { sel: [0, 1, 2] },
+    hints: ["Step 1: Bence orders 2 Sonkás at 19:40. Which of these tables could hold that row? And where is the price of a Sonkás?", "Look at the columns of admins, cooks and couriers. What is different between them?", "Is a homepage something the app remembers, or something it shows?"],
+    check: function(ans){
+      var sel = ans.sel;
+      if (!sel.length) return "Nothing is ticked yet. Replay step 1 on these tables first.";
+      for (var i = 0; i < sel.length; i++) if (!OPTS[sel[i]][1]) return OPTS[sel[i]][2];
+      if (sel.length < 3) return sel.length + " of 3 found. " + (sel.indexOf(0) < 0 ? "Replay step 1: where does Bence's order go?" : sel.indexOf(1) < 0 ? "Compare the columns of the people tables." : "Is every table here data?");
+      return "";
+    },
+    after: "None of it looked wrong until you replayed the story. The app knew who exists, not what they did." + HOMEWORK },
+
+  { title: "Extra A: next year", kind: "grid", lockNames: true, lockRows: true, extra: true,
+    do: "Two columns in <code>customers</code> will be wrong in a year, and nobody will notice. Fix the table: delete what goes out of date, and keep what lets you work it out.",
+    sub: "No hints. Ask: which values change on their own, without anybody typing anything? <b>✕</b> deletes a column, <b>+ column</b> adds one.",
+    start: function(){ return { tables: [TB("customers", ["name", "phone", "address", "age", "orders_count"], [["Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12.", "17", "12"]])] }; },
+    solution: { tables: [TB("customers", ["name", "phone", "address", "birth_date"], [["Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12.", "2009-03-14"]])] },
+    hints: [],
+    check: function(ans){
+      var t = ans.tables[0], cols = t.cols.map(norm);
+      if (cols.some(function(c){ return c === "age" || /^kor$|eletkor/.test(c); })) return "Bence is 17 today. On his birthday, who changes the age? Nobody does, so it goes wrong. Keep the date he was born instead: the age can be worked out from it.";
+      if (cols.some(function(c){ return /count|orders|rendeles/.test(c); })) return "orders_count is wrong after his next order, unless somebody remembers to change it. You can count his rows in orders instead: delete the column.";
+      if (!cols.some(function(c){ return /name|nev/.test(c); }) || !cols.some(function(c){ return /phone|telefon/.test(c); }) || !cols.some(function(c){ return /address|cim/.test(c); })) return "Keep name, phone and address. They don't go out of date on their own.";
+      var bi = -1; cols.forEach(function(c, i){ if (/birth|born|szulet|dob/.test(c)) bi = i; });
+      if (bi < 0) return "Without the age, how do you know he is 17? Add a column for the date he was born.";
+      if (!norm(t.rows[0][bi])) return "Write a date of birth in Bence's row: any date that makes him 17.";
+      if (cols.some(function(c){ return !c; })) return "One column has no name. Name it, or delete it.";
+      return "";
+    },
+    after: "If you can work it out from what is already stored, don't store it. The age comes from birth_date; the number of orders comes from counting his rows in orders." },
+
+  { title: "Extra B: a new story", kind: "grid", extra: true, last: true, story: DRIVING,
+    do: "A new place, a new story: it is on the left. Make the tables, one row each, then <b>Check</b>.",
+    sub: "No hints. The same rules: a thing gets a table, a fact is a column, and what happens is a table too.",
+    start: function(){ return { tables: [TB("", ["", ""], [blank(2)])] }; },
+    solution: { tables: [
+      TB("students", ["name"], [["Kovács Lili"]]),
+      TB("instructors", ["name"], [["Nagy Péter"]]),
+      TB("cars", ["plate", "model", "colour"], [["ABC-123", "Suzuki Swift", "white"]]),
+      TB("lessons", ["student", "instructor", "car", "starts_at", "minutes", "note"], [["Kovács Lili", "Nagy Péter", "ABC-123", "Tuesday 15:00", "90", "roundabouts still scary"]])
+    ] },
+    hints: [],
+    check: drivingReplay,
+    after: "\"7th\" is not stored: you count Lili's rows in lessons. The note belongs to this lesson, not to Lili. That is the whole lesson. Next time: ids." }
+];
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "db-tables-from-a-story-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, work: {}, msg: {}, checked: {} }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var UI = { note: "", prepView: "solution" };
+var primerIdx = 0, showSay = PREP;
+function L(){ return LESSONS[S.i]; }
+function W(){ if (!S.work[S.i]) S.work[S.i] = L().start(); return S.work[S.i]; }
+
+/* ====================================================================
+   The work area
+   ==================================================================== */
+
+function roTable(t){
+  var h = '<div class="tcard"><div class="thead"><span class="tname">' + esc(t.name) + '</span></div><table class="g"><tr>';
+  t.cols.forEach(function(c){ h += '<th><span class="cn">' + esc(c) + '</span></th>'; });
+  h += '</tr>';
+  t.rows.forEach(function(r){ h += '<tr>' + r.map(function(v){ return v === "" ? '<td class="ro empty"></td>' : '<td class="ro">' + esc(v) + '</td>'; }).join("") + '</tr>'; });
+  return h + '</table></div>';
+}
+function roTables(ts){ return '<div class="ro-tables">' + ts.map(roTable).join("") + '</div>'; }
+
+// Inputs grow with what is typed, so long values stay readable.
+function wch(v, min){ return ' style="width:' + Math.max(min, String(v).length + 2) + 'ch"'; }
+function gridHtml(ans, les){
+  var h = '<div class="designer">';
+  ans.tables.forEach(function(t, ti){
+    h += '<div class="tcard"><div class="thead">';
+    h += les.lockNames ? '<span class="tname">' + esc(t.name) + '</span>' : '<input class="tname-in" data-k="name" data-t="' + ti + '" value="' + esc(t.name) + '" placeholder="table name" aria-label="Table name">';
+    if (!les.lockNames) h += '<button class="x" data-act="deltable" data-t="' + ti + '" title="Delete this table">✕ table</button>';
+    h += '</div><table class="g"><tr>';
+    t.cols.forEach(function(c, ci){
+      h += les.lockCols ? '<th><span class="cn">' + esc(c) + '</span></th>' :
+        '<th><div class="colx"><input data-k="col" data-t="' + ti + '" data-c="' + ci + '" value="' + esc(c) + '"' + wch(c, 10) + ' placeholder="column" aria-label="Column name"><button class="x" data-act="delcol" data-t="' + ti + '" data-c="' + ci + '" title="Delete this column">✕</button></div></th>';
+    });
+    if (!les.lockCols) h += '<th class="side"><button class="add" style="margin:0" data-act="addcol" data-t="' + ti + '">+ column</button></th>';
+    h += '</tr>';
+    t.rows.forEach(function(r, ri){
+      h += '<tr>';
+      r.forEach(function(v, ci){ h += '<td><input data-k="cell" data-t="' + ti + '" data-r="' + ri + '" data-c="' + ci + '" value="' + esc(v) + '"' + wch(v, 12) + ' aria-label="' + esc((t.cols[ci] || "cell") + ", row " + (ri + 1)) + '"></td>'; });
+      if (!les.lockRows && t.rows.length > 1) h += '<td class="side"><button class="x" data-act="delrow" data-t="' + ti + '" data-r="' + ri + '" title="Delete this row">✕</button></td>';
+      h += '</tr>';
+    });
+    h += '</table>';
+    if (!les.lockRows) h += '<button class="add" data-act="addrow" data-t="' + ti + '">+ row</button>';
+    h += '</div>';
+  });
+  if (!les.lockNames) h += '<button class="add big" data-act="addtable">+ table</button>';
+  return h + '</div>';
+}
+
+function solutionHtml(les){
+  var h = '<div class="solbox"><h4>Solution: type it in yourself (paste is off)</h4>';
+  if (les.kind === "grid") h += roTables(les.solution.tables);
+  else if (les.kind === "pick") h += '<p>The words that get a table: ' + les.solution.sel.map(function(i){ return "<b>" + esc(PICK[i][0]) + "</b>"; }).join(", ") + '.</p>';
+  else h += '<p>The three problems:</p><ul>' + les.solution.sel.map(function(i){ return "<li>" + esc(OPTS[i][0]) + "</li>"; }).join("") + '</ul>';
+  return h + '</div>';
+}
+
+function renderWork(){
+  var les = L(), ans = W(), h = "";
+  if (S.sol[S.i] && !S.done[S.i]) h += solutionHtml(les);
+  if (les.kind === "grid") h += gridHtml(ans, les);
+  else if (les.kind === "pick") {
+    h += '<h4>Which ones get a table of their own?</h4><div class="chips">' + PICK.map(function(p, i){ return '<button class="chip' + (ans.sel.indexOf(i) >= 0 ? " on" : "") + '" data-act="pick" data-i="' + i + '" aria-pressed="' + (ans.sel.indexOf(i) >= 0) + '">' + esc(p[0]) + '</button>'; }).join("") + '</div>';
+  } else {
+    h += '<h4>Your teammate\'s tables</h4>' + roTables(les.show);
+    h += '<h4 style="margin-top:18px">Tick the three real problems</h4><div class="opts">' + OPTS.map(function(o, i){ var on = ans.sel.indexOf(i) >= 0; return '<label class="opt' + (on ? " on" : "") + '"><input type="checkbox" data-act="opt" data-i="' + i + '"' + (on ? " checked" : "") + '><span>' + esc(o[0]) + '</span></label>'; }).join("") + '</div>';
+  }
+  $("ws").innerHTML = h;
+}
+
+$("ws").addEventListener("input", function(e){
+  var el = e.target, k = el.dataset.k; if (!k) return;
+  var t = W().tables[Number(el.dataset.t)];
+  if (k === "name") t.name = el.value;
+  else if (k === "col") t.cols[Number(el.dataset.c)] = el.value;
+  else if (k === "cell") t.rows[Number(el.dataset.r)][Number(el.dataset.c)] = el.value;
+  if (k !== "name") el.style.width = Math.max(k === "col" ? 10 : 12, el.value.length + 2) + "ch";
+  save();
+});
+$("ws").addEventListener("change", function(e){
+  var el = e.target;
+  if (el.dataset.act === "opt") { toggleSel(Number(el.dataset.i)); }
+});
+$("ws").addEventListener("click", function(e){
+  var b = e.target.closest("[data-act]"); if (!b || b.dataset.act === "opt") return;
+  var a = b.dataset.act, ans = W(), t = ans.tables ? ans.tables[Number(b.dataset.t)] : null;
+  if (a === "pick") { toggleSel(Number(b.dataset.i)); return; }
+  if (a === "addtable") ans.tables.push(TB("", ["", ""], [blank(2)]));
+  else if (a === "deltable") ans.tables.splice(Number(b.dataset.t), 1);
+  else if (a === "addcol") { t.cols.push(""); t.rows.forEach(function(r){ r.push(""); }); }
+  else if (a === "delcol") { var c = Number(b.dataset.c); if (t.cols.length > 1) { t.cols.splice(c, 1); t.rows.forEach(function(r){ r.splice(c, 1); }); } }
+  else if (a === "addrow") t.rows.push(blank(t.cols.length));
+  else if (a === "delrow") { if (t.rows.length > 1) t.rows.splice(Number(b.dataset.r), 1); }
+  save(); renderWork();
+  if (a === "addtable") { var ins = $("ws").querySelectorAll(".tname-in"); if (ins.length) ins[ins.length - 1].focus(); }
+});
+function toggleSel(i){ var s = W().sel, k = s.indexOf(i); if (k >= 0) s.splice(k, 1); else s.push(i); s.sort(function(a, b){ return a - b; }); save(); renderWork(); }
+// While the solution is open, they type it: no pasting.
+$("ws").addEventListener("paste", function(e){
+  if (S.sol[S.i] && !S.done[S.i]) { e.preventDefault(); UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); }
+});
+
+/* ====================================================================
+   Checking
+   ==================================================================== */
+
+function checkNow(){
+  var idx = S.i, les = LESSONS[idx], ans = W(), msg = les.check(ans), key = JSON.stringify(ans);
+  S.checked[idx] = true; S.msg[idx] = msg; UI.note = "";
+  if (!msg) {
+    if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+    S.sol[idx] = false;
+    (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+  } else if (S.lastTried[idx] !== key && key !== JSON.stringify(les.start())) {
+    S.lastTried[idx] = key; S.tries[idx] = (S.tries[idx] || 0) + 1;
+  }
+  save(); renderAll();
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints.length;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function renderStrip(){
+  var les = L(), done = !!S.done[S.i], msg = S.msg[S.i], r = "";
+  $("t-kicker").textContent = "Lesson D1 · Task " + (S.i + 1) + " of " + N + (les.boss ? " · Confident? Start here" : les.detective ? " · Detective" : les.extra ? " · Extra" : "") + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? "The solution is above your work. Type it in, then <b>Check</b>." : les.sub;
+  if (!S.checked[S.i] && !done) r = '<span class="dim">Fill it in, then press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</span>';
+  else if (S.checked[S.i] && msg) r = '<span class="no">✗ Not yet.</span> ' + msg;
+  else if (done) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    return renderStripNote();
+  }
+  act.appendChild(button("Check", "btn primary", checkNow));
+  if (done && !msg) { if (S.i < N - 1) act.appendChild(button("Next task →", "btn", function(){ gotoTask(S.i + 1); })); }
+  else if (!S.sol[S.i]) act.appendChild(button(hs.solutionNext ? "Show solution" : (hs.len ? "Stuck? Hint" : "Stuck?"), "btn", stuck));
+  renderStripNote();
+}
+function renderStripNote(){ var n = $("t-note"); n.classList.toggle("hidden", !UI.note); n.textContent = UI.note; }
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: change something and press Check. Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+// ?prep only: flip between the task's start and its solution.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  S.work[S.i] = UI.prepView === "task" ? L().start() : clone(L().solution);
+  checkNow();
+}
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); UI.note = "";
+  if (PREP) { UI.prepView = "solution"; S.work[S.i] = clone(L().solution); checkNow(); return; }
+  save(); renderAll();
+}
+function renderAll(){
+  renderDots(); renderStrip();
+  $("story").innerHTML = L().story || SZELET;
+  renderWork();
+}
+$("l-again").onclick = function(){
+  if (!confirm("Start this task again? What you wrote in this task is lost.")) return;
+  S.work[S.i] = L().start(); S.checked[S.i] = false; S.msg[S.i] = ""; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your work and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); checkNow(); }
+});
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var Pr = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + LESSON + ' · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(Pr.title) + '</h2>' +
+    '<div class="art">' + ART[Pr.art]() + '</div>' +
+    '<p>' + Pr.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(Pr.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook: lets an automated check run an answer against a task without the UI.
+window.__D1 = { LESSONS: LESSONS, PRIMER: PRIMER, ART: ART, PREP: PREP, gotoTask: gotoTask, state: function(){ return S; },
+  check: function(i, ans){ return LESSONS[i].check(ans); }, start: function(i){ return LESSONS[i].start(); }, solution: function(i){ return clone(LESSONS[i].solution); } };
+
+document.title = LESSON;
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
