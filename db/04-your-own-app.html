@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson D4 · Your own app</title>
+<style>
+:root{
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button,input,textarea{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #c9ced6;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap}
+
+/* ===== practice: the story beside the work ===== */
+.work{flex:1;display:grid;grid-template-columns:minmax(280px,34fr) 66fr;min-height:0}
+.storyp{background:#fffdf5;border-right:1px solid #e8dfc0;overflow:auto;padding:16px 18px}
+.storyp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#8a6d1f}
+.storyp h3+p,.storyp h3+ol{margin-top:4px}
+.storyp * + h3{margin-top:16px}
+.storyp p{margin:6px 0;font-size:15px;line-height:1.55}
+.storyp ol{margin:6px 0;padding-left:22px;font-size:15px;line-height:1.55}
+.storyp li{margin:4px 0}
+.storyp .app{font-weight:700}
+.storyp .vague{color:var(--bad)}
+.storyp .dim{color:var(--muted)}
+.storyp a{color:var(--accent)}
+.ws{overflow:auto;padding:16px 18px 60px;background:#fff}
+
+/* your story */
+.steprow{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start;margin-bottom:8px;max-width:760px}
+.stepn{font-weight:700;padding-top:7px;text-align:right;color:var(--muted)}
+textarea.step,input.appname,textarea.swap{width:100%;border:1px solid #d6d9de;border-radius:8px;padding:6px 10px;font-size:15px;line-height:1.45;background:#fffdf0;resize:vertical;outline:none}
+textarea.step:focus,input.appname:focus,textarea.swap:focus{box-shadow:inset 0 0 0 2px #f2b04a;background:#fffbe6}
+.appline{max-width:760px;margin-bottom:14px}
+.appline label{display:block;font-weight:700;margin-bottom:4px}
+.opt-tag{font-weight:400;color:var(--muted);font-size:13px}
+
+/* tables they fill in */
+.designer{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tcard{border:1px solid #c7d2fe;border-radius:10px;background:#fff;padding:8px 10px 10px;max-width:100%;overflow-x:auto}
+.tcard .thead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tname{font:700 15px ui-monospace,Consolas,monospace;color:var(--ink)}
+input.tname-in{font:700 15px ui-monospace,Consolas,monospace;border:1px dashed #9aa5b8;border-radius:6px;padding:3px 6px;width:170px}
+table.g{border-collapse:collapse}
+table.g th{background:#eef3fc;border:1px solid #c7d2fe;padding:0;text-align:left;font:600 13px ui-monospace,Consolas,monospace;vertical-align:top}
+table.g th .cn{display:block;padding:5px 8px}
+table.g td{border:1px solid #d6d9de;padding:0}
+table.g td.ro{padding:5px 8px;font-size:14px}
+table.g input{border:0;padding:5px 8px;width:12ch;max-width:320px;background:transparent;font-size:14px;outline:none}
+table.g th input{font:600 13px ui-monospace,Consolas,monospace}
+table.g input:focus{background:#fffbe6;box-shadow:inset 0 0 0 2px #f2b04a}
+table.g td input{background:#fffdf0}
+table.g td.empty{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#f3f4f6 4px,#f3f4f6 8px);min-width:60px}
+table.g td.side,table.g th.side{border:0;background:none;padding:0 0 0 4px;vertical-align:middle}
+.x{border:0;background:none;color:#9aa0a6;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
+.x:hover{color:var(--bad);background:#fff0f0}
+.add{border:1px dashed #9aa5b8;background:#fff;color:#475569;border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer;margin-top:6px}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+.add.big{padding:8px 14px;font-size:14px;align-self:center}
+.colx{display:flex;align-items:center}
+
+/* tick lists */
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:6px;max-width:760px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid #d6d9de;border-radius:10px;padding:9px 12px;cursor:pointer;font-size:15px;background:#fff}
+.opt:hover{border-color:var(--accent)}
+.opt.on{border-color:var(--accent);background:#eef3fc}
+.opt input{margin-top:4px}
+.opt code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.9em}
+.ws h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ws .honest{margin:0 0 10px;max-width:760px;font-size:14px;color:var(--warn)}
+.ws .dimp{color:var(--muted);font-size:14px}
+.swapbox{border:1px dashed #c9ced6;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#fbfcfd}
+.swapbox label.lbl{font-weight:700}
+.ro-tables{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.solbox{border:2px solid #f2b04a;background:#fffaf0;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.solbox h4{color:var(--warn)}
+.solbox p{margin:0 0 8px;font-size:14px}
+
+/* the live checklist */
+.rules{border:1px solid var(--line);border-radius:10px;background:#fbfcfd;padding:8px 12px 10px;margin-bottom:14px}
+.rules ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:3px 18px}
+.rules li{color:var(--muted);font-size:14px}
+.rules li::before{content:"○ ";font-weight:700}
+.rules li.ok{color:var(--ok)}
+.rules li.ok::before{content:"✓ "}
+.rules code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.9em;color:var(--ink)}
+
+/* pointers: _id columns, and following them */
+.follow{position:sticky;top:-16px;z-index:3;background:#fff;margin:-16px -18px 12px;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px;min-height:20px}
+.follow .dim{color:var(--muted)}
+.follow .lead{color:var(--accent);font-weight:700}
+.follow .broken{color:var(--bad);font-weight:700}
+.follow code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.92em}
+table.g th.ptr{background:#fde68a;border-color:#f59e0b}
+table.g td.ptr,table.g td.ptr input{background:#fef3c7}
+table.g td.ptr{cursor:pointer}
+table.g td.ptr.ro{font-weight:700}
+table.g tr.hit td,table.g tr.hit td input{background:#dbeafe}
+table.g td.from{box-shadow:inset 0 0 0 2px #f59e0b}
+table.g td.broken,table.g td.broken input{background:#fde2e1;color:var(--bad);font-weight:700}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work{grid-template-columns:1fr;display:block;overflow:auto}
+  .storyp{border-right:0;border-bottom:1px solid #e8dfc0}
+  #practice{height:auto;min-height:100%}
+  html,body{height:auto}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+  <div class="work">
+    <div class="storyp" id="story"></div>
+    <div class="ws" id="ws"></div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+// ?prep: the teacher flips through the tasks with a sample filled in. Nothing is saved.
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+var LESSON = "Lesson D4 · Your own app";
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+// For comparing what they typed: no accents, lower case, single spaces.
+function norm(s){ return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+function digits(s){ return String(s == null ? "" : s).replace(/\D/g, ""); }
+function alnum(s){ return norm(s).replace(/[^a-z0-9]/g, ""); }
+
+/* ====================================================================
+   The left panel: how to write a story, and the given stories
+   ==================================================================== */
+
+var HOWTO =
+  '<h3>How to write it</h3>' +
+  '<p>Pick <b>one real use</b> of your app: one person, one day, from the first tap to the end. Write it as 5 to 8 steps.</p>' +
+  '<p>Each step is one line with facts in it: <b>who</b> (a name), <b>what</b>, <b>when</b> (a day, a time), <b>how many</b>, <b>how much</b>.</p>' +
+  '<h3>An example: Szelet, a pizza place</h3>' +
+  '<ol>' +
+  '<li>Friday 27 November, 19:40. Tóth Bence orders on his phone: 2 Sonkás pizzas, 2 990 Ft each.</li>' +
+  '<li>He gives his phone number, +36 30 555 1234, and pays cash at the door.</li>' +
+  '<li>20:05. The courier, Varga Zoltán, takes order 88.</li>' +
+  '<li>20:20. Bence gets his pizzas. Order 88 is marked delivered.</li>' +
+  '<li>Saturday 28 November, 18:30. Molnár Dóra orders 1 Margherita and 1 Négy sajtos.</li>' +
+  '</ol>' +
+  '<p class="vague">Too vague: <i>"The user orders food."</i> Who? What? When? How many?</p>';
+
+var GYM =
+  '<h3>A gym app</h3>' +
+  '<p>A small gym wants an app where members log their workouts.</p>' +
+  '<ol>' +
+  '<li>Kovács Lili joins the gym\'s app with her email, lili.k@mail.hu.</li>' +
+  '<li>Monday 7 December, 17:30. Lili starts a workout.</li>' +
+  '<li>First exercise: Squat, 4 sets of 10 reps.</li>' +
+  '<li>Then Push-up, 3 sets of 12 reps.</li>' +
+  '<li>Then Lunge, 3 sets of 8 reps.</li>' +
+  '<li>Wednesday 9 December, 18:00. Lili works out again: Squat, 5 sets of 5 reps.</li>' +
+  '</ol>' +
+  '<h3>The exercises</h3><p>Squat (legs) · Push-up (chest) · Lunge (legs)</p>';
+
+var CLUB =
+  '<h3>A club event app</h3>' +
+  '<p>A photo club wants an app for its events and sign-ups.</p>' +
+  '<ol>' +
+  '<li>Szabó Márk joins the club\'s app. His email is mark.szabo@mail.hu.</li>' +
+  '<li>Nagy Emma joins too: emma.nagy@mail.hu.</li>' +
+  '<li>The club posts an event: Night photo walk, Friday 11 December, 18:00. It costs 1 500 Ft.</li>' +
+  '<li>Márk signs up for the walk and pays.</li>' +
+  '<li>Emma signs up too. She will pay later.</li>' +
+  '<li>The club posts a second event: Portrait workshop, Saturday 19 December, 10:00, 2 000 Ft. Márk signs up. He has not paid yet.</li>' +
+  '</ol>';
+
+var DRAWDB_HOW =
+  '<h3>drawDB in five steps</h3>' +
+  '<ol>' +
+  '<li>Open <a href="https://drawdb.vercel.app/" target="_blank" rel="noopener">drawdb.vercel.app</a> and start a new diagram. No login.</li>' +
+  '<li>Add one table for each of yours, with the same name.</li>' +
+  '<li>Give it the same columns (drawDB calls them fields).</li>' +
+  '<li>For every <code>_id</code> column, drag from it to the <code>id</code> it points at: a line appears.</li>' +
+  '<li>Move the boxes until the lines are easy to follow. Export it as a picture, so the whole team has it.</li>' +
+  '</ol>' +
+  '<p class="dim">Your tables are on the right, to copy from.</p>';
+
+/* ====================================================================
+   The slides: why first. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c, dash){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"' + (dash ? ' stroke-dasharray="5 4"' : "") + '/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + esc(label) + '">' + inner + '</svg>'; }
+// A line of text where some parts are facts: ["plain", ["fact"], "plain"].
+function TS(x, y, parts, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 14) + '" fill="' + (o.fill || INK) + '" xml:space="preserve">' + parts.map(function(p){ return typeof p === "string" ? esc(p) : '<tspan font-weight="700" fill="' + (o.fact || A) + '">' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+
+// A table drawn as a grid. o.hl = ["row,col", ...] cells in yellow, o.hlRow = a whole row, o.hlCol = a column, o.fills = colours per cell, o.bad = red header.
+function colWs(cols, rows){ return cols.map(function(c, j){ var m = c.length * 7.4; rows.forEach(function(r){ m = Math.max(m, String(r[j]).length * 6.9); }); return Math.round(m + 16); }); }
+function gridW(cols, rows){ return colWs(cols, rows).reduce(function(a, b){ return a + b; }, 0); }
+function colX(cols, rows, x, j){ var ws = colWs(cols, rows), cx = x; for (var k = 0; k < j; k++) cx += ws[k]; return cx; }
+function colMid(cols, rows, x, j){ return colX(cols, rows, x, j) + colWs(cols, rows)[j] / 2; }
+function GRID(x, y, name, cols, rows, o){
+  o = o || {};
+  var ws = colWs(cols, rows), s = "", hl = o.hl || [];
+  if (name) s += T(x, y - 6, esc(name), { bold: true, mono: true, size: 13, fill: o.bad ? RED : INK });
+  var cx = x;
+  cols.forEach(function(c, j){
+    s += R(cx, y, ws[j], 22, { rx: 0, fill: o.bad ? "#fff0f0" : "#eef3fc", stroke: o.bad ? "#f5b5b0" : "#c7d2fe" }) + T(cx + 7, y + 15, esc(c), { mono: true, bold: true, size: 11.5, fill: o.bad ? RED : INK });
+    cx += ws[j];
+  });
+  rows.forEach(function(r, i){
+    var yy = y + 22 + i * 22; cx = x;
+    r.forEach(function(v, j){
+      var key = i + "," + j, f = o.fills && o.fills[key], on = hl.indexOf(key) >= 0 || o.hlRow === i, col = o.hlCol === j;
+      var fill = f || (on ? "#fef3c7" : col ? "#fef3c7" : v === "" ? "#f3f4f6" : "#fff");
+      s += R(cx, yy, ws[j], 22, { rx: 0, fill: fill, stroke: "#d6d9de" }) + T(cx + 7, yy + 15, esc(v), { size: 12, bold: on || col || !!f, fill: INK });
+      cx += ws[j];
+    });
+  });
+  return s;
+}
+var BLUE = "#dbeafe", YEL = "#fef3c7";
+function ROWFILL(n, c){ var f = {}; for (var j = 0; j < n; j++) f["0," + j] = c; return f; }
+
+// A drawDB-style box: a coloured head with the table name, one line per column. Returns the svg and the y of each column's middle.
+function BOX(x, y, w, name, fields){
+  var s = R(x, y, w, 26 + fields.length * 22, { rx: 6, stroke: "#9fb3d9" }) + '<path d="M ' + x + ' ' + (y + 26) + ' V ' + (y + 6) + ' a 6 6 0 0 1 6 -6 H ' + (x + w - 6) + ' a 6 6 0 0 1 6 6 V ' + (y + 26) + ' z" fill="#2f6fde"/>';
+  s += T(x + 10, y + 18, esc(name), { bold: true, mono: true, size: 12.5, fill: "#fff" });
+  var mids = {};
+  fields.forEach(function(f, i){
+    var yy = y + 26 + i * 22;
+    if (i) s += '<line x1="' + x + '" y1="' + yy + '" x2="' + (x + w) + '" y2="' + yy + '" stroke="' + LINE + '"/>';
+    s += T(x + 10, yy + 15, esc(f), { mono: true, size: 12, bold: /_id$/.test(f) || f === "id", fill: /_id$/.test(f) ? AMB : INK });
+    mids[f] = yy + 11;
+  });
+  return { s: s, y: mids };
+}
+function LINK(x1, y1, x2, y2){
+  var d = 'M ' + x1 + ' ' + y1 + ' C ' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+  return '<path d="' + d + '" fill="none" stroke="' + AMB + '" stroke-width="2"/>' + '<circle cx="' + x1 + '" cy="' + y1 + '" r="3.5" fill="' + AMB + '"/><circle cx="' + x2 + '" cy="' + y2 + '" r="3.5" fill="' + AMB + '"/>';
+}
+
+var ART = {
+  why: function(){
+    var s = R(30, 14, 170, 204, { rx: 24, fill: "#fff", stroke: INK, sw: 2 });
+    s += R(42, 32, 146, 168, { rx: 6, fill: "#f8fafc", stroke: LINE });
+    s += T(115, 58, "Szelet", { bold: true, size: 15, anchor: "middle" });
+    s += T(52, 94, "2 × Sonkás", { size: 13 }) + T(178, 94, "5 980 Ft", { size: 13, anchor: "end" });
+    s += '<line x1="52" y1="108" x2="178" y2="108" stroke="' + LINE + '"/>';
+    s += R(52, 146, 126, 34, { rx: 17, fill: A, stroke: A }) + T(115, 168, "Order", { bold: true, size: 14, fill: "#fff", anchor: "middle" });
+    var oc = ["id", "customer_id", "ordered_at", "status"], or = [["88", "12", "2026-11-27 19:40", "new"]];
+    s += GRID(268, 140, "orders", oc, or, { fills: ROWFILL(4, YEL) });
+    s += ARROW(182, 163, 262, 173, AMB);
+    s += T(268, 214, "One tap, one new row.", { bold: true, size: 14, fill: AMB });
+    return svg(232, "A phone shows the Szelet app with 2 Sonkás pizzas and an Order button. An arrow goes from the button to one new row in the orders table: id 88, customer_id 12, ordered_at 2026-11-27 19:40, status new", s);
+  },
+  story: function(){
+    var L = [
+      [["Friday 27 November, 19:40"], ". ", ["Tóth Bence"], " orders ", ["2 Sonkás"], " pizzas."],
+      ["He pays ", ["cash"], ". His phone: ", ["+36 30 555 1234"], "."],
+      [["20:05"], ". The courier ", ["Varga Zoltán"], " takes order ", ["88"], "."],
+      [["20:20"], ". Bence gets his pizzas. Order 88 is ", ["delivered"], "."],
+      [["Saturday, 18:30"], ". ", ["Molnár Dóra"], " orders ", ["1 Margherita"], "."]
+    ], s = "";
+    L.forEach(function(l, i){ var y = 34 + i * 34; s += T(18, y, (i + 1) + ".", { size: 14, fill: MUT, bold: true }) + TS(44, y, l, { size: 15 }); });
+    return svg(190, "Szelet's story in five numbered steps. In each step the facts are in blue: a day and a time, a name, how many, which pizza, cash, a phone number, an order number, delivered", s);
+  },
+  rules: function(){
+    var L = [
+      ["Every step of the story lands on a row", ""],
+      ["Something that happens has its own table", "orders, bookings"],
+      ["Every table has an example row", ""],
+      ["Nothing stored that can be worked out", "age, counts"],
+      null,
+      ["Every table has an id", "id"],
+      ["Point, don't copy a name", "customer_id"],
+      ["The pointer goes on the many side", ""],
+      null,
+      ["No list in a cell, no numbered columns", "\"2, 2, 1\"  pizza1"],
+      ["Many both ways: a table in the middle", "order_items"]
+    ], s = "", y = 30;
+    L.forEach(function(l){
+      if (!l) { y += 12; s += '<line x1="16" y1="' + (y - 22) + '" x2="624" y2="' + (y - 22) + '" stroke="' + LINE + '"/>'; return; }
+      s += R(18, y - 13, 15, 15, { rx: 3, stroke: "#9aa5b8", sw: 1.5 }) + '<path d="M 21 ' + (y - 6) + ' l 3.5 4 l 6.5 -8" fill="none" stroke="' + GRN + '" stroke-width="2.2"/>';
+      s += T(44, y, esc(l[0]), { size: 14.5 });
+      if (l[1]) s += T(420, y, esc(l[1]), { size: 13, mono: true, fill: MUT });
+      y += 28;
+    });
+    return svg(y - 8, "A checklist of nine ticked lines: every step lands on a row; something that happens has its own table (orders, bookings); every table has an example row; nothing stored that can be worked out (age, counts); every table has an id; point, don't copy a name (customer_id); the pointer goes on the many side; no list in a cell, no numbered columns; many both ways means a table in the middle (order_items)", s);
+  },
+  replay: function(){
+    var s = TS(16, 30, ["Order ", ["88"], " is ", ["delivered"], " at ", ["20:20"], "."], { size: 15 });
+    var oc = ["id", "customer_id", "status", "delivered_at"], or = [["88", "12", "delivered", "20:20"]];
+    // The table's name sits to its right, so the arrows can land on the columns without crossing any text.
+    s += GRID(16, 96, "", oc, or, { hl: ["0,0", "0,2", "0,3"] });
+    s += T(16 + gridW(oc, or) + 22, 112, "orders", { bold: true, mono: true, size: 13 });
+    s += ARROW(68, 38, colMid(oc, or, 16, 0), 94, AMB) + ARROW(138, 38, colMid(oc, or, 16, 2), 94, AMB) + ARROW(222, 38, colMid(oc, or, 16, 3), 94, AMB);
+    s += T(16 + gridW(oc, or) + 22, 136, "✓ Lands on a row.", { bold: true, size: 14, fill: GRN });
+    s += TS(16, 196, ["21:00. Bence gives the pizza ", ["5 stars"], "."], { size: 15 });
+    s += ARROW(250, 204, 300, 236, RED, true);
+    s += T(318, 248, "?", { bold: true, size: 26, fill: RED });
+    s += T(346, 246, "✗ No row for it: it goes on the list.", { bold: true, size: 14, fill: RED });
+    return svg(270, "Step: order 88 is delivered at 20:20. Three arrows go from 88, delivered and 20:20 into three cells of the orders row: it lands on a row. Second step: 21:00, Bence gives the pizza 5 stars. A dashed red arrow goes to a question mark: no row for it, so it goes on the list", s);
+  },
+  drawdb: function(){
+    var w = 124, y = 30;
+    var c = BOX(12, y, w, "customers", ["id", "name", "phone"]);
+    var o = BOX(172, y, w, "orders", ["id", "customer_id", "ordered_at", "status"]);
+    var m = BOX(332, y, w, "order_items", ["order_id", "pizza_id", "quantity"]);
+    var p = BOX(492, y, w, "pizzas", ["id", "name", "price"]);
+    var s = c.s + o.s + m.s + p.s;
+    s += LINK(172, o.y.customer_id, 136, c.y.id) + LINK(332, m.y.order_id, 296, o.y.id) + LINK(456, m.y.pizza_id, 492, p.y.id);
+    s += T(12, 196, "One box per table. One line from every _id to the id it points at.", { bold: true, size: 14, fill: AMB });
+    return svg(214, "Four boxes, the way drawDB draws them: customers, orders, order_items and pizzas, each listing its columns. Lines go from orders.customer_id to customers.id, from order_items.order_id to orders.id, and from order_items.pizza_id to pizzas.id", s);
+  },
+  loop: function(){
+    var W = 132, H = 40, G = 24, s = "";
+    var top = ["story", "tables", "example rows", "replay"], bot = ["follow the id", "ask both ways", "swap"];
+    var x0 = 16, y1 = 24, y2 = 120;
+    top.forEach(function(t, i){ var x = x0 + i * (W + G); s += R(x, y1, W, H, { rx: 10, fill: "#eef3fc", stroke: "#c7d2fe" }) + T(x + W / 2, y1 + 25, t, { size: 14, bold: true, anchor: "middle" }); if (i < 3) s += ARROW(x + W + 2, y1 + H / 2, x + W + G - 2, y1 + H / 2, MUT); });
+    // the second row runs right to left, under the first
+    bot.forEach(function(t, i){ var x = x0 + (3 - i) * (W + G), on = t === "swap"; s += R(x, y2, W, H, { rx: 10, fill: on ? "#fff7e6" : "#eef3fc", stroke: on ? AMB : "#c7d2fe", sw: on ? 2 : 0 }) + T(x + W / 2, y2 + 25, t, { size: 14, bold: true, anchor: "middle", fill: on ? AMB : INK }); if (i < 2) s += ARROW(x - 2, y2 + H / 2, x - G + 2, y2 + H / 2, MUT); });
+    var xr = x0 + 3 * (W + G) + W / 2;
+    s += ARROW(xr, y1 + H + 2, xr, y2 - 2, MUT);
+    var xs = x0 + 1 * (W + G);
+    s += '<polyline points="' + xs + ',' + (y2 + H / 2) + ' ' + (x0 + W / 2) + ',' + (y2 + H / 2) + ' ' + (x0 + W / 2) + ',' + (y1 + H + 12) + '" fill="none" stroke="' + MUT + '" stroke-width="2" stroke-dasharray="5 4"/>' + ARROW(x0 + W / 2, y1 + H + 12, x0 + W / 2, y1 + H + 2, MUT);
+    return svg(178, "The designer's loop as boxes with arrows: story, tables, example rows, replay, then follow the id, ask both ways, and swap, which is marked. A dashed arrow goes from swap back to story", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Your app is a story", art: "why",
+    body: "Think of an app you use: Wolt, a gym app, your bank. Every tap is a step in a story, and every step writes a row into a table.<br><br>Your own app idea is a story too. Before anyone writes code, the tables must hold every step of it. Today you design those tables yourself, with everything you know about tables, ids and links.",
+    say: "Ask: when you press Order on Wolt, what does the app write down? Who, what, when, how much. Then ask each team: what is the first thing your app writes down? About 3 minutes." },
+  { title: "Story first", art: "story",
+    body: "Before any table, write <b>one real use</b> of your app as 5 to 8 steps: one person, one day, from the first tap to the end.<br><br>Each step is one line, and each line has facts in it: a name, a number, a time, a date. <i>\"The user orders food\"</i> has none: who? what? when? how many? A step with no facts fills no cell.",
+    say: "Let one person per team read their first step out loud. Ask the class to point at the facts in it. No name, number or time? Too vague: they rewrite it. Then 10 minutes on paper (task 1 on the page)." },
+  { title: "The rules you already know", art: "rules",
+    body: "Each step of the story fills a row. Something that happens (an order, a lesson, a workout) gets its own table, and nothing is stored that can be worked out.<br><br>Every row has an <b>id</b>, and another table points at it with a column like <span class=\"mono\">customer_id</span>, on the \"many\" side. No list in a cell: if both ways are \"many\", a table sits in the middle.",
+    say: "Read the lines one by one and ask for a Szelet example of each. Why no age? (It changes every year: store the birth date.) Why no order count? (Count the rows.) Why order_items? (One order, many pizzas; one pizza, many orders.) The page checks some of these; the replay and the swap check the rest." },
+  { title: "Replay it, then swap", art: "replay",
+    body: "Read your story out loud, step by step. At each step, point at the row it fills. If you can't point at one, the tables are missing something.<br><br>Then <b>swap</b>: another team reads your story and points at your rows. They only know what is written, not what you meant. Every step that does not land on a row goes on a list, and you fix your tables.",
+    say: "Pair the teams before the lesson. The other team gets no help: if they have to ask, that step goes on the list. About 10 minutes each way. Then each team fixes its own tables." },
+  { title: "Then draw it in drawDB", art: "drawdb",
+    body: "Last, draw the same tables in <b>drawDB</b> (drawdb.vercel.app): drag and drop, no login. Each table is a box, each column a line in it, and every <span class=\"mono\">_id</span> gets a line to the <span class=\"mono\">id</span> it points at.<br><br>Paper first, then the page, then drawDB. The diagram adds nothing new: it shows the tables that already passed the replay.",
+    say: "Show drawDB once on the projector: add a table, add its fields, drag from customer_id to customers.id to draw a line. Don't let them start there: tables that fail the replay only look tidy in a diagram." },
+  { title: "The designer's loop", art: "loop",
+    body: "The whole loop: write the <b>story</b>, make the <b>tables</b>, fill <b>example rows</b>, <b>replay</b> the story, <b>follow every id</b>, <b>ask both ways</b> for every two tables that meet, then <b>swap</b>: someone else replays it. Anything that fails sends you round the loop again.<br><br>In the practice: your story, your tables (the page ticks the rules it can check), the replay, the swap, drawDB. Click any yellow cell: the row it points at lights up. Press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) on each task.",
+    say: "Ask which step catches what: a step with no row (replay), a broken link (follow the id), a list in a cell (ask both ways), a step only its writers understand (swap)." }
+];
+
+/* ====================================================================
+   Tables, ids and pointers
+   ==================================================================== */
+
+function TB(name, cols, rows){ return { name: name, cols: cols.slice(), rows: rows.map(function(r){ return r.slice(); }) }; }
+function blank(n){ var r = []; for (var i = 0; i < n; i++) r.push(""); return r; }
+
+// "id" (or "azonosito") is a table's own id.
+function isIdName(c){ var a = alnum(c); return a === "id" || a === "azonosito"; }
+// customer_id, customerId, vevo_id → "customer", "vevo". Anything else → "".
+function ptrPrefix(c){
+  var m = norm(c).match(/^(.+?)([ _-])?(id|azonosito)$/);
+  if (!m) return "";
+  var p = alnum(m[1]);
+  if (!p || (!m[2] && p.length < 4)) return "";
+  return p;
+}
+// Is the table called after this prefix? customer → customers, vevo → vevok, category → categories, tag → tagok.
+var PLURAL = ["", "s", "es", "k", "ok", "ek", "ak"];
+var IRREG = { person: "people", child: "children" };
+function selfName(p, name){
+  var n = alnum(name); if (!p || !n) return false;
+  if (n.indexOf(p) === 0 && PLURAL.indexOf(n.slice(p.length)) >= 0) return true;
+  if (/y$/.test(p) && n === p.slice(0, -1) + "ies") return true;
+  return IRREG[p] === n;
+}
+function stemMatch(p, name){ var n = alnum(name), k = Math.min(4, p.length, n.length); return k >= 3 && p.slice(0, k) === n.slice(0, k); }
+// The table a column like customer_id points at: the one named after it (customers), else the shortest one that starts the same way. -1 if none.
+function targetOf(col, tables){
+  var p = ptrPrefix(col); if (!p) return -1;
+  for (var i = 0; i < tables.length; i++) if (selfName(p, tables[i].name)) return i;
+  var best = -1;
+  for (var j = 0; j < tables.length; j++) if (stemMatch(p, tables[j].name) && (best < 0 || alnum(tables[j].name).length < alnum(tables[best].name).length)) best = j;
+  return best;
+}
+// Which column is the table's own id: "id", or a column like member_id in members.
+function idColOf(t, ti, tables){
+  for (var i = 0; i < t.cols.length; i++) if (isIdName(t.cols[i])) return i;
+  for (var j = 0; j < t.cols.length; j++) { var p = ptrPrefix(t.cols[j]); if (p && selfName(p, t.name)) return j; }
+  return -1;
+}
+function isPointer(t, ti, ci, tables){ var tg = targetOf(t.cols[ci], tables); return tg >= 0 && tg !== ti && ci !== idColOf(t, ti, tables); }
+// A column that looks like a pointer, even if its table is missing: customer_id, customerId (not "android").
+function ptrShaped(c, tables){ var raw = String(c).trim(); return !!ptrPrefix(raw) && (/[ _-](id|azonosito)$/i.test(raw) || /[a-záéíóöőúüű]Id$/.test(raw) || targetOf(raw, tables) >= 0); }
+function isPtrCol(t, ti, ci, tables){ return ci !== idColOf(t, ti, tables) && ptrShaped(t.cols[ci], tables); }
+function rowById(t, ti, tables, v){
+  var idc = idColOf(t, ti, tables), want = alnum(v);
+  if (idc < 0 || !want) return -1;
+  for (var r = 0; r < t.rows.length; r++) if (alnum(t.rows[r][idc]) === want) return r;
+  return -1;
+}
+function rowLabel(t, ti, tables, r){ var idc = idColOf(t, ti, tables); return t.rows[r].filter(function(v, i){ return i !== idc && String(v).trim(); }).join(" · "); }
+function filledRows(t){ return t.rows.filter(function(r){ return r.some(function(c){ return norm(c); }); }); }
+function ptrCount(t, ti, ts){ var n = 0; t.cols.forEach(function(c, ci){ if (isPointer(t, ti, ci, ts)) n++; }); return n; }
+function dotName(t, c){ return "<b>" + esc(t.name) + "." + esc(c) + "</b>"; }
+function ptrNameFor(t){
+  var n = norm(t.name).replace(/\s+/g, "_");
+  if (/ies$/.test(n)) return n.slice(0, -3) + "y_id";
+  if (/(ss|x|ch|sh)es$/.test(n)) return n.slice(0, -2) + "_id";
+  if (/s$/.test(n)) return n.slice(0, -1) + "_id";
+  return n + "_id";
+}
+
+/* --------------------------------------------------------------------
+   The rules the page can check without the story
+   -------------------------------------------------------------------- */
+
+// A cell with several values: "2, 2, 1", "12 and 7", "3/4". Not a decimal like "4,5".
+function splitParts(v){ return norm(v).split(/\s*(?:[,;\/+&]|\band\b|\bes\b)\s*/).filter(function(p){ return p; }); }
+function isDecimal(v){ return /^\s*\d+,\d+\s*$/.test(String(v)); }
+function ptrList(v){ if (isDecimal(v)) return false; return splitParts(v).length >= 2 || /^\d+(\s+\d+)+$/.test(String(v).trim()); }
+function numList(v){
+  if (isDecimal(v)) return false;
+  var p = norm(v).split(/\s*(?:[,;+&]|\band\b|\bes\b)\s*/).filter(function(x){ return x; });
+  return p.length >= 2 && p.every(function(x){ return /^\d{1,6}$/.test(x); });
+}
+var NAMEC = /(^|[ _-])(name|nev|title|cim|megnevezes|username|nickname|becenev|fullname|full_name|first_?name|last_?name|vezeteknev|keresztnev)$/;
+function nameCols(t, ti, ts){ var out = []; t.cols.forEach(function(c, ci){ if (ci !== idColOf(t, ti, ts) && !isPtrCol(t, ti, ci, ts) && NAMEC.test(norm(c))) out.push(ci); }); return out; }
+// The columns that name a row: name, title, …; else the first column with words in it.
+function labelCols(t, ti, ts){
+  var n = nameCols(t, ti, ts); if (n.length) return n;
+  var rows = filledRows(t);
+  for (var ci = 0; ci < t.cols.length; ci++) {
+    if (ci === idColOf(t, ti, ts) || isPtrCol(t, ti, ci, ts)) continue;
+    var vals = rows.map(function(r){ return String(r[ci]).trim(); }).filter(function(v){ return v; });
+    if (vals.length && vals.some(function(v){ return /[a-z]/.test(norm(v)); })) return vals.every(function(v){ return /^\p{Lu}/u.test(v); }) ? [ci] : [];
+  }
+  return [];
+}
+function labels(t, ti, ts){
+  var out = {};
+  labelCols(t, ti, ts).forEach(function(ci){ filledRows(t).forEach(function(r){ var v = norm(r[ci]); if (v.length >= 3 && /[a-z]/.test(v)) out[v] = r[ci]; }); });
+  return out;
+}
+function idVals(t, ti, ts){ var idc = idColOf(t, ti, ts), out = {}; if (idc >= 0) filledRows(t).forEach(function(r){ var v = alnum(r[idc]); if (v) out[v] = true; }); return out; }
+
+function ruleNames(ts){
+  if (!ts.length) return "There are no tables yet. Add one: <b>+ table</b>.";
+  var seen = {};
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], n = alnum(t.name);
+    if (!n) return "A table has no name. Name it after the kind of thing in it: members, orders, …";
+    if (seen[n]) return "Two tables are called <b>" + esc(t.name) + "</b>. Each table needs a name of its own.";
+    seen[n] = true;
+    if (!t.cols.length) return "<b>" + esc(t.name) + "</b> has no columns.";
+    var cs = {};
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      var c = alnum(t.cols[ci]);
+      if (!c) return "<b>" + esc(t.name) + "</b> has a column with no name. Name it after the fact it holds, or delete it (✕).";
+      if (cs[c]) return "<b>" + esc(t.name) + "</b> has two columns called <b>" + esc(t.cols[ci]) + "</b>. One fact, one column.";
+      cs[c] = true;
+    }
+  }
+  return "";
+}
+function ruleIds(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), seen = {};
+    if (idc < 0) {
+      if (ptrCount(t, i, ts) >= 2) continue; // a table in the middle: its pointers are enough
+      return "<b>" + esc(t.name) + "</b> has no id column. Every row gets a number of its own, in a column called <b>id</b>.";
+    }
+    var rows = filledRows(t);
+    for (var r = 0; r < rows.length; r++) {
+      var v = alnum(rows[r][idc]);
+      if (!v) return "A row in <b>" + esc(t.name) + "</b> has no id. Every row gets a number of its own.";
+      if (seen[v]) return "Two rows in <b>" + esc(t.name) + "</b> have id <b>" + esc(rows[r][idc]) + "</b>. An id is never used twice in the same table.";
+      seen[v] = true;
+    }
+  }
+  return "";
+}
+function ruleRows(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), rows = filledRows(t);
+    var real = rows.filter(function(r){ return r.some(function(c, ci){ return ci !== idc && norm(c); }); });
+    if (!real.length) return "<b>" + esc(t.name) + "</b> has no example row. Write one row from your story, with real values in it.";
+    var echo = real.every(function(r){ return r.every(function(c, ci){ return !norm(c) || ci === idc || alnum(c) === alnum(t.cols[ci]); }); });
+    if (echo) return "The row in <b>" + esc(t.name) + "</b> repeats the column names. An example row holds real values from your story: a name, a time, a price.";
+  }
+  return "";
+}
+function ruleLists(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), rows = filledRows(t);
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      var c = t.cols[ci], ptr = ci === idc || isPtrCol(t, i, ci, ts);
+      for (var r = 0; r < rows.length; r++) {
+        var v = rows[r][ci];
+        if (!norm(v)) continue;
+        if (ptr ? ptrList(v) : numList(v))
+          return dotName(t, c) + " has <b>" + esc(v) + "</b>: a list in one cell. A cell holds one value. Ask both ways: one row here, how many there? And the other way round?";
+        if (ptr) continue;
+        var parts = splitParts(v);
+        if (parts.length < 2) continue;
+        for (var j = 0; j < ts.length; j++) {
+          var lab = labels(ts[j], j, ts), ids = (selfName(alnum(c), ts[j].name) || stemMatch(alnum(c), ts[j].name)) ? idVals(ts[j], j, ts) : {};
+          var hits = parts.filter(function(p){ return lab[p] !== undefined || ids[alnum(p)]; }).length;
+          if (hits >= 2) return dotName(t, c) + " has <b>" + esc(v) + "</b>: a list of rows from <b>" + esc(ts[j].name) + "</b> in one cell. A cell holds one value. Ask both ways between <b>" + esc(t.name) + "</b> and <b>" + esc(ts[j].name) + "</b>.";
+        }
+      }
+    }
+  }
+  return "";
+}
+function ruleNumbered(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], groups = {};
+    t.cols.forEach(function(c){ var k = alnum(norm(c).replace(/\d+/g, "")); (groups[k] = groups[k] || []).push(c); });
+    for (var k in groups) {
+      var g = groups[k];
+      if (g.length >= 2 && g.some(function(c){ return /\d/.test(c); }))
+        return "<b>" + esc(t.name) + "</b> has <b>" + g.map(esc).join("</b>, <b>") + "</b>: numbered columns. What happens when a " + (g.length + 1 > 3 ? (g.length + 1) + "th" : "third") + " one comes? Ask both ways.";
+    }
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      var c = t.cols[ci], m = norm(c).match(/\d+/);
+      if (!m || Number(m[0]) < 1 || Number(m[0]) > 3) continue;
+      var stem = alnum(norm(c).replace(/\d+/g, "")).replace(/(id|azonosito)$/, "");
+      if (stem.length < 3) continue;
+      for (var j = 0; j < ts.length; j++) if (selfName(stem, ts[j].name) || alnum(ts[j].name).indexOf(stem) === 0)
+        return dotName(t, c) + " is a numbered column: number " + m[0] + " of <b>" + esc(ts[j].name) + "</b>. What happens when there are more? Ask both ways.";
+    }
+  }
+  return "";
+}
+function rulePointers(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), rows = filledRows(t);
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      if (ci === idc) continue;
+      var c = t.cols[ci];
+      if (!ptrShaped(c, ts)) {
+        // A column named after a table that holds its ids: a pointer without the _id.
+        for (var j = 0; j < ts.length; j++) {
+          if (j === i || !selfName(alnum(c), ts[j].name)) continue;
+          var vals = rows.map(function(r){ return norm(r[ci]); }).filter(function(v){ return v; }), ids = idVals(ts[j], j, ts);
+          if (vals.length && vals.every(function(v){ return /^\d+$/.test(v); }) && vals.some(function(v){ return ids[v]; }))
+            return dotName(t, c) + " holds ids of <b>" + esc(ts[j].name) + "</b>, but its name doesn't say so. A pointer's name ends in <b>_id</b>.";
+        }
+        continue;
+      }
+      var tg = targetOf(c, ts);
+      if (tg < 0) return dotName(t, c) + " points at no table: no table is named after <b>" + esc(ptrPrefix(c)) + "</b>. A pointer is named after the table it points at.";
+      if (tg === i) return dotName(t, c) + " points at its own table. A table has one id: is this column needed?";
+      var tt = ts[tg];
+      for (var r = 0; r < rows.length; r++) {
+        var v = rows[r][ci];
+        if (!alnum(v) || ptrList(v)) continue;
+        if (rowById(tt, tg, ts, v) >= 0) continue;
+        if (idColOf(tt, tg, ts) < 0) return dotName(t, c) + " points at <b>" + esc(tt.name) + "</b>, which has no id column: there is nothing to lead to.";
+        if (/[a-z]/.test(norm(v)) && !/^\d/.test(norm(v))) return dotName(t, c) + " holds <b>" + esc(v) + "</b>. A pointer holds the id of a row in " + esc(tt.name) + ", not a name.";
+        return "Follow " + dotName(t, c) + " <b>" + esc(v) + "</b>: there is no row with id " + esc(v) + " in <b>" + esc(tt.name) + "</b>. Every id must lead to a row.";
+      }
+    }
+  }
+  return "";
+}
+function ruleCopies(ts){
+  for (var i = 0; i < ts.length; i++) {
+    var t = ts[i], idc = idColOf(t, i, ts), own = nameCols(t, i, ts), rows = filledRows(t);
+    for (var ci = 0; ci < t.cols.length; ci++) {
+      if (ci === idc || isPtrCol(t, i, ci, ts) || own.indexOf(ci) >= 0) continue;
+      for (var r = 0; r < rows.length; r++) {
+        var v = norm(rows[r][ci]);
+        if (v.length < 3 || !/[a-z]/.test(v)) continue;
+        for (var j = 0; j < ts.length; j++) {
+          if (j === i) continue;
+          if (labels(ts[j], j, ts)[v] !== undefined)
+            return dotName(t, t.cols[ci]) + " has <b>" + esc(rows[r][ci]) + "</b>, which is already a row in <b>" + esc(ts[j].name) + "</b>: point at it with <b>" + esc(ptrNameFor(ts[j])) + "</b>.";
+        }
+      }
+    }
+  }
+  return "";
+}
+function ruleShape(ts){
+  if (ts.length < 2) return "Only one table. An app keeps more than one kind of thing: who uses it, and what happens. Make a table for each.";
+  var linked = ts.some(function(t, i){ return t.cols.some(function(c, ci){ return isPointer(t, i, ci, ts) && filledRows(t).some(function(r){ return alnum(r[ci]); }); }); });
+  if (!linked) return "Your tables don't point at each other yet. Where does a row need a row of another table? Put an <b>_id</b> column there, with the id of that row.";
+  return "";
+}
+
+var RULES = [
+  { key: "names", label: "Every table and column has a name", fn: ruleNames, always: true },
+  { key: "ids", label: "Every table has an id, and no id repeats", fn: ruleIds },
+  { key: "rows", label: "Every table has an example row", fn: ruleRows, always: true },
+  { key: "lists", label: "No list in a cell", fn: ruleLists },
+  { key: "numbered", label: "No numbered columns", fn: ruleNumbered },
+  { key: "pointers", label: "Every <code>_id</code> leads to a row", fn: rulePointers },
+  { key: "copies", label: "No copied names: point instead", fn: ruleCopies },
+  { key: "shape", label: "Two tables or more, linked by an <code>_id</code>", fn: ruleShape, always: true }
+];
+// Each rule, ticked or not. Before there is any example row, only "names", "rows" and "shape" can pass.
+function rules(tables){
+  var ts = tables || [], any = ts.some(function(t){ return filledRows(t).length; });
+  return RULES.map(function(R0){
+    var msg = R0.fn(ts);
+    if (!msg && !any && !R0.always) msg = "Write an example row first.";
+    return { key: R0.key, label: R0.label, pass: !msg, msg: msg };
+  });
+}
+function rulesCheck(ans){ var rs = rules(ans.tables); for (var i = 0; i < rs.length; i++) if (!rs[i].pass) return rs[i].msg; return ""; }
+
+/* --------------------------------------------------------------------
+   Replaying a given story (the extras)
+   -------------------------------------------------------------------- */
+
+function allRows(ans){
+  var out = [];
+  ans.tables.forEach(function(t, ti){ filledRows(t).forEach(function(r){ out.push({ t: ti, cells: r.map(norm), raw: r }); }); });
+  return out;
+}
+function has(row, fn){ return row.cells.some(fn); }
+function first(rows, fn){ for (var i = 0; i < rows.length; i++) if (fn(rows[i])) return rows[i]; return null; }
+function re(x){ return function(c){ return x.test(c); }; }
+// Does row "from" hold a pointer to row "to"?
+function pointsAt(ans, from, to){
+  var ts = ans.tables, ft = ts[from.t], tt = ts[to.t], tid = idColOf(tt, to.t, ts);
+  if (tid < 0) return false;
+  var want = alnum(to.raw[tid]);
+  return ft.cols.some(function(c, ci){
+    if (!ptrPrefix(c) || ci === idColOf(ft, from.t, ts)) return false;
+    var tg = targetOf(c, ts);
+    if (tg >= 0 && tg !== to.t) return false;
+    return alnum(from.raw[ci]) === want;
+  });
+}
+function linkMsg(ans, from, to, what, who, colHint){
+  var ts = ans.tables, ft = ts[from.t], tt = ts[to.t], want = to.raw[idColOf(tt, to.t, ts)];
+  for (var ci = 0; ci < ft.cols.length; ci++) {
+    var c = ft.cols[ci];
+    if (!ptrPrefix(c) || targetOf(c, ts) !== to.t || ci === idColOf(ft, from.t, ts)) continue;
+    var v = from.raw[ci];
+    if (!alnum(v)) return "In " + what + ", <b>" + esc(c) + "</b> is empty. Put the id of " + who + " in it: " + esc(want) + ".";
+    var hit = rowById(tt, to.t, ts, v);
+    return "Follow <b>" + esc(c) + " " + esc(v) + "</b> in " + what + ": " + (hit >= 0 ? "it leads to <b>" + esc(rowLabel(tt, to.t, ts, hit)) + "</b>." : "there is no row with id " + esc(v) + ".") + " It should lead to " + who + ".";
+  }
+  return "Which cell of " + what + " says it is " + who + "'s? Point at " + who + ": a <b>" + colHint + "</b> column, with the id of " + who + ".";
+}
+// The numbers in a row that are facts (not ids, not pointers).
+function factNums(ans, row){
+  var t = ans.tables[row.t], idc = idColOf(t, row.t, ans.tables), out = [];
+  row.raw.forEach(function(v, ci){ if (ci !== idc && !isPtrCol(t, row.t, ci, ans.tables) && digits(v)) out.push(digits(v)); });
+  return out;
+}
+function hasNums(ans, row, nums){ var got = factNums(ans, row); return nums.every(function(n){ var k = got.indexOf(String(n)); if (k < 0) return false; got.splice(k, 1); return true; }); }
+// A thing table: has an id, and is not one of the given tables.
+function thingRow(ans, rows, not, fn){ return first(rows, function(r){ return not.indexOf(r.t) < 0 && idColOf(ans.tables[r.t], r.t, ans.tables) >= 0 && has(r, fn); }); }
+
+var EXS = [["Squat", /squat|guggol/, 3], ["Push-up", /push ?-?up|fekvo/, 4], ["Lunge", /lunge|kitor/, 5]];
+function gymReplay(ans){
+  var rows = allRows(ans), ts = ans.tables;
+  var user = first(rows, function(r){ return has(r, re(/lili/)) && has(r, function(c){ return alnum(c).indexOf("lilikmailhu") >= 0; }); });
+  if (!user) return "Replay step 1: Kovács Lili joins with her email, lili.k@mail.hu. Point at the row that holds her name and her email together.";
+  var w1 = first(rows, function(r){ return has(r, re(/17[:.]30/)); });
+  if (!w1) return "Replay step 2: Monday 7 December, 17:30, Lili starts a workout. Point at the row that says when. A workout is something that happens: it gets a table of its own.";
+  if (w1.t === user.t) return "17:30 is in Lili's own row. But she works out again on Wednesday: a workout is something that happens, so it gets a table of its own.";
+  if (!pointsAt(ans, w1, user)) return linkMsg(ans, w1, user, "Monday's workout", "Lili", "user_id");
+  var w2 = first(rows, function(r){ return has(r, re(/18[:.]00/)); });
+  if (!w2) return "Replay step 6: Wednesday 9 December, 18:00, Lili works out again. Point at that workout's row.";
+  if (w2.t !== w1.t) return "The two workouts are in two different tables. Both are workouts: one table, one row each.";
+  if (!pointsAt(ans, w2, user)) return linkMsg(ans, w2, user, "Wednesday's workout", "Lili", "user_id");
+  var ex = {};
+  for (var i = 0; i < EXS.length; i++) {
+    ex[EXS[i][0]] = thingRow(ans, rows, [w1.t, user.t], re(EXS[i][1]));
+    if (!ex[EXS[i][0]]) return "Replay step " + EXS[i][2] + ": " + EXS[i][0] + " is an exercise Lili does again and again. Point at its row: a table of exercises, with an id.";
+  }
+  var LINKS = [[w1, "Squat", 4, 10, 3, "Monday's workout"], [w1, "Push-up", 3, 12, 4, "Monday's workout"], [w1, "Lunge", 3, 8, 5, "Monday's workout"], [w2, "Squat", 5, 5, 6, "Wednesday's workout"]];
+  for (var k = 0; k < LINKS.length; k++) {
+    var L = LINKS[k], e = ex[L[1]];
+    var link = first(rows, function(r){ return r.t !== L[0].t && r.t !== e.t && pointsAt(ans, r, L[0]) && pointsAt(ans, r, e); });
+    if (!link) return "Replay step " + L[4] + ": " + L[1] + ", " + L[2] + " sets of " + L[3] + " reps, in " + L[5] + ". Point at the row that says so. Ask both ways: one workout, how many exercises? One exercise, how many workouts?";
+    if (!hasNums(ans, link, [L[2], L[3]])) return "Replay step " + L[4] + ": the row that links " + L[5] + " to " + L[1] + ". Does it say " + L[2] + " sets and " + L[3] + " reps?";
+  }
+  return "";
+}
+
+var YES = /^(yes|y|true|igen|i|paid|fizetett|fizetve|kifizetve|1|x|✓|done|ok)$/;
+// The cell of a row that says "paid". In a sign-up row the amount (1500) counts too.
+function yesCell(ans, row, amount){
+  var t = ans.tables[row.t], idc = idColOf(t, row.t, ans.tables);
+  for (var ci = 0; ci < row.raw.length; ci++) {
+    if (ci === idc || isPtrCol(t, row.t, ci, ans.tables)) continue;
+    var v = norm(row.raw[ci]);
+    if (YES.test(v) || (amount && digits(v) === amount)) return ci;
+  }
+  return -1;
+}
+function clubReplay(ans){
+  var rows = allRows(ans), ts = ans.tables;
+  var mark = first(rows, function(r){ return has(r, re(/mark/)) && has(r, function(c){ return alnum(c).indexOf("markszabomailhu") >= 0; }); });
+  if (!mark) return "Replay step 1: Szabó Márk joins, mark.szabo@mail.hu. Point at the row that holds his name and his email together.";
+  var emma = first(rows, function(r){ return has(r, re(/emma/)) && has(r, function(c){ return alnum(c).indexOf("emmanagymailhu") >= 0; }); });
+  if (!emma) return "Replay step 2: Nagy Emma joins, emma.nagy@mail.hu. Point at her row.";
+  if (emma.t !== mark.t) return "Márk and Emma are in two different tables. Both are members: one table, one row each.";
+  var walk = first(rows, function(r){ return r.t !== mark.t && has(r, re(/18[:.]00/)); });
+  if (!walk) return "Replay step 3: the Night photo walk, Friday 11 December, 18:00. Point at the row that says so. An event is something the club holds again and again: a table of its own.";
+  if (!has(walk, function(c){ return digits(c) === "1500"; })) return "Replay step 3: the walk costs 1 500 Ft. Which cell of the walk's row says so?";
+  var shop = first(rows, function(r){ return r.t !== mark.t && has(r, re(/10[:.]00/)); });
+  if (!shop) return "Replay step 6: the Portrait workshop, Saturday 19 December, 10:00. Point at its row.";
+  if (shop.t !== walk.t) return "The walk and the workshop are in two different tables. Both are events: one table, one row each.";
+  if (yesCell(ans, mark) >= 0 || yesCell(ans, walk) >= 0) return "Replay step 4: Márk pays for the walk. Something in " + (yesCell(ans, mark) >= 0 ? "Márk's row" : "the walk's row") + " says paid. But he paid for the walk, not for the workshop. Is it a fact about him, or about one sign-up?";
+  var SIGN = [[walk, mark, true, 4, "Márk", "the walk"], [walk, emma, false, 5, "Emma", "the walk"], [shop, mark, false, 6, "Márk", "the workshop"]];
+  var paidCol = -1, paidT = -1;
+  for (var k = 0; k < SIGN.length; k++) {
+    var S0 = SIGN[k];
+    var link = first(rows, function(r){ return r.t !== S0[0].t && r.t !== S0[1].t && pointsAt(ans, r, S0[0]) && pointsAt(ans, r, S0[1]); });
+    if (!link) return "Replay step " + S0[3] + ": " + S0[4] + " signs up for " + S0[5] + ". Point at the row that says so. Ask both ways: one event, how many members? One member, how many events?";
+    var y = yesCell(ans, link, S0[2] ? "1500" : "");
+    if (S0[2]) {
+      if (y < 0) return "Replay step 4: Márk pays for the walk. Which cell of his sign-up row says so?";
+      paidCol = y; paidT = link.t;
+    } else if (y >= 0) {
+      return "Replay step " + S0[3] + ": " + S0[4] + " has <b>not</b> paid for " + S0[5] + " yet, but the sign-up says <b>" + esc(link.raw[y]) + "</b>.";
+    } else if (link.t === paidT && !norm(link.raw[paidCol])) {
+      return "Replay step " + S0[3] + ": " + S0[4] + " has not paid for " + S0[5] + " yet. Write that in the <b>" + esc(ts[paidT].cols[paidCol]) + "</b> cell of the sign-up, so nobody has to guess.";
+    }
+  }
+  return "";
+}
+
+/* --------------------------------------------------------------------
+   Your story
+   -------------------------------------------------------------------- */
+
+var NSTEPS = 8;
+// A fact: a digit, or a capital letter on a word that does not start a sentence ("Kiss Anna", "Friday").
+function hasFact(s){
+  if (/\d/.test(s)) return true;
+  var toks = String(s).split(/\s+/).filter(function(x){ return x; }), start = true;
+  for (var i = 0; i < toks.length; i++) {
+    var w = toks[i].replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "");
+    if (w && !start && /^\p{Lu}/u.test(w) && !/^(I|I'm|I'll|I've|I'd|OK)$/.test(w)) return true;
+    start = /[.!?]["'”)\]]*$/.test(toks[i]);
+  }
+  return false;
+}
+function words(s){ return String(s).split(/\s+/).filter(function(x){ return /\p{L}|\d/u.test(x); }).length; }
+function storyCheck(ans){
+  var st = (ans.steps || []).map(function(s){ return String(s || "").trim(); }), n = 0, last = -1;
+  st.forEach(function(s, i){ if (s) { n++; last = i; } });
+  if (!n) return "Your story is empty. Write step 1: who does what in your app, and when?";
+  for (var i = 0; i < last; i++) if (!st[i]) return "Step " + (i + 1) + " is empty, but step " + (last + 1) + " is not. Fill the gap, or move the steps up.";
+  if (st.filter(function(s){ return /bence|szelet|sonkas|varga/.test(norm(s)); }).length >= 3) return "That is Szelet's story, the example. Write one use of your own app idea.";
+  for (var j = 0; j <= last; j++) {
+    if (words(st[j]) < 3) return "Step " + (j + 1) + " is very short. Write a whole sentence: who does what?";
+    if (!hasFact(st[j])) return "Step " + (j + 1) + " has no fact in it: who? what? when? how many? Add a full name, a number, a time or a date.";
+  }
+  if (n < 5) return "Your story has " + n + " step" + (n === 1 ? "" : "s") + ". Write at least 5: follow the person until they are done.";
+  return "";
+}
+function storyStart(){ return { app: "", steps: blank(NSTEPS) }; }
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+var SAMPLE_STORY = { app: "A school chess club app: members sign up for tournaments.", steps: [
+  "Monday 30 November, 14:10. Kiss Anna from 12.B joins the chess club in the app.",
+  "The club adds an event: Friday tournament, 4 December, 15:00, room 214, for 16 players.",
+  "Kiss Anna signs up for the tournament.",
+  "Horváth Dani from 11.A signs up too.",
+  "Friday, 15:00. The teacher marks Anna and Dani as there.",
+  "17:30. Dani wins. The app saves his place: 1st. Anna is 2nd.",
+  "", ""] };
+var SAMPLE_TABLES = [
+  TB("members", ["id", "name", "class", "email"], [["1", "Kiss Anna", "12.B", "anna.kiss@mail.hu"], ["2", "Horváth Dani", "11.A", "dani.h@mail.hu"]]),
+  TB("events", ["id", "title", "starts_at", "room", "max_players"], [["1", "Friday tournament", "2026-12-04 15:00", "214", "16"]]),
+  TB("signups", ["event_id", "member_id", "signed_up_at", "attended", "place"], [["1", "1", "2026-11-30 14:20", "yes", "2"], ["1", "2", "2026-12-01 09:05", "yes", "1"]])
+];
+var GYM_TABLES = [
+  TB("users", ["id", "name", "email"], [["1", "Kovács Lili", "lili.k@mail.hu"]]),
+  TB("exercises", ["id", "name", "body_part"], [["1", "Squat", "legs"], ["2", "Push-up", "chest"], ["3", "Lunge", "legs"]]),
+  TB("workouts", ["id", "user_id", "started_at"], [["1", "1", "2026-12-07 17:30"], ["2", "1", "2026-12-09 18:00"]]),
+  TB("workout_exercises", ["workout_id", "exercise_id", "sets", "reps"], [["1", "1", "4", "10"], ["1", "2", "3", "12"], ["1", "3", "3", "8"], ["2", "1", "5", "5"]])
+];
+var CLUB_TABLES = [
+  TB("members", ["id", "name", "email"], [["1", "Szabó Márk", "mark.szabo@mail.hu"], ["2", "Nagy Emma", "emma.nagy@mail.hu"]]),
+  TB("events", ["id", "title", "starts_at", "price"], [["1", "Night photo walk", "2026-12-11 18:00", "1500"], ["2", "Portrait workshop", "2026-12-19 10:00", "2000"]]),
+  TB("signups", ["event_id", "member_id", "paid"], [["1", "1", "yes"], ["1", "2", "no"], ["2", "1", "no"]])
+];
+
+var REPLAY_ITEMS = [
+  "Something that happens (an order, a booking, a workout) has its own table.",
+  "Nothing is stored that can be worked out: no age (store the birth date), no counts (count the rows).",
+  "Where both ways are \"many\", there is a table in the middle.",
+  "Every pointer is on the \"many\" side: one customer, many orders, so the order holds <code>customer_id</code>.",
+  "I read my story out loud, step by step, and every step landed on a row."
+];
+var SWAP_ITEMS = [
+  "Another team read our story out loud and pointed at a row for each step.",
+  "They clicked every yellow <code>_id</code> cell, and each one lit up a row.",
+  "We changed our tables (task 2) for every step on the list."
+];
+var DRAW_ITEMS = [
+  "Every table from task 2 is a box in drawDB, with the same name and the same columns.",
+  "Every <code>_id</code> column has one line to the <code>id</code> it points at.",
+  "The diagram matches my tables: nothing missing, nothing extra."
+];
+function ticksStart(n){ var t = []; for (var i = 0; i < n; i++) t.push(false); return { ticks: t, text: "", landed: false }; }
+function ticksAll(n){ var t = ticksStart(n); t.ticks = t.ticks.map(function(){ return true; }); return t; }
+function tickCount(ans){ return (ans.ticks || []).filter(function(x){ return x; }).length; }
+function confirmCheck(n, what){
+  return function(ans){
+    var k = tickCount(ans);
+    if (!k) return "Nothing is ticked yet. " + what;
+    if (k < n) return k + " of " + n + " ticked. " + what;
+    return "";
+  };
+}
+function swapCheck(ans){
+  var t = ans.ticks || [], list = norm(ans.text);
+  if (!t[0]) return "First the other team replays your story: they read it out loud and point at your rows. Then tick the first line.";
+  if (!t[1]) return "Did they click every yellow cell? A pointer that lights up nothing is a broken link: tick the second line when each one leads to a row.";
+  if (list && ans.landed) return "You ticked \"every step landed\", but the box lists steps that missed. Which is it?";
+  if (!list && !ans.landed) return "The box is empty. Write each step that did not land on a row, or tick \"every step landed\" if none missed.";
+  if (list && !t[2]) return "Fix your tables in task 2 for every step on the list, then tick the last line.";
+  return "";
+}
+
+var LESSONS = [
+  { title: "Your story", kind: "story",
+    do: "Write <b>one real use</b> of your app idea as 5 to 8 steps. Each step: one line, with facts in it.",
+    sub: "An example is on the left. The page checks that every step has a fact it can see: a name, a number, a time or a date.",
+    start: storyStart,
+    solution: SAMPLE_STORY, noSol: true,
+    hints: ["Pick one person and one day. What do they do first in your app? Write that as step 1, with their full name and the time.",
+      "A fact is something the app must remember: a name, a number, a time, a date, a price. <i>\"Kiss Anna books the 16:00 slot on Saturday\"</i> has three.",
+      "Stuck on the end? Follow the person until they are done: they pay, they get it, they rate it, they come back next week."],
+    check: storyCheck,
+    after: "Your story is the test your tables must pass. Every step in it must land on a row. Next: the tables." },
+
+  { title: "Your tables", kind: "design", boss: false,
+    do: "Make the tables your story needs: an id in each, pointers instead of copied names, a table in the middle where both ways are many, and one example row each, from your story.",
+    sub: "Your story is on the left. The checklist above your tables ticks each rule the page can check. Click a yellow cell: the row it points at lights up.",
+    start: function(){ return { tables: [TB("", ["id", ""], [blank(2)])] }; },
+    solution: { tables: SAMPLE_TABLES }, solTitle: "A good design for a different app (a chess club). Yours will look different: use it to see the shape.",
+    hints: ["Start from your story. Each person or thing it names again and again gets a table (members, products, …). Something that happens gets a table too (orders, bookings, workouts).",
+      "Give every table an <b>id</b> column first, then one example row with real values from your story.",
+      "Where a row would copy a name from another table, point instead: a column like <code>member_id</code>, with the id of that row. Ask both ways for every two tables that meet: if both are \"many\", make a table in the middle."],
+    check: rulesCheck,
+    after: "Every rule the page can check is ticked. The page can't check the rest: is every step of your story in a row? That is the next task." },
+
+  { title: "Replay it", kind: "confirm", items: REPLAY_ITEMS, show: "mine", optsTitle: "Tick each line that is true",
+    honest: "The page can't check these. You can: tick a line only when it is true for your tables. If one isn't, go back to task 2 and fix the tables first.",
+    do: "Read your story out loud, step by step, and point at the row each step fills. Then tick each line that is true for your tables.",
+    sub: "Your story is on the left, your tables are on the right. Click a yellow cell: the row it points at lights up.",
+    start: function(){ return ticksStart(REPLAY_ITEMS.length); }, solution: ticksAll(REPLAY_ITEMS.length), hints: [],
+    check: confirmCheck(REPLAY_ITEMS.length, "The page can't check these: look at your tables and tick each line when it is true."),
+    after: "Your own replay is done. You know what you meant, though. Next: someone who doesn't." },
+
+  { title: "Swap", kind: "confirm", items: SWAP_ITEMS, show: "mine", box: 2, optsTitle: "The other team replays yours",
+    honest: "The page can't see the other team. Tick the lines when they are true.",
+    do: "Swap with another team. They read <b>your</b> story out loud and point at <b>your</b> rows. Every step that does not land on a row goes in the box.",
+    sub: "They only know what is written. If they have to ask you what a step means, that step goes on the list.",
+    start: function(){ return ticksStart(SWAP_ITEMS.length); },
+    solution: { ticks: [true, true, true], text: "Step 6: Dani's place (1st) had no cell. We added a place column to signups.", landed: false }, hints: [],
+    check: swapCheck,
+    after: "Your tables held up in someone else's hands. Last: the diagram." },
+
+  { title: "Draw it in drawDB", kind: "confirm", items: DRAW_ITEMS, show: "mine", link: "https://drawdb.vercel.app/", optsTitle: "Tick when it is true",
+    honest: "The page can't see your diagram. Tick a line only when it is true.",
+    do: "Draw your final tables in drawDB: one box per table, one line from every <code>_id</code> to the <code>id</code> it points at. Then tick when the diagram matches your tables.",
+    sub: "drawDB opens in a new tab: drag and drop, no login. How to use it is on the left, your tables are on the right.",
+    start: function(){ return ticksStart(DRAW_ITEMS.length); }, solution: ticksAll(DRAW_ITEMS.length), hints: [], left: DRAWDB_HOW,
+    check: confirmCheck(DRAW_ITEMS.length, "Compare the diagram with your tables, box by box and line by line."),
+    after: "Story, tables, replay, swap, diagram: your app idea now has a database that holds every step of its story." },
+
+  { title: "Extra A: a gym app", kind: "design", extra: true, story: GYM, replay: gymReplay,
+    do: "No app idea yet? Here is one. Make the gym app's tables from its story on the left, with ids, pointers and example rows.",
+    sub: "No hints. The same checklist as task 2, and Check replays the story: every fact must land in a cell.",
+    start: function(){ return { tables: [TB("", ["id", ""], [blank(2)])] }; },
+    solution: { tables: GYM_TABLES }, hints: [],
+    check: function(ans){ return rulesCheck(ans) || gymReplay(ans); },
+    after: "One workout has many exercises, and the Squat is in many workouts: the sets and the reps belong to the table in the middle, not to the workout and not to the exercise." },
+
+  { title: "Extra B: a club event app", kind: "design", extra: true, last: true, story: CLUB, replay: clubReplay,
+    do: "Another idea: a photo club's events. Make its tables from the story on the left, with ids, pointers and example rows.",
+    sub: "No hints. The same checklist as task 2, and Check replays the story: every fact must land in a cell.",
+    start: function(){ return { tables: [TB("", ["id", ""], [blank(2)])] }; },
+    solution: { tables: CLUB_TABLES }, hints: [],
+    check: function(ans){ return rulesCheck(ans) || clubReplay(ans); },
+    after: "\"Paid\" is not about Márk and not about the walk: it is about Márk on the walk. A fact about the link lives in the table in the middle." }
+];
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "db-your-own-app-v1";
+var TRIES_PER_HINT = 2;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, work: {}, msg: {}, checked: {} }; }
+function normalize(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalize((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var UI = { note: "", prepView: "solution", follow: null };
+var primerIdx = 0, showSay = PREP;
+function L(){ return LESSONS[S.i]; }
+function W(){ if (!S.work[S.i]) S.work[S.i] = L().start(); return S.work[S.i]; }
+// Their story and tables, for the later tasks. In ?prep, the samples.
+function myStory(){ return PREP ? clone(SAMPLE_STORY) : (S.work[0] || storyStart()); }
+function myTables(){
+  var ts = PREP ? clone(SAMPLE_TABLES) : ((S.work[1] && S.work[1].tables) || []);
+  return ts.filter(function(t){ return norm(t.name) || filledRows(t).length; }).map(function(t){ return TB(t.name, t.cols, filledRows(t)); });
+}
+
+/* ====================================================================
+   The work area
+   ==================================================================== */
+
+// Every table on screen that pointers can lead to.
+var VIEW = [];
+function addView(t){ VIEW.push(t); return VIEW.length - 1; }
+
+function roTable(t, live){
+  var v = live ? addView(t) : -1;
+  var h = '<div class="tcard"' + (v >= 0 ? ' data-v="' + v + '"' : "") + '><div class="thead"><span class="tname">' + esc(t.name) + '</span></div><table class="g"><tr>';
+  t.cols.forEach(function(c){ h += '<th><span class="cn">' + esc(c) + '</span></th>'; });
+  h += '</tr>';
+  t.rows.forEach(function(r, ri){ h += '<tr>' + r.map(function(val, ci){ return '<td class="ro' + (val === "" ? " empty" : "") + '" data-r="' + ri + '" data-c="' + ci + '">' + esc(val) + '</td>'; }).join("") + '</tr>'; });
+  return h + '</table></div>';
+}
+function roTables(ts, live){ return '<div class="ro-tables">' + ts.map(function(t){ return roTable(t, live); }).join("") + '</div>'; }
+
+// Inputs grow with what is typed, so long values stay readable.
+function wch(v, min){ return ' style="width:' + Math.max(min, String(v).length + 2) + 'ch"'; }
+function gridHtml(ans){
+  var h = '<div class="designer">';
+  ans.tables.forEach(function(t, ti){
+    h += '<div class="tcard" data-v="' + addView(t) + '"><div class="thead">';
+    h += '<input class="tname-in" data-k="name" data-t="' + ti + '" value="' + esc(t.name) + '" placeholder="table name" aria-label="Table name">';
+    h += '<button class="x" data-act="deltable" data-t="' + ti + '" title="Delete this table">✕ table</button>';
+    h += '</div><table class="g"><tr>';
+    t.cols.forEach(function(c, ci){
+      h += '<th><div class="colx"><input data-k="col" data-t="' + ti + '" data-c="' + ci + '" value="' + esc(c) + '"' + wch(c, 10) + ' placeholder="column" aria-label="Column name"><button class="x" data-act="delcol" data-t="' + ti + '" data-c="' + ci + '" title="Delete this column">✕</button></div></th>';
+    });
+    h += '<th class="side"><button class="add" style="margin:0" data-act="addcol" data-t="' + ti + '">+ column</button></th></tr>';
+    t.rows.forEach(function(r, ri){
+      h += '<tr>';
+      r.forEach(function(v, ci){
+        h += '<td data-r="' + ri + '" data-c="' + ci + '"><input data-k="cell" data-t="' + ti + '" data-r="' + ri + '" data-c="' + ci + '" value="' + esc(v) + '"' + wch(v, 12) + ' aria-label="' + esc((t.cols[ci] || "cell") + ", row " + (ri + 1)) + '"></td>';
+      });
+      if (t.rows.length > 1) h += '<td class="side"><button class="x" data-act="delrow" data-t="' + ti + '" data-r="' + ri + '" title="Delete this row">✕</button></td>';
+      h += '</tr>';
+    });
+    h += '</table><button class="add" data-act="addrow" data-t="' + ti + '">+ row</button></div>';
+  });
+  return h + '<button class="add big" data-act="addtable">+ table</button></div>';
+}
+function rulesHtml(){
+  return '<div class="rules" id="rules"></div>';
+}
+function renderRules(){
+  var box = $("rules"); if (!box) return;
+  box.innerHTML = '<h4>The page checks</h4><ul>' + rules(W().tables).map(function(r){ return '<li class="' + (r.pass ? "ok" : "") + '" data-rule="' + r.key + '">' + r.label + '</li>'; }).join("") + '</ul>';
+}
+
+function storyHtml(ans){
+  var h = '<div class="appline"><label for="app-name">Your app in one line <span class="opt-tag">(optional)</span></label><input id="app-name" class="appname" data-k="app" value="' + esc(ans.app || "") + '" placeholder="e.g. An app where students book a tutor for an hour"></div>';
+  h += '<h4>Your story</h4>';
+  for (var i = 0; i < NSTEPS; i++) {
+    h += '<div class="steprow"><span class="stepn">' + (i + 1) + '</span><textarea class="step" rows="2" data-k="step" data-i="' + i + '" aria-label="Step ' + (i + 1) + '"' +
+      (i === 0 ? ' placeholder="Who does what, and when?"' : i >= 5 ? ' placeholder="(optional)"' : "") + '>' + esc((ans.steps || [])[i] || "") + '</textarea></div>';
+  }
+  return h;
+}
+function myStoryPanel(){
+  var st = myStory(), steps = (st.steps || []).filter(function(s){ return String(s || "").trim(); });
+  var h = '<h3>Your story</h3>';
+  if (norm(st.app)) h += '<p class="app">' + esc(st.app) + '</p>';
+  if (!steps.length) return h + '<p class="dim">Your story is empty. Write it in task 1 first: the tables come from it.</p>';
+  return h + '<ol>' + steps.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join("") + '</ol>';
+}
+
+function confirmHtml(les, ans){
+  var h = '';
+  if (les.link) h += '<p style="margin:0 0 12px"><a class="btn primary" href="' + les.link + '" target="_blank" rel="noopener">Open drawDB ↗</a></p>';
+  h += '<h4>' + esc(les.optsTitle) + '</h4>';
+  if (les.honest) h += '<p class="honest">' + les.honest + '</p>';
+  h += '<div class="opts">';
+  les.items.forEach(function(it, i){
+    if (les.box === i) {
+      h += '<div class="swapbox"><label class="lbl" for="swap-text">Steps that did not land on a row</label>' +
+        '<textarea id="swap-text" class="swap" rows="3" data-k="swaptext" placeholder="Step 4: the rating has no row.">' + esc(ans.text || "") + '</textarea>' +
+        '<label class="opt' + (ans.landed ? " on" : "") + '"><input type="checkbox" data-act="landed"' + (ans.landed ? " checked" : "") + '><span>Every step landed on a row: nothing to write.</span></label></div>';
+    }
+    var on = !!(ans.ticks || [])[i];
+    h += '<label class="opt' + (on ? " on" : "") + '"><input type="checkbox" data-act="tick" data-i="' + i + '"' + (on ? " checked" : "") + '><span>' + it + '</span></label>';
+  });
+  h += '</div>';
+  var ts = myTables();
+  h += '<h4 style="margin-top:18px">Your tables</h4>';
+  h += ts.length ? roTables(ts, true) : '<p class="dimp">Your tables are empty. Make them in task 2 first.</p>';
+  return h;
+}
+
+function solutionHtml(les){
+  var h = '<div class="solbox"><h4>Solution: type it in yourself (paste is off)</h4>';
+  if (les.solTitle) h += '<p>' + esc(les.solTitle) + '</p>';
+  return h + roTables(les.solution.tables, false) + '</div>';
+}
+
+var FOLLOW_TIP = '<span class="dim">Click a yellow cell: the row it points at lights up.</span>';
+function renderWork(){
+  var les = L(), ans = W(), h = "";
+  VIEW = [];
+  if (les.kind === "story") h = storyHtml(ans);
+  else {
+    h = '<div class="follow" id="follow">' + FOLLOW_TIP + '</div>';
+    if (S.sol[S.i] && !S.done[S.i] && les.solution && les.solution.tables) h += solutionHtml(les);
+    if (les.kind === "design") h += rulesHtml() + gridHtml(ans);
+    else h += confirmHtml(les, ans);
+  }
+  $("ws").innerHTML = h;
+  renderRules();
+  decorate();
+}
+
+// Colour every pointer column, and light up the row the chosen cell points at.
+function decorate(){
+  var cards = $("ws").querySelectorAll(".tcard[data-v]");
+  var cellAt = function(card, r, c){ var tr = card.querySelectorAll("table.g tr")[r + 1]; return tr ? tr.querySelectorAll("td:not(.side)")[c] : null; };
+  Array.prototype.forEach.call(cards, function(card){
+    var vi = Number(card.dataset.v), t = VIEW[vi], trs = card.querySelectorAll("table.g tr"), ths = trs[0].querySelectorAll("th:not(.side)");
+    t.cols.forEach(function(c, ci){
+      var on = isPointer(t, vi, ci, VIEW);
+      if (ths[ci]) ths[ci].classList.toggle("ptr", on);
+      for (var r = 1; r < trs.length; r++) { var td = trs[r].querySelectorAll("td:not(.side)")[ci]; if (td) { td.classList.toggle("ptr", on); td.classList.remove("broken", "from"); } }
+    });
+    for (var r = 1; r < trs.length; r++) trs[r].classList.remove("hit");
+  });
+  var f = UI.follow, out = FOLLOW_TIP;
+  if (f && VIEW[f.v] && VIEW[f.v].rows[f.r] && isPointer(VIEW[f.v], f.v, f.c, VIEW)) {
+    var t = VIEW[f.v], col = t.cols[f.c], val = t.rows[f.r][f.c], tg = targetOf(col, VIEW), tt = VIEW[tg];
+    var from = cellAt($("ws").querySelector('.tcard[data-v="' + f.v + '"]'), f.r, f.c);
+    if (alnum(val)) {
+      var hit = rowById(tt, tg, VIEW, val), card = $("ws").querySelector('.tcard[data-v="' + tg + '"]');
+      if (hit >= 0) {
+        if (card) card.querySelectorAll("table.g tr")[hit + 1].classList.add("hit");
+        if (from) from.classList.add("from");
+        out = '<span class="lead">' + esc(col) + ' ' + esc(val) + ' →</span> <code>' + esc(tt.name) + '</code>, the row with id ' + esc(val) + ': <b>' + esc(rowLabel(tt, tg, VIEW, hit)) + '</b>';
+      } else {
+        if (from) from.classList.add("broken");
+        out = '<span class="broken">' + esc(col) + ' ' + esc(val) + ' → there is no row with id ' + esc(val) + ' in ' + esc(tt.name) + '.</span>';
+      }
+    } else out = '<span class="dim">' + esc(col) + ' is empty here: it points at nothing yet.</span>';
+  }
+  var box = $("follow"); if (box) box.innerHTML = out;
+}
+function followCell(td){
+  var card = td.closest(".tcard[data-v]"); if (!card || td.dataset.r === undefined) return;
+  UI.follow = { v: Number(card.dataset.v), r: Number(td.dataset.r), c: Number(td.dataset.c) };
+  decorate();
+}
+
+$("ws").addEventListener("input", function(e){
+  var el = e.target, k = el.dataset.k; if (!k) return;
+  var ans = W();
+  if (k === "step") { ans.steps[Number(el.dataset.i)] = el.value; save(); return; }
+  if (k === "app") { ans.app = el.value; save(); return; }
+  if (k === "swaptext") { ans.text = el.value; save(); return; }
+  var t = ans.tables[Number(el.dataset.t)];
+  if (k === "name") t.name = el.value;
+  else if (k === "col") t.cols[Number(el.dataset.c)] = el.value;
+  else if (k === "cell") t.rows[Number(el.dataset.r)][Number(el.dataset.c)] = el.value;
+  if (k !== "name") el.style.width = Math.max(k === "col" ? 10 : 12, el.value.length + 2) + "ch";
+  save(); renderRules(); decorate();
+});
+$("ws").addEventListener("focusin", function(e){ var td = e.target.closest("td[data-r]"); if (td) followCell(td); });
+$("ws").addEventListener("change", function(e){
+  var el = e.target, ans = W();
+  if (el.dataset.act === "tick") { ans.ticks[Number(el.dataset.i)] = el.checked; save(); renderWork(); }
+  else if (el.dataset.act === "landed") { ans.landed = el.checked; save(); renderWork(); }
+});
+$("ws").addEventListener("click", function(e){
+  var td = e.target.closest("td.ro[data-r]"); if (td) { followCell(td); return; }
+  var b = e.target.closest("button[data-act]"); if (!b) return;
+  var a = b.dataset.act, ans = W(), t = ans.tables ? ans.tables[Number(b.dataset.t)] : null;
+  if (a === "addtable") ans.tables.push(TB("", ["id", ""], [blank(2)]));
+  else if (a === "deltable") ans.tables.splice(Number(b.dataset.t), 1);
+  else if (a === "addcol") { t.cols.push(""); t.rows.forEach(function(r){ r.push(""); }); }
+  else if (a === "delcol") { var c = Number(b.dataset.c); if (t.cols.length > 1) { t.cols.splice(c, 1); t.rows.forEach(function(r){ r.splice(c, 1); }); } }
+  else if (a === "addrow") t.rows.push(blank(t.cols.length));
+  else if (a === "delrow") { if (t.rows.length > 1) t.rows.splice(Number(b.dataset.r), 1); }
+  UI.follow = null;
+  save(); renderWork();
+  if (a === "addtable") { var ins = $("ws").querySelectorAll(".tname-in"); if (ins.length) ins[ins.length - 1].focus(); }
+});
+// While the solution is open, they type it: no pasting.
+$("ws").addEventListener("paste", function(e){
+  if (S.sol[S.i] && !S.done[S.i]) { e.preventDefault(); UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); }
+});
+
+/* ====================================================================
+   Checking
+   ==================================================================== */
+
+function checkNow(){
+  var idx = S.i, les = LESSONS[idx], ans = W(), msg = les.check(ans), key = JSON.stringify(ans), hadSol = !!S.sol[idx];
+  S.checked[idx] = true; S.msg[idx] = msg; UI.note = "";
+  if (!msg) {
+    if (!S.done[idx]) { S.done[idx] = true; if (S.sol[idx]) S.usedSol[idx] = true; }
+    S.sol[idx] = false;
+  } else if (S.lastTried[idx] !== key && key !== JSON.stringify(les.start())) {
+    S.lastTried[idx] = key; S.tries[idx] = (S.tries[idx] || 0) + 1;
+  }
+  save(); renderStrip(); renderDots();
+  // What they type in keeps its focus; the rest redraws.
+  if (les.kind === "confirm" || PREP || hadSol !== !!S.sol[idx]) renderWork();
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), shown = S.hints[S.i] || 0, tries = S.tries[S.i] || 0, len = les.hints.length;
+  var nextAt = len === 0 ? 3 * TRIES_PER_HINT : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function renderStrip(){
+  var les = L(), done = !!S.done[S.i], msg = S.msg[S.i], r = "";
+  $("t-kicker").textContent = "Lesson D4 · Task " + (S.i + 1) + " of " + N + (les.extra ? " · Extra" : "") + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: sample") : "");
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? "The solution is above your work. Type it in, then <b>Check</b>." : les.sub;
+  if (!S.checked[S.i] && !done) r = '<span class="dim">' + (les.kind === "confirm" ? "Tick the lines, then press <b>Check</b>." : "Fill it in, then press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).") + '</span>';
+  else if (S.checked[S.i] && msg) r = '<span class="no">✗ Not yet.</span> ' + msg;
+  else if (done) r = '<span class="yes">✓ Done.</span> ' + (les.after || "");
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show sample" : "Show task", "btn", togglePrep));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    return renderStripNote();
+  }
+  act.appendChild(button("Check", "btn primary", checkNow));
+  if (done && !msg) { if (S.i < N - 1) act.appendChild(button("Next task →", "btn", function(){ gotoTask(S.i + 1); })); }
+  else if (les.kind !== "confirm" && !S.sol[S.i] && !(les.noSol && hs.solutionNext)) act.appendChild(button(hs.solutionNext ? "Show solution" : (hs.len ? "Stuck? Hint" : "Stuck?"), "btn", stuck));
+  renderStripNote();
+}
+function renderStripNote(){ var n = $("t-note"); n.classList.toggle("hidden", !UI.note); n.textContent = UI.note; }
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: change something and press Check. Each different try counts. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+// ?prep only: flip between the task's start and its sample.
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  S.work[S.i] = UI.prepView === "task" ? L().start() : clone(L().solution);
+  checkNow();
+}
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); UI.note = ""; UI.follow = null;
+  if (PREP) { UI.prepView = "solution"; S.work[S.i] = clone(L().solution); renderAll(); checkNow(); return; }
+  save(); renderAll();
+}
+function leftPanel(){ var les = L(); return les.story || les.left || (S.i === 0 ? HOWTO : myStoryPanel()); }
+function renderAll(){
+  renderDots(); renderStrip();
+  $("story").innerHTML = leftPanel();
+  renderWork();
+}
+$("l-again").onclick = function(){
+  if (!confirm("Start this task again? What you wrote in this task is lost.")) return;
+  S.work[S.i] = L().start(); S.checked[S.i] = false; S.msg[S.i] = ""; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your work and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); checkNow(); }
+});
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); }
+function renderPrimer(){
+  var Pr = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + LESSON + ' · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(Pr.title) + '</h2>' +
+    '<div class="art">' + ART[Pr.art]() + '</div>' +
+    '<p>' + Pr.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(Pr.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook: lets an automated check run an answer against a task without the UI.
+window.__D4 = { LESSONS: LESSONS, PRIMER: PRIMER, ART: ART, PREP: PREP, gotoTask: gotoTask, state: function(){ return S; },
+  check: function(i, ans){ return LESSONS[i].check(ans); }, start: function(i){ return LESSONS[i].start(); }, solution: function(i){ return clone(LESSONS[i].solution); },
+  rules: rules, targetOf: targetOf, hasFact: hasFact, follow: function(){ return $("follow") ? $("follow").textContent : ""; } };
+
+document.title = LESSON;
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
