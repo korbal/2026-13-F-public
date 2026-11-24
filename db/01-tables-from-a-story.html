@@ -220,8 +220,9 @@ function GRID(x, y, name, cols, rows, o){
   rows.forEach(function(r, i){
     var yy = y + 22 + i * 22; cx = x;
     r.forEach(function(v, j){
-      var on = hl.indexOf(i + "," + j) >= 0 || o.hlRow === i, empty = v === "";
-      s += R(cx, yy, ws[j], 22, { rx: 0, fill: on ? "#fef3c7" : empty ? "#f3f4f6" : "#fff", stroke: "#d6d9de" }) + T(cx + 7, yy + 15, esc(v), { size: 12, bold: on, fill: o.dimRows && o.dimRows.indexOf(i) >= 0 ? "#9aa0a6" : INK });
+      var key = i + "," + j, f = o.fills && o.fills[key], on = hl.indexOf(key) >= 0 || o.hlRow === i, col = o.hlCol === j, empty = v === "";
+      var fill = f || (on ? "#fef3c7" : col ? "#dbeafe" : empty ? "#f3f4f6" : "#fff");
+      s += R(cx, yy, ws[j], 22, { rx: 0, fill: fill, stroke: "#d6d9de" }) + T(cx + 7, yy + 15, esc(v), { size: 12, bold: on || !!f || (o.hlRow === i && col), fill: INK });
       cx += ws[j];
     });
   });
@@ -229,118 +230,106 @@ function GRID(x, y, name, cols, rows, o){
   return s;
 }
 
+// Normal text in coloured pieces: parts = [[text, colour, bold], ...]
+function TP(x, y, parts, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" xml:space="preserve">' + parts.map(function(p){ return '<tspan fill="' + (p[1] || INK) + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+var BLUE = "#dbeafe", YEL = "#fef3c7", PUR = "#ede9fe";
+
 var ART = {
   wolt: function(){
     var s = "";
-    s += R(8, 8, 132, 196, { rx: 18, fill: "#fff", stroke: "#cfd6df", sw: 2 }) + R(52, 16, 44, 6, { rx: 3, fill: "#e5e7eb", stroke: "#e5e7eb" });
+    s += R(8, 8, 132, 190, { rx: 18, fill: "#fff", stroke: "#cfd6df", sw: 2 }) + R(52, 16, 44, 6, { rx: 3, fill: "#e5e7eb", stroke: "#e5e7eb" });
     s += T(74, 46, "Szelet", { anchor: "middle", bold: true, size: 14 });
     s += R(20, 58, 108, 34, { rx: 8, fill: "#fffaf0", stroke: "#f0a500", sw: 2 }) + T(74, 80, "2 × Sonkás", { anchor: "middle", bold: true, size: 12 });
     s += R(20, 104, 108, 30, { rx: 15, fill: A, stroke: A }) + T(74, 123, "Order", { anchor: "middle", bold: true, size: 13, fill: "#fff" });
-    s += T(74, 160, "✓ Order placed", { anchor: "middle", bold: true, size: 12, fill: GRN });
-    s += T(74, 180, "on the way…", { anchor: "middle", size: 12, fill: MUT });
-    s += ARROW(146, 112, 182, 112, A) + T(164, 100, "1 row", { anchor: "middle", bold: true, size: 11, fill: A });
-    var rows = [["Kiss Dóra", "Margherita", "1", "19:12", "delivered"], ["you", "Sonkás", "2", "19:40", "on the way"], ["Nagy Ádám", "Négy sajtos", "1", "19:41", "new"]];
-    s += GRID(190, 58, "orders", ["customer", "pizza", "quantity", "time", "status"], rows, { hlRow: 1, dimRows: [0, 2] });
-    s += T(190, 168, "… and a few million more rows", { size: 12, fill: MUT });
-    s += PILL(8, 222, 226, "Concept v2, Monday: tables + rows", "#eef3fc", "#c7d2fe", A, 11);
-    s += PILL(242, 222, 156, "Defence: database 5 pts", "#eef3fc", "#c7d2fe", A, 11);
-    s += PILL(406, 222, 226, "May: the backend reads one, 15 pts", "#eef3fc", "#c7d2fe", A, 11);
-    return svg(256, "A phone orders 2 Sonkás pizzas. The app writes one new row into the orders table: you, Sonkás, 2, 19:40, on the way, between other customers' rows. Below: concept v2 on Monday needs tables and rows, the database is 5 points at the defence, and in May the backend task reads a database for 15 points", s);
+    s += T(74, 162, "✓ Order placed", { anchor: "middle", bold: true, size: 12, fill: GRN });
+    s += ARROW(150, 119, 200, 119, A) + T(175, 108, "1 new row", { anchor: "middle", bold: true, size: 11, fill: A });
+    s += GRID(210, 86, "orders", ["customer", "pizza", "quantity", "time"], [["Kiss Dóra", "Margherita", "1", "19:12"], ["you", "Sonkás", "2", "19:40"]], { hlRow: 1 });
+    s += T(210, 170, "Every order anybody places is one more row.", { size: 12.5, fill: INK });
+    return svg(206, "You press Order on a phone: 2 Sonkás. The app writes one new row into the orders table: you, Sonkás, 2, 19:40, under the row of an earlier order. Every order is one more row", s);
   },
   grid: function(){
-    var rows = [["Margherita", "32", "2490"], ["Sonkás", "32", "2990"], ["Négy sajtos", "32", "3290"]], s = "";
-    s += GRID(16, 40, "pizzas", ["name", "size", "price"], rows, { hl: ["1,2"] });
-    var w = gridW(["name", "size", "price"], rows), x = 16 + w;
-    s += ARROW(x + 34, 51, x + 6, 51, A) + T(x + 40, 55, "one column = one fact (the price)", { bold: true, size: 12, fill: A });
-    s += '<line x1="' + (x + 8) + '" y1="95" x2="' + (x + 30) + '" y2="95" stroke="' + AMB + '" stroke-width="2"/>' + T(x + 40, 99, "one row = one real thing (the Sonkás)", { bold: true, size: 12, fill: AMB });
-    s += T(16, 150, "2990: which pizza? Sonkás. Which fact? Its price.", { size: 12.5 });
-    s += T(16, 180, "the same list, as you know it from JavaScript", { bold: true, size: 12, fill: MUT });
-    s += R(8, 188, 624, 96, { fill: "#15181f", stroke: "#15181f" });
-    ['[', '  { name: "Margherita",  size: 32, price: 2490 },', '  { name: "Sonkás",      size: 32, price: 2990 },', '  { name: "Négy sajtos", size: 32, price: 3290 }', ']'].forEach(function(l, i){
-      s += T(20, 206 + i * 17, esc(l), { mono: true, size: 12, fill: i === 2 ? "#fde68a" : "#e5e7eb" });
-    });
-    s += T(620, 240, "each object = a row", { anchor: "end", bold: true, size: 12, fill: "#93c5fd" }) + T(620, 258, "each key = a column", { anchor: "end", bold: true, size: 12, fill: "#93c5fd" });
-    return svg(292, "The pizzas table: columns name, size and price, three rows, one per pizza. One column is one fact, one row is one real thing. The cell 2990 is the price of the Sonkás. Below, the same data as a JavaScript list of objects: each object is a row, each key is a column", s);
+    var cols = ["name", "size", "price"], rows = [["Margherita", "32", "2490"], ["Sonkás", "32", "2990"], ["Négy sajtos", "32", "3290"]];
+    var ws = colWs(cols, rows), x0 = 16, y0 = 34, s = "";
+    s += GRID(x0, y0, "pizzas", cols, rows, { hlRow: 1, hlCol: 2 });
+    var right = x0 + ws[0] + ws[1] + ws[2], rowY = y0 + 22 + 22 + 11, priceX = x0 + ws[0] + ws[1] + ws[2] / 2, bottom = y0 + 22 + 66;
+    s += '<line x1="' + (right + 8) + '" y1="' + rowY + '" x2="' + (right + 40) + '" y2="' + rowY + '" stroke="' + AMB + '" stroke-width="2"/>';
+    s += T(right + 48, rowY + 5, "a row = one pizza (the Sonkás)", { bold: true, size: 13, fill: AMB });
+    s += ARROW(priceX, bottom + 30, priceX, bottom + 6, A) + T(priceX - 20, bottom + 48, "a column = one fact (the price)", { bold: true, size: 13, fill: A });
+    return svg(190, "The pizzas table with three rows. The Sonkás row is marked: a row is one pizza. The price column is marked: a column is one fact. Where they meet: 2990, the price of the Sonkás", s);
   },
   mark: function(){
-    var s = R(8, 6, 624, 44, { rx: 6, fill: "#fffdf5", stroke: "#e8dfc0" });
-    s += T(18, 24, "19:40. Tóth Bence orders 2 Sonkás (32 cm, 2 990 Ft). Phone +36 30 555 1234,", { size: 12.5 });
-    s += T(18, 42, "Kossuth Lajos u. 12. He pays cash. The kitchen starts it.", { size: 12.5 });
-    s += T(16, 74, "a thing → a table", { bold: true, size: 12, fill: A }) + T(226, 74, "a fact → a column", { bold: true, size: 12, fill: AMB }) + T(470, 74, "never needed → nothing", { bold: true, size: 12, fill: MUT });
-    s += PILL(16, 84, 96, "Tóth Bence", "#dbeafe", A, A) + PILL(118, 84, 74, "Sonkás", "#dbeafe", A, A);
-    s += PILL(226, 84, 60, "phone", "#fef3c7", AMB, AMB) + PILL(292, 84, 70, "address", "#fef3c7", AMB, AMB) + PILL(368, 84, 52, "32", "#fef3c7", AMB, AMB) + PILL(226, 116, 60, "2990", "#fef3c7", AMB, AMB);
-    s += PILL(470, 84, 100, "the kitchen", "#f3f4f6", "#cfd6df", MUT);
-    s += PILL(292, 116, 128, "2 · cash → slide 4", "#f5f3ff", "#7c3aed", "#6d28d9");
-    s += GRID(16, 176, "customers", ["name", "phone", "address"], [["", "", ""]]);
-    s += GRID(330, 176, "pizzas", ["name", "size", "price"], [["", "", ""]]);
-    return svg(228, "The story, marked. Things become tables: Tóth Bence and Sonkás. Facts become columns: phone, address, 32, 2990. The kitchen is never needed, so it is nothing. 2 and cash wait for slide 4. Below, two empty tables: customers with name, phone, address, and pizzas with name, size, price", s);
+    var s = R(8, 6, 624, 54, { rx: 6, fill: "#fffdf5", stroke: "#e8dfc0" });
+    s += TP(18, 28, [["Tóth Bence", A, 1], [" orders a "], ["Sonkás", A, 1], [" ("], ["32 cm", AMB, 1], [", "], ["2 990 Ft", AMB, 1], [")."]], 13.5);
+    s += TP(18, 50, [["His phone is "], ["+36 30 555 1234", AMB, 1], [", his address is "], ["Kossuth Lajos u. 12.", AMB, 1]], 13.5);
+    s += R(16, 76, 14, 14, { rx: 3, fill: BLUE, stroke: A }) + T(36, 88, "a thing → its own table", { bold: true, size: 12.5, fill: A });
+    s += R(226, 76, 14, 14, { rx: 3, fill: YEL, stroke: AMB }) + T(246, 88, "a fact about it → a column", { bold: true, size: 12.5, fill: AMB });
+    s += GRID(16, 130, "customers", ["name", "phone", "address"], [["Tóth Bence", "+36 30 555 1234", "Kossuth Lajos u. 12."]], { fills: { "0,0": BLUE, "0,1": YEL, "0,2": YEL } });
+    s += GRID(420, 130, "pizzas", ["name", "size", "price"], [["Sonkás", "32", "2990"]], { fills: { "0,0": BLUE, "0,1": YEL, "0,2": YEL } });
+    return svg(186, "A story sentence with marked words. Tóth Bence and Sonkás are things: each gets its own table. His phone, his address, 32 cm and 2990 are facts: they become columns. Below, the customers table with Tóth Bence's row and the pizzas table with the Sonkás row, coloured the same way", s);
   },
   happens: function(){
-    var cols = ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"];
-    var rows = [["Tóth Bence", "Sonkás", "2", "19:40", "cash", "", "new"], ["Tóth Bence", "Sonkás", "2", "19:40", "cash", "Varga Zoltán", "on the way"], ["Tóth Bence", "Sonkás", "2", "19:40", "cash", "Varga Zoltán", "delivered"]];
-    var s = T(16, 18, "one order, one row, three moments", { bold: true, size: 13, fill: A });
-    s += GRID(62, 50, "orders", cols, rows.slice(0, 1), {});
-    s += GRID(62, 120, "", cols, rows.slice(1, 2), { hl: ["0,5", "0,6"] });
-    s += GRID(62, 190, "", cols, rows.slice(2, 3), { hl: ["0,6"] });
-    s += T(10, 87, "19:40", { bold: true, size: 13 }) + T(10, 157, "20:05", { bold: true, size: 13 }) + T(10, 227, "20:20", { bold: true, size: 13 });
-    s += ARROW(320, 98, 320, 116) + ARROW(320, 168, 320, 186);
-    s += T(16, 262, "Bence and the Sonkás were there yesterday too. The new thing is the order.", { bold: true, size: 12.5, fill: INK });
-    return svg(272, "The same row of the orders table at three moments. 19:40: Tóth Bence, Sonkás, 2, 19:40, cash, no courier yet, status new. 20:05: the courier Varga Zoltán is filled in and the status is on the way. 20:20: the status is delivered. It is one row that changes, not three rows", s);
+    var cols = ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"], row = ["Tóth Bence", "Sonkás", "2", "19:40", "cash", "Varga Zoltán", "delivered"];
+    var ws = colWs(cols, [row]), x = 16, xs = [];
+    ws.forEach(function(w){ xs.push(x); x += w; });
+    var y = 112, s = "";
+    var box = function(x1, x2, time, txt, fill, stroke){
+      return R(x1 + 2, 10, x2 - x1 - 4, 48, { rx: 8, fill: fill, stroke: stroke, sw: 2 }) + T((x1 + x2) / 2, 30, time, { anchor: "middle", bold: true, size: 13 }) + T((x1 + x2) / 2, 48, esc(txt), { anchor: "middle", size: 11.5 }) + ARROW((x1 + x2) / 2, 60, (x1 + x2) / 2, y - 4, "#9aa0a6");
+    };
+    s += box(xs[0], xs[5], "19:40", "Bence orders 2 Sonkás and will pay cash", BLUE, A);
+    s += box(xs[5], xs[6], "20:05", "Zoltán takes it", PUR, "#7c3aed");
+    s += box(xs[6], x, "20:20", "delivered", YEL, AMB);
+    s += GRID(16, y, "", cols, [row], { fills: { "0,0": BLUE, "0,1": BLUE, "0,2": BLUE, "0,3": BLUE, "0,4": BLUE, "0,5": PUR, "0,6": YEL } });
+    s += T(16, 178, "One order = one row. Later steps fill in more cells of the same row.", { bold: true, size: 13, fill: INK });
+    return svg(190, "Three moments of the story and one row of the orders table. At 19:40 Bence orders 2 Sonkás and will pay cash: that fills customer, pizza, quantity, ordered_at and paid_with. At 20:05 Zoltán takes it: that fills courier. At 20:20 it is delivered: that fills status. One order is one row", s);
   },
   nottable: function(){
-    var s = "";
-    s += T(16, 18, "a screen", { bold: true, size: 13, fill: RED });
-    s += GRID(16, 44, "homepage", ["title", "banner"], [["Szelet", "pizza.jpg"]], { bad: true, cross: true });
-    s += ARROW(80, 96, 80, 124, MUT) + T(16, 144, "It shows rows from", { size: 12 }) + T(16, 160, "other tables.", { size: 12 }) + T(16, 180, "Not data.", { bold: true, size: 12, fill: GRN });
-    s += T(180, 18, "a fact", { bold: true, size: 13, fill: RED });
-    s += GRID(180, 44, "phones", ["number"], [["+36 30 555 1234"]], { bad: true, cross: true });
-    s += ARROW(240, 96, 240, 124, MUT);
-    s += GRID(180, 148, "customers", ["name", "phone"], [["Tóth Bence", "+36 30 555 1234"]], { hl: ["0,1"] });
-    s += T(392, 18, "same columns", { bold: true, size: 13, fill: RED });
-    s += GRID(392, 44, "admins", ["name", "email"], [["Kiss Réka", "reka@szelet.hu"]], { bad: true });
-    s += GRID(392, 108, "cooks", ["name", "email"], [["Papp Ádám", "adam@szelet.hu"]], { bad: true });
-    s += ARROW(460, 156, 460, 176, MUT);
-    s += GRID(392, 196, "staff", ["name", "email", "job"], [["Kiss Réka", "reka@szelet.hu", "admin"], ["Papp Ádám", "adam@szelet.hu", "cook"]], { hl: ["0,2", "1,2"] });
-    return svg(270, "Three things that look like tables and are not. homepage is a screen: it shows rows from other tables. phones holds a fact: the phone is a column of customers. admins and cooks have the same columns: they are one staff table with a job column", s);
+    var s = "", fixX = 330;
+    var band = function(y, label){ return (y > 10 ? '<line x1="8" y1="' + (y - 10) + '" x2="632" y2="' + (y - 10) + '" stroke="' + LINE + '"/>' : "") + T(8, y + 6, label, { bold: true, size: 13, fill: RED }); };
+    s += band(10, "A screen is not a table");
+    s += GRID(8, 42, "homepage", ["title", "banner"], [["Szelet", "pizza.jpg"]], { bad: true });
+    s += ARROW(250, 64, 310, 64, MUT);
+    s += T(fixX, 60, "A screen shows rows from your tables.", { size: 13 }) + T(fixX, 80, "It is not one.", { bold: true, size: 13, fill: GRN });
+    s += band(110, "A fact is not a table");
+    s += GRID(8, 142, "phones", ["number"], [["+36 30 555 1234"]], { bad: true });
+    s += ARROW(250, 164, 310, 164, MUT);
+    s += GRID(fixX, 142, "customers", ["name", "phone"], [["Tóth Bence", "+36 30 555 1234"]], { hlCol: 1 });
+    s += band(210, "Same columns: one table");
+    s += GRID(8, 242, "admins", ["name", "email"], [["Kiss Réka", "reka@szelet.hu"]], { bad: true });
+    s += GRID(8, 304, "cooks", ["name", "email"], [["Papp Ádám", "adam@szelet.hu"]], { bad: true });
+    s += ARROW(250, 286, 310, 286, MUT);
+    s += GRID(fixX, 264, "staff", ["name", "email", "job"], [["Kiss Réka", "reka@szelet.hu", "admin"], ["Papp Ádám", "adam@szelet.hu", "cook"]], { hlCol: 2 });
+    return svg(354, "Three things that look like tables and are not. A homepage table: a screen shows rows from your tables, it is not one. A phones table: the phone is a column of customers. Two tables admins and cooks with the same columns: one staff table with a job column", s);
   },
   replay: function(){
-    var steps = [["Read the story", 110], ["Mark things and facts", 160], ["Write one row each", 146], ["Replay ★", 82, 1], ["Add what's missing", 140]], s = "", x = 4;
-    steps.forEach(function(st, i){
-      var nw = st[2];
-      s += R(x, 8, st[1] - 14, 30, { rx: 15, fill: nw ? "#dcfce7" : "#eef3fc", stroke: nw ? GRN : "#c7d2fe", sw: 2 }) + T(x + (st[1] - 14) / 2, 28, esc(st[0]), { anchor: "middle", bold: true, size: 11.5, fill: nw ? GRN : A });
-      if (i < steps.length - 1) s += ARROW(x + st[1] - 13, 23, x + st[1] - 2, 23);
-      x += st[1];
-    });
-    s += '<path d="M 570 39 V 50 H 40 V 45" fill="none" stroke="#9aa0a6" stroke-width="2"/><path d="M 40 39 L 35 47 L 45 47 z" fill="#9aa0a6"/>';
-    var rows = [["Bence orders 2 Sonkás at 19:40", "✓", "a new row in orders", GRN], ["his phone and address", "✓", "his row in customers", GRN], ["Varga Zoltán takes it at 20:05", "✗", "no column for when: add taken_at, or skip it", RED], ["delivered at 20:20", "✓", "status, in the same row", GRN]];
-    s += R(8, 64, 624, 26, { rx: 0, fill: "#f9fafb", stroke: LINE }) + T(18, 81, "Story step", { bold: true, size: 12 }) + T(238, 81, "Where is it written?", { bold: true, size: 12 });
+    var rows = [["Bence orders 2 Sonkás at 19:40", "✓", "a new row in orders", GRN], ["his phone and address", "✓", "his row in customers", GRN], ["Zoltán takes it at 20:05", "✓", "courier, in the order's row", GRN], ["delivered at 20:20", "✓", "status, in the order's row", GRN], ["the owner asks: when did Zoltán leave?", "✗", "no column says that: add one, or skip it", RED]];
+    var s = R(8, 8, 624, 28, { rx: 0, fill: "#f9fafb", stroke: LINE }) + T(18, 27, "Story step", { bold: true, size: 13 }) + T(300, 27, "Point at it", { bold: true, size: 13 });
     rows.forEach(function(r, i){
-      var y = 90 + i * 30;
-      s += R(8, y, 624, 30, { rx: 0, fill: "#fff", stroke: LINE }) + T(18, y + 19, esc(r[0]), { size: 12.5 }) + T(238, y + 19, r[1], { bold: true, size: 14, fill: r[3] }) + T(256, y + 19, esc(r[2]), { size: 12.5, fill: r[1] === "✗" ? RED : INK });
+      var y = 36 + i * 32;
+      s += R(8, y, 624, 32, { rx: 0, fill: r[1] === "✗" ? "#fff5f5" : "#fff", stroke: LINE }) + T(18, y + 21, esc(r[0]), { size: 13 }) + T(300, y + 21, r[1], { bold: true, size: 15, fill: r[3] }) + T(320, y + 21, esc(r[2]), { size: 13, fill: r[1] === "✗" ? RED : INK });
     });
-    return svg(214, "The designer's loop: read the story, mark things and facts, write one row each, replay (new today), add what's missing, again. Replay table: Bence orders, a new row in orders. His phone and address, his row in customers. Varga Zoltán takes it at 20:05: no column for when, so add taken_at or decide it is not needed. Delivered at 20:20: status in the same row", s);
+    return svg(206, "Replaying the story on the tables. Step 1, Bence orders: a new row in orders. Step 2, his phone and address: his row in customers. Step 4, Zoltán takes it: courier in the order's row. Step 5, delivered: status in the order's row. A question nobody planned for, when did Zoltán leave: no column says that, so add one or decide it is not needed", s);
   }
 };
 
 var PRIMER = [
   { title: "Your Wolt order is one row", art: "wolt",
-    body: "When you order on Wolt, nothing magic happens. The app writes <b>one line into a table</b>: who, what, when, where. Wolt remembers four kinds of things: restaurants, dishes, couriers and orders. Each one is a table.<br><br>Your project needs the same. Concept v2, due <b>Monday 30 November</b>: every table, its columns, and one example row from your story. At the defence, the database is 5 points and you hand in its diagram. In May, the backend task (15 points) reads a database.",
+    body: "When you order on Wolt, nothing magic happens. The app writes <b>one line into a table</b>: who, what, how many, when. Wolt remembers four kinds of things: restaurants, dishes, couriers and orders. Each one is a table.<br><br>Every app that remembers something works like this. Today: how to find the tables in a story, before any code.",
     say: "Ask what Wolt has to remember about their last order. Write the answers on the board as they come. That list is already the orders table." },
   { title: "A table holds one kind of thing", art: "grid",
-    body: "<b>One row = one real thing.</b> <b>One column = one fact</b> about it. Every row has the same columns.<br><br>You know the bottom part already: a list of objects of the same shape. A table is the same thing drawn as a grid. Each object is a row, each key is a column.",
+    body: "<b>One row = one real thing.</b> <b>One column = one fact</b> about it. Every row has the same columns.<br><br>It is the same as a list of objects of the same shape, like <span class=\"mono\">{ name: \"Sonkás\", size: 32, price: 2990 }</span>: each object is a row, each key is a column.",
     say: "Point at 2990 and ask: which pizza, which fact? (Sonkás, its price.) Every cell answers \"which thing, which fact\"." },
   { title: "From the story: things and facts", art: "mark",
-    body: "Read the story and mark what the app must remember. A <b>thing</b> gets a table. A <b>fact about a thing</b> is a column. What the app never needs to look up is nothing.<br><br>The phone number is not a table: it is a fact about Bence. The kitchen is not a table: there is one kitchen, and the app never looks it up.",
-    say: "Ask where 2 and cash go. Not Bence (tomorrow he orders 1 and pays by card), not the pizza. They belong to this order. Next slide." },
+    body: "Read the story and mark what the app must remember. A <b>thing</b> gets its own table. A <b>fact about a thing</b> is a column in that thing's table.<br><br>The phone number is not a table: it is a fact about Bence. What the app never needs to look up is nothing at all: there is one kitchen, so no kitchen table.",
+    say: "Ask where \"2\" and \"cash\" go. Not with Bence (tomorrow he orders 1 and pays by card), not with the pizza. They belong to this order. Next slide." },
   { title: "What happens is a table too", art: "happens",
     body: "The new thing at 19:40 is <b>the order</b>. Something that happens and must be remembered is a thing: an order, a booking, a delivery, a lesson. It gets a table, and every time it happens, a new row.<br><br>A design with only people in it (users, admins, couriers) can't remember anything that happened. It knows who exists, not what they did.",
-    say: "The courier cell is empty at 19:40. Ask what changes in this row at 20:05 and at 20:20. (The same row gets the courier, then delivered. Not a new row.)" },
+    say: "Ask what the row looks like at 19:40. (Courier and status are still empty or new. They are filled in later, in the same row.)" },
   { title: "Not a table", art: "nottable",
     body: "Three things that look like tables and are not.<br><b>A screen</b> is not data: the homepage <i>shows</i> rows from tables. <b>A fact</b> is a column of the thing it belongs to. <b>Same columns = same kind of thing</b>: admins and cooks are both staff, so one <span class=\"mono\">staff</span> table with a <span class=\"mono\">job</span> column.",
-    say: "Ask which of their own concept tables is really a screen. (Most teams have one.)" },
+    say: "Ask for one more example of each: another screen, another fact, another pair of tables with the same columns." },
   { title: "Check it: replay the story", art: "replay",
-    body: "Don't guess if your tables are good. <b>Replay the story</b>: go one step at a time and point at the row where it is written. If you can't point, a table or a column is missing.<br><br>Then: the practice. The story is always on the left. Every task starts with <b>Predict first</b>. Press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) when you are done.",
-    say: "The ✗ is real. Let them decide: does the owner need to know when the courier left? Either answer is fine if they can say why. That is designing." }
+    body: "Don't guess if your tables are good. <b>Replay the story</b>: go one step at a time and point at the cell where it is written. If you can't point, a table or a column is missing.<br><br>Then: the practice. The story is always on the left. Every task starts with <b>Predict first</b>. Press <b>Check</b> (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) when you are done.",
+    say: "The last row is a question the story never asked. Let them decide: does the owner need it? Either answer is fine if they can say why. That is designing." }
 ];
 
 /* ====================================================================
@@ -479,7 +468,6 @@ var SZELET_SOLUTION = { tables: [
   TB("orders", ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"], [["Tóth Bence", "Sonkás", "2", "2026-11-27 19:40", "cash", "Varga Zoltán", "delivered"]])
 ] };
 var ORDER_COLS = ["customer", "pizza", "quantity", "ordered_at", "paid_with", "courier", "status"];
-var HOMEWORK = "<br><b>Homework:</b> the same for your own project. Every table, its columns, one row from your scenario, then replay it. That is section 6 of concept v2, due <b>Monday 30 November</b>.";
 
 var LESSONS = [
   { title: "The menu as a table", kind: "grid", lockNames: true, lockCols: true,
@@ -569,7 +557,7 @@ var LESSONS = [
       if (sel.length < 3) return sel.length + " of 3 found. " + (sel.indexOf(0) < 0 ? "Replay step 1: where does Bence's order go?" : sel.indexOf(1) < 0 ? "Compare the columns of the people tables." : "Is every table here data?");
       return "";
     },
-    after: "None of it looked wrong until you replayed the story. The app knew who exists, not what they did." + HOMEWORK },
+    after: "None of it looked wrong until you replayed the story. The app knew who exists, not what they did." },
 
   { title: "Extra A: next year", kind: "grid", lockNames: true, lockRows: true, extra: true,
     do: "Two columns in <code>customers</code> will be wrong in a year, and nobody will notice. Fix the table: delete what goes out of date, and keep what lets you work it out.",
