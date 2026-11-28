@@ -635,7 +635,7 @@ var NONE = function(){ return newState({ d: {} }, HOME); };
 var LESSONS = [
   { title: "Start it", kind: "paste", noTerm: true, explorer: false,
     do: P("after node server.js, will the $ come back?") + "Download <a href=\"lesson08-starter.zip\" download>lesson08-starter.zip</a> and unzip it into a folder of yours. Open the folder that has <code>server.js</code> in VS Code, open a terminal, and start it with <code>node server.js</code>. Paste what the terminal printed.",
-    sub: "<b>File → Open Folder</b>, then <b>Terminal → New Terminal</b>. Before starting: <code>ls</code> should show <code>server.js</code> and <code>node_modules/</code>.",
+    sub: "<b>File → Open Folder</b>, then <b>Terminal → New Terminal</b>. Before starting: <code>ls</code> should show <code>server.js</code> and <code>node_modules/</code>. To copy from the terminal: select, then right-click. Not Ctrl+C: that stops your server.",
     build: NONE, solve: function(){ return { answer: OK_START }; },
     hints: ["Windows' Extract All often makes a folder inside a folder. If <code>ls</code> shows <code>lesson08-starter/</code>, <code>cd</code> into it.", "In the terminal: <code>pwd</code>, <code>ls</code>. You want to see server.js in the list before you run node."],
     check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the terminal printed after <code>node server.js</code>."; if (/Listening on http:\/\/localhost:3000/.test(t)) return ""; return why(t) || "I don't see <code>Listening on http://localhost:3000</code>. Paste everything the terminal printed after <code>node server.js</code>."; },

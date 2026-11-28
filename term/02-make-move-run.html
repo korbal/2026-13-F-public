@@ -137,7 +137,7 @@ button,input,textarea{font:inherit}
       <div class="solbox hidden" id="solbox"></div>
       <div class="answer hidden" id="answer"></div>
       <div class="term" id="term"></div>
-      <div class="termbar" id="termbar"><span><b>Tab</b> finishes a name</span><span><b>↑</b> last command</span><span><b>Ctrl+C</b> stop / cancel</span><span><b>Ctrl+L</b> clear</span></div>
+      <div class="termbar" id="termbar"><span><b>Tab</b> finishes a name</span><span><b>↑</b> last command</span><span><b>Ctrl+C</b> stop / cancel</span><span><b>Select + right-click</b> copy</span><span><b>Right-click</b> paste</span><span><b>Ctrl+L</b> clear</span></div>
     </div>
   </div>
 </div>
@@ -594,7 +594,7 @@ var PRIMER = [
     body: "<span class=\"mono\">rm file</span> deletes it. There is no Recycle Bin and no undo, and the terminal doesn't ask \"are you sure?\".<br><br>So: <span class=\"mono\">ls</span> before, read the name, then <span class=\"mono\">rm</span>. Use Tab so you delete the file you meant.",
     say: "Ask who has deleted the wrong file in Explorer and got it back from the Recycle Bin. Here you can't. That's the whole slide." },
   { title: "node runs it, Ctrl+C stops it", art: "node",
-    body: "<span class=\"mono\">node hello.js</span> runs a JavaScript file. A small script prints and ends, and the <span class=\"mono\">$</span> comes back. A server keeps running: <b>no <span class=\"mono\">$</span></b>, the terminal is busy, and anything you type does nothing.<br><br><kbd>Ctrl</kbd>+<kbd>C</kbd> stops it. The file must be where you are, or node says <span class=\"mono\">Cannot find module</span>.",
+    body: "<span class=\"mono\">node hello.js</span> runs a JavaScript file. A small script prints and ends, and the <span class=\"mono\">$</span> comes back. A server keeps running: <b>no <span class=\"mono\">$</span></b>, the terminal is busy, and anything you type does nothing.<br><br><kbd>Ctrl</kbd>+<kbd>C</kbd> stops it, which is why you copy from a terminal with right-click, never Ctrl+C. The file must be where you are, or node says <span class=\"mono\">Cannot find module</span>.",
     say: "Live: start a server, type ls (nothing happens), Ctrl+C, ls again. The frozen terminal is the most common call for help in the backend lessons." },
   { title: "Do it, then look", art: "loop",
     body: "The terminal tells you when something is wrong, and says nothing when it works. So after every change, <b>look</b>: <span class=\"mono\">ls</span>.<br><br>Then: the practice. Each start puts the files in different places, so look, don't copy. The last task is in your real VS Code terminal.",
@@ -747,10 +747,10 @@ var LESSONS = [
 
   { title: "Your real terminal", kind: "paste", noTerm: true, explorer: false, last: true,
     do: "Now the real one. In VS Code: <b>File → Open Folder</b>, pick any folder of yours with something in it. Then <b>Terminal → New Terminal</b>. Type <code>pwd</code> and <code>ls</code> there. Copy what it printed and paste it below.",
-    sub: "The terminal should say <code>MINGW64</code>. If it says <code>PS</code>, click the <b>∨</b> next to <b>+</b> in the terminal panel and pick <b>Git Bash</b>. To copy: select the text, then right-click → Copy.",
+    sub: "The terminal should say <code>MINGW64</code>. If it says <code>PS</code>, click the <b>∨</b> next to <b>+</b> in the terminal panel and pick <b>Git Bash</b>. To copy: select the text, then right-click.<br>Shortcut for later: right-click a folder in VS Code's Explorer → <b>Open in Integrated Terminal</b>. The terminal starts in that folder, no <code>cd</code> needed.",
     build: function(R){ return newState({ d: {} }, HOME); },
     solve: function(st){ return { cmds: [], answer: USER + " MINGW64 ~/13F\n$ pwd\n/h/13F\n\n" + USER + " MINGW64 ~/13F\n$ ls\nangol/  webprog/  orarend.pdf" }; },
-    hints: ["Terminal → New Terminal opens it at the bottom of VS Code. Type there, press Enter.", "Select from the first prompt to the last line ls printed, right-click, Copy. Then click the box here and Ctrl+V."],
+    hints: ["Terminal → New Terminal opens it at the bottom of VS Code. Type there, press Enter.", "Select from the first prompt to the last line ls printed, then right-click (if a menu opens, pick Copy). Then click the box here and Ctrl+V."],
     check: function(st){
       var t = String(st.answer || "").replace(/\r/g, "");
       if (!t.trim()) return "Paste the terminal's text in the box.";
@@ -904,6 +904,21 @@ $("term").addEventListener("keydown", function(e){
     e.preventDefault(); interrupt(st, inp.value); UI.typed = ""; afterCommand(); return;
   }
   if (e.ctrlKey && (e.key === "l" || e.key === "L")) { e.preventDefault(); st.lines = []; UI.typed = inp.value; save(); renderTerm(); return; }
+});
+// Right-click: copy what is selected, or paste when nothing is (as in VS Code on Windows).
+$("term").addEventListener("contextmenu", function(e){
+  var sel = window.getSelection ? String(window.getSelection()) : "";
+  if (sel) {
+    e.preventDefault();
+    var done = function(){ UI.note = "Copied. Right-click again (or Ctrl+V) to paste it."; renderStripNote(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(sel).then(done, function(){ try { document.execCommand("copy"); done(); } catch (x) {} });
+    else { try { document.execCommand("copy"); done(); } catch (x) {} }
+    window.getSelection().removeAllRanges(); return;
+  }
+  var inp = $("tin"); if (!inp || !navigator.clipboard || !navigator.clipboard.readText) return;
+  e.preventDefault();
+  if (S.sol[S.i] && !S.done[S.i]) { UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); return; }
+  navigator.clipboard.readText().then(function(t){ t = String(t).split("\n")[0]; inp.value += t; UI.typed = inp.value; inp.focus(); }, function(){ UI.note = "The browser didn't allow pasting this way. Ctrl+V works here."; renderStripNote(); });
 });
 $("term").addEventListener("input", function(e){ if (e.target.id === "tin") UI.typed = e.target.value; });
 $("term").addEventListener("paste", function(e){
