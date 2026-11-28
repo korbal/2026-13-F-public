@@ -5,27 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>13F1 Frontend-Backend</title>
 <style>
-  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --chip: #eef3fc; }
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --link: #1a5fb4; --chip: #eef3fc; --card: #fff; --ok: #1a5fb4; }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --chip: #23262d; }
+    :root { --bg: #18181a; --fg: #ececea; --muted: #9a9a95; --line: #2e2e31; --link: #78aeed; --chip: #23262d; --card: #1f1f22; --ok: #78aeed; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 8px; }
-  h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 36px 0 6px; }
-  ul { list-style: none; padding: 0; margin: 0; }
-  li { padding: 12px 0; border-top: 1px solid var(--line); }
-  li:last-child { border-bottom: 1px solid var(--line); }
+  main { max-width: 720px; margin: 0 auto; padding: 36px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 2px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
   a { color: var(--link); }
-  .row { display: grid; grid-template-columns: 92px 1fr; gap: 2px 14px; align-items: baseline; }
-  .num { font-size: 0.85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
-  .title { font-weight: 600; }
-  .desc { grid-column: 2; color: var(--muted); font-size: 0.95rem; }
   code { font: 15px ui-monospace, Consolas, monospace; }
-  .links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  @media (max-width: 420px) { .row { grid-template-columns: 1fr; } .desc { grid-column: 1; } }
+
+  .resume { display: none; background: var(--chip); border-radius: 12px; padding: 12px 16px; margin: 0 0 18px; }
+  .resume.on { display: block; }
+  .resume b { font-weight: 700; }
+
+  .unit { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 0 0 10px; }
+  .unit > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: grid; grid-template-columns: 1fr auto; gap: 0 12px; align-items: baseline; }
+  .unit > summary::-webkit-details-marker { display: none; }
+  .unit > summary::before { content: "▸"; position: absolute; margin-left: -12px; color: var(--muted); font-size: 0.8rem; }
+  .unit[open] > summary::before { content: "▾"; }
+  .uname { font-weight: 700; font-size: 1.05rem; }
+  .uline { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 0.92rem; }
+  .ucount { grid-column: 2; grid-row: 1 / 3; color: var(--muted); font-size: 0.85rem; white-space: nowrap; align-self: center; }
+  .now { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; background: var(--link); color: var(--card); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 2px; }
+  .unit ul { list-style: none; padding: 0 16px 6px; margin: 0; }
+  .unit li { padding: 10px 0; border-top: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 44px 1fr; gap: 0 12px; align-items: baseline; }
+  .num { font-size: 0.85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .main { min-width: 0; }
+  .title { font-weight: 600; }
+  .desc { display: block; color: var(--muted); font-size: 0.92rem; }
+  .zip, .prog { font-size: 0.8rem; margin-left: 8px; white-space: nowrap; }
+  .zip { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; text-decoration: none; }
+  .prog { color: var(--muted); }
+  .prog.done { color: var(--ok); font-weight: 700; }
+
+  h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 30px 0 6px; }
+  .more { list-style: none; padding: 0 16px 6px; margin: 0; }
+  .more li { padding: 10px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 110px 1fr; gap: 2px 12px; align-items: baseline; }
+    .more .k { font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+  .links { display: flex; flex-wrap: wrap; gap: 2px 14px; }
+  .more .desc { grid-column: 2; }
+  @media (max-width: 460px) { .more li { grid-template-columns: 1fr; } .more .desc { grid-column: 1; } .ucount { display: none; } }
 </style>
 </head>
 <body>
@@ -33,45 +56,104 @@
   <h1>13F1 Frontend-Backend</h1>
   <p class="sub">2026/27 · Széchenyi</p>
 
-  <h2>Lessons</h2>
-  <ul>
-    <li class="row"><span class="num">Lesson 1</span><a class="title" href="dom/01-data-to-elements.html">Data to elements</a><span class="desc">A list in your file becomes elements on the page.</span></li>
-    <li class="row"><span class="num">Lesson 2</span><a class="title" href="fetch/01-what-is-json.html">What is JSON?</a><span class="desc">Text or object, <code>{ }</code> or <code>[ ]</code>: reading JSON.</span></li>
-    <li class="row"><span class="num">Lesson 3</span><a class="title" href="fetch/02-data-from-a-server.html">Data from a server</a><span class="desc">Ask the class API for data with <code>fetch</code>, and put it on your page.</span></li>
-    <li class="row"><span class="num">Lesson 4</span><a class="title" href="fetch/03-cards-from-the-server.html">Cards from the server</a><span class="desc">One card for each item, and how to find a bug when nothing is red.</span></li>
-    <li class="row"><span class="num">Lesson 5</span><a class="title" href="fetch/04-data-into-a-table.html">Data into a table</a><span class="desc">Cells into the row, the row into the table.</span></li>
-    <li class="row"><span class="num">Lesson 6</span><a class="title" href="fetch/05-walking-nested-json.html">Walking nested JSON</a><span class="desc">Find any value in the data, one step at a time.</span></li>
-    <li class="row"><span class="num">Lesson 7</span><a class="title" href="fetch/06-json-parse-and-stringify.html">JSON.parse and JSON.stringify</a><span class="desc">JSON travels as text: text to object, and back.</span></li>
-    <li class="row"><span class="num">Lesson D1</span><a class="title" href="db/01-tables-from-a-story.html">Tables from a story</a><span class="desc">What an app must remember, as tables with one row each. Check it by replaying the story.</span></li>
-    <li class="row"><span class="num">Lesson D2</span><a class="title" href="db/02-ids-and-links.html">Ids and links</a><span class="desc">Every row gets an id, and tables point at each other instead of copying names. Check it by following the ids.</span></li>
-    <li class="row"><span class="num">Lesson D3</span><a class="title" href="db/03-no-lists-in-a-cell.html">No lists in a cell</a><span class="desc">One order, several pizzas: when one cell is not enough, ask both ways and make a table in the middle.</span></li>
-    <li class="row"><span class="num">Lesson D4</span><a class="title" href="db/04-your-own-app.html">Your own app</a><span class="desc">Your own app idea: write one real use as a story, build its tables with a live checklist, replay it, swap with another team, then draw it in drawDB.</span></li>
-    <li class="row"><span class="num">Lesson T1</span><a class="title" href="term/01-where-am-i.html">Where am I?</a><span class="desc">The terminal, part 1: read the prompt, look with <code>ls</code>, move with <code>cd</code>.</span></li>
-    <li class="row"><span class="num">Lesson T2</span><a class="title" href="term/02-make-move-run.html">Make, move, run</a><span class="desc">The terminal, part 2: <code>mkdir</code>, <code>cp</code>, <code>mv</code>, <code>rm</code>, and running a file with <code>node</code>.</span></li>
-    <li class="row"><span class="num">Lesson 8</span><a class="title" href="backend/01-your-own-server.html">Your own server</a><span class="desc">Start a server on your computer, ask it from the browser, and break it on purpose. Download: <a href="backend/lesson08-starter.zip">starter (zip)</a></span></li>
-    <li class="row"><span class="num">Lesson 9</span><a class="title" href="backend/02-your-server-your-data.html">Your server, your data</a><span class="desc">Your own list on your own server, an address for it, and a page that shows it. Download: <a href="backend/lesson09-starter.zip">starter (zip)</a></span></li>
-    <li class="row"><span class="num">Lesson 10</span><a class="title" href="backend/03-one-by-id.html">One by id</a><span class="desc">One cat by its id, and an honest 404 when it isn't there. Download: <a href="backend/lesson10-starter.zip">starter (zip)</a></span></li>
-  </ul>
+  <p class="resume" id="resume"></p>
 
-  <h2>Git and GitHub</h2>
-  <ul>
-    <li class="row"><span class="num">Practice</span><a class="title" href="git/git-practice.html">Git practice</a><span class="desc">Save points, log, revert, push and pull.</span></li>
-    <li class="row"><span class="num">In class</span><a class="title" href="git/first-push.html">First push, step by step</a><span class="desc">Your own repository on GitHub, from Git Bash.</span></li>
-    <li class="row"><span class="num">Homework</span><a class="title" href="git/home-push.html">Push at home, pull at school</a><span class="desc">The same repository on two computers.</span></li>
-  </ul>
+  <details class="unit" id="u-frontend">
+    <summary><span class="uname">Frontend</span><span class="uline">Data on the page: elements, JSON, fetch, cards, tables.</span><span class="ucount">7 lessons</span></summary>
+    <ul>
+      <li class="row" data-key="data-to-elements-vscode-v1" data-n="8" data-x=""><span class="num">1</span><span class="main"><a class="title" href="dom/01-data-to-elements.html">Data to elements</a><span class="prog" aria-live="polite"></span><span class="desc">A list in your file becomes elements on the page.</span></span></li>
+      <li class="row" data-key="what-is-json-vscode-v1" data-n="8" data-x=""><span class="num">2</span><span class="main"><a class="title" href="fetch/01-what-is-json.html">What is JSON?</a><span class="prog" aria-live="polite"></span><span class="desc">Text or object, <code>{ }</code> or <code>[ ]</code>: reading JSON.</span></span></li>
+      <li class="row" data-key="data-from-a-server-v1" data-n="6" data-x=""><span class="num">3</span><span class="main"><a class="title" href="fetch/02-data-from-a-server.html">Data from a server</a><span class="prog" aria-live="polite"></span><span class="desc">Ask the class API for data with <code>fetch</code>, and put it on your page.</span></span></li>
+      <li class="row" data-key="cards-from-the-server-v1" data-n="7" data-x="5,6"><span class="num">4</span><span class="main"><a class="title" href="fetch/03-cards-from-the-server.html">Cards from the server</a><span class="prog" aria-live="polite"></span><span class="desc">One card for each item, and how to find a bug when nothing is red.</span></span></li>
+      <li class="row" data-key="data-into-a-table-v1" data-n="7" data-x="5,6"><span class="num">5</span><span class="main"><a class="title" href="fetch/04-data-into-a-table.html">Data into a table</a><span class="prog" aria-live="polite"></span><span class="desc">Cells into the row, the row into the table.</span></span></li>
+      <li class="row" data-key="walking-nested-json-v1" data-n="7" data-x="5,6"><span class="num">6</span><span class="main"><a class="title" href="fetch/05-walking-nested-json.html">Walking nested JSON</a><span class="prog" aria-live="polite"></span><span class="desc">Find any value in the data, one step at a time.</span></span></li>
+      <li class="row" data-key="json-parse-and-stringify-v1" data-n="7" data-x="5,6"><span class="num">7</span><span class="main"><a class="title" href="fetch/06-json-parse-and-stringify.html">JSON.parse and JSON.stringify</a><span class="prog" aria-live="polite"></span><span class="desc">JSON travels as text: text to object, and back.</span></span></li>
+    </ul>
+  </details>
+  <details class="unit" id="u-db">
+    <summary><span class="uname">Database thinking</span><span class="uline">What an app must remember, as tables that point at each other.</span><span class="ucount">4 lessons</span></summary>
+    <ul>
+      <li class="row" data-key="db-tables-from-a-story-v1" data-n="7" data-x="5,6"><span class="num">D1</span><span class="main"><a class="title" href="db/01-tables-from-a-story.html">Tables from a story</a><span class="prog" aria-live="polite"></span><span class="desc">One table per kind of thing, one row per real thing. Check it by replaying the story.</span></span></li>
+      <li class="row" data-key="db-ids-and-links-v1" data-n="7" data-x="5,6"><span class="num">D2</span><span class="main"><a class="title" href="db/02-ids-and-links.html">Ids and links</a><span class="prog" aria-live="polite"></span><span class="desc">Every row gets an id, and tables point at each other instead of copying names.</span></span></li>
+      <li class="row" data-key="db-no-lists-v1" data-n="8" data-x="6,7"><span class="num">D3</span><span class="main"><a class="title" href="db/03-no-lists-in-a-cell.html">No lists in a cell</a><span class="prog" aria-live="polite"></span><span class="desc">One order, several pizzas: a table in the middle.</span></span></li>
+      <li class="row" data-key="db-your-own-app-v1" data-n="7" data-x="5,6"><span class="num">D4</span><span class="main"><a class="title" href="db/04-your-own-app.html">Your own app</a><span class="prog" aria-live="polite"></span><span class="desc">Your own app idea as a story and tables, checked by another team, drawn in drawDB.</span></span></li>
+    </ul>
+  </details>
+  <details class="unit" id="u-term">
+    <summary><span class="uname">Terminal</span><span class="uline">Find your way, make and move files, run things.</span><span class="ucount">2 lessons</span></summary>
+    <ul>
+      <li class="row" data-key="term-where-am-i-v1" data-n="8" data-x="6,7"><span class="num">T1</span><span class="main"><a class="title" href="term/01-where-am-i.html">Where am I?</a><span class="prog" aria-live="polite"></span><span class="desc">Read the prompt, look with <code>ls</code>, move with <code>cd</code>.</span></span></li>
+      <li class="row" data-key="term-make-move-run-v1" data-n="9" data-x="7"><span class="num">T2</span><span class="main"><a class="title" href="term/02-make-move-run.html">Make, move, run</a><span class="prog" aria-live="polite"></span><span class="desc"><code>mkdir</code>, <code>cp</code>, <code>mv</code>, <code>rm</code>, and running a file with <code>node</code>.</span></span></li>
+    </ul>
+  </details>
+  <details class="unit" id="u-backend" open>
+    <summary><span class="uname">Backend <span class="now">now</span></span><span class="uline">Your own server: start it, give it data, ask it from a page.</span><span class="ucount">3 lessons</span></summary>
+    <ul>
+      <li class="row" data-key="backend-your-own-server-v1" data-n="9" data-x="7,8"><span class="num">8</span><span class="main"><a class="title" href="backend/01-your-own-server.html">Your own server</a> <a class="zip" href="backend/lesson08-starter.zip" download>starter.zip</a><span class="prog" aria-live="polite"></span><span class="desc">Start a server, ask it from the browser, break it on purpose.</span></span></li>
+      <li class="row" data-key="backend-your-server-your-data-v1" data-n="7" data-x="5,6"><span class="num">9</span><span class="main"><a class="title" href="backend/02-your-server-your-data.html">Your server, your data</a> <a class="zip" href="backend/lesson09-starter.zip" download>starter.zip</a><span class="prog" aria-live="polite"></span><span class="desc">Your own list, an address for it, and a page that shows it.</span></span></li>
+      <li class="row" data-key="backend-one-by-id-v1" data-n="7" data-x="5,6"><span class="num">10</span><span class="main"><a class="title" href="backend/03-one-by-id.html">One by id</a> <a class="zip" href="backend/lesson10-starter.zip" download>starter.zip</a><span class="prog" aria-live="polite"></span><span class="desc">One thing by its id, and an honest 404 when it isn't there.</span></span></li>
+    </ul>
+  </details>
 
-  <h2>Tests</h2>
-  <ul>
-    <!-- One <li> per test, oldest first. -->
-    <li class="row"><span class="num">Test 02</span><span class="links"><a href="test02/demo.html">Mistakes</a><a href="test02/walkthrough.html">Walkthrough</a></span></li>
-    <li class="row"><span class="num">Test 03</span><span class="links"><a href="test03/demo.html">Mistakes</a><a href="test03/walkthrough.html">Walkthrough</a></span></li>
-    <li class="row"><span class="num">Test 04</span><span class="links"><a href="test04/demo.html">Mistakes</a><a href="test04/walkthrough.html">Walkthrough</a><a href="test04/solution/index.html?v=2">Solution</a><a href="test04/paper.html">Paper</a></span><span class="desc">Downloads: <a href="test04/test04-kiindulo.zip">starter files (zip)</a> · <a href="test04/test04-megoldas.zip?v=2">solution (zip)</a></span></li>
+  <h2>Also</h2>
+  <details class="unit" id="u-git">
+    <summary><span class="uname">Git and GitHub</span><span class="uline">Save points, your own repository, home and school.</span><span class="ucount">3 pages</span></summary>
+  <ul class="more">
+    <li><span class="k">Practice</span><span><a href="git/git-practice.html">Git practice</a><span class="desc">Save points, log, revert, push and pull.</span></span></li>
+    <li><span class="k">In class</span><span><a href="git/first-push.html">First push, step by step</a><span class="desc">Your own repository on GitHub, from Git Bash.</span></span></li>
+    <li><span class="k">Homework</span><span><a href="git/home-push.html">Push at home, pull at school</a><span class="desc">The same repository on two computers.</span></span></li>
   </ul>
+  </details>
 
-  <h2>Vizsgaremek</h2>
-  <ul>
-    <li class="row"><span class="num">Concept</span><span class="links"><a href="vizsgaremek/concept.html">What to write</a><a href="vizsgaremek/concept-example.html">Example</a></span></li>
+  <details class="unit" id="u-tests">
+    <summary><span class="uname">Tests</span><span class="uline">The mistakes, walkthroughs and solutions of past tests.</span><span class="ucount">3 tests</span></summary>
+  <ul class="more">
+    <!-- One <li> per test, newest first. -->
+    <li><span class="k">Test 04</span><span><span class="links"><a href="test04/demo.html">Mistakes</a><a href="test04/walkthrough.html">Walkthrough</a><a href="test04/solution/index.html?v=2">Solution</a><a href="test04/paper.html">Paper</a></span><span class="desc">Downloads: <a href="test04/test04-kiindulo.zip">starter files (zip)</a> · <a href="test04/test04-megoldas.zip?v=2">solution (zip)</a></span></span></li>
+    <li><span class="k">Test 03</span><span class="links"><a href="test03/demo.html">Mistakes</a><a href="test03/walkthrough.html">Walkthrough</a></span></li>
+    <li><span class="k">Test 02</span><span class="links"><a href="test02/demo.html">Mistakes</a><a href="test02/walkthrough.html">Walkthrough</a></span></li>
   </ul>
+  </details>
+
+  <details class="unit" id="u-vizsgaremek">
+    <summary><span class="uname">Vizsgaremek</span><span class="uline">What goes in the concept, with an example.</span><span class="ucount">2 pages</span></summary>
+  <ul class="more">
+    <li><span class="k">Concept</span><span class="links"><a href="vizsgaremek/concept.html">What to write</a><a href="vizsgaremek/concept-example.html">Example</a></span></li>
+  </ul>
+  </details>
 </main>
+<script>
+// Progress from this browser: each lesson saves its own (done tasks) under its key. Nothing is sent anywhere.
+(function(){
+  var OPEN = "home-open-units-v1", last = null;
+  function read(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  document.querySelectorAll(".unit").forEach(function(u){
+    if (!u.querySelector("li[data-key]")) return;
+    var lessons = u.querySelectorAll("li[data-key]"), done = 0;
+    lessons.forEach(function(li){
+      var s = read(li.dataset.key), n = Number(li.dataset.n), x = li.dataset.x ? li.dataset.x.split(",").map(Number) : [];
+      if (!s || !Array.isArray(s.done)) return;
+      var all = 0, core = 0, coreN = 0;
+      for (var i = 0; i < n; i++) { if (s.done[i]) all++; if (x.indexOf(i) < 0) { coreN++; if (s.done[i]) core++; } }
+      if (!all) return;
+      var p = li.querySelector(".prog");
+      if (core === coreN) { p.textContent = "✓ done" + (all > core ? " + " + (all - core) + " extra" + (all - core > 1 ? "s" : "") : ""); p.classList.add("done"); done++; }
+      else { p.textContent = all + " of " + coreN + " tasks"; last = li; }
+    });
+    if (done) u.querySelector(".ucount").textContent = done + " of " + lessons.length + " done";
+  });
+  if (last) {
+    var a = last.querySelector(".title"), r = document.getElementById("resume");
+    r.innerHTML = "Pick up where you left off: <b>Lesson " + last.querySelector(".num").textContent + "</b> · <a href=\"" + a.getAttribute("href") + "\">" + a.textContent + "</a>";
+    r.classList.add("on");
+  }
+  // Remember which units this browser opened or closed.
+  var saved = read(OPEN);
+  document.querySelectorAll(".unit").forEach(function(u){
+    if (saved && saved[u.id] !== undefined) u.open = saved[u.id];
+    u.addEventListener("toggle", function(){ var o = read(OPEN) || {}; o[u.id] = u.open; try { localStorage.setItem(OPEN, JSON.stringify(o)); } catch (e) {} });
+  });
+})();
+</script>
 </body>
 </html>
