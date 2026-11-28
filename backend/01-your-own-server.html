@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 8 · Your own server</title>
+<style>
+:root{
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button,input,textarea{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #c9ced6;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd,.slide kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.result code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.hints code{background:#fff;border-radius:4px;padding:0 4px;font-size:.88em}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+
+/* ===== practice: Explorer beside the terminal ===== */
+.work{flex:1;display:grid;grid-template-columns:minmax(240px,30fr) 70fr;min-height:0}
+.work.noexp{grid-template-columns:1fr}
+.explorer{background:#fff;border-right:1px solid var(--line);overflow:auto;padding:12px 14px;font-size:14px}
+.explorer h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.explorer .addr{font:13px ui-monospace,Consolas,monospace;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin-bottom:8px;word-break:break-all}
+.trow{display:flex;align-items:center;gap:6px;padding:2px 6px;border-radius:5px;white-space:nowrap}
+.trow .ic{width:16px;text-align:center;flex:none}
+.trow.dir .nm{font-weight:600}
+.trow.file{color:#374151}
+.trow.here{background:#fef3c7;outline:2px solid #f2b04a}
+.trow .pin{font-size:12px;font-weight:700;color:var(--warn);margin-left:6px}
+.trow.new{animation:flash 1.6s ease-out}
+@keyframes flash{0%{background:#bbf7d0}100%{background:transparent}}
+.explorer .off{color:var(--muted);font-size:13px;margin-top:8px}
+.right{display:flex;flex-direction:column;min-height:0;min-width:0}
+.answer{flex:none;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.answer label{font-weight:700}
+.answer input{border:1px solid #c9ced6;border-radius:6px;padding:6px 8px;min-width:260px;font-family:ui-monospace,Consolas,monospace}
+.answer textarea{border:1px solid #c9ced6;border-radius:6px;padding:6px 8px;width:100%;min-height:160px;font:13px ui-monospace,Consolas,monospace}
+.solbox{flex:none;border-bottom:2px solid #f2b04a;background:#fffaf0;padding:8px 14px;font-size:14px}
+.solbox h4{margin:0 0 4px;color:var(--warn);font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+.solbox pre{margin:4px 0 0;white-space:pre-wrap;font:12.5px ui-monospace,Consolas,monospace;background:#fff;border:1px solid #f5e2b0;border-radius:6px;padding:6px 8px;max-height:200px;overflow:auto}
+.solbox code{display:inline-block;background:#fff;border:1px solid #f5e2b0;border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0;font-size:13px}
+
+/* the terminal: Git Bash colours */
+.term{flex:1;min-height:240px;background:#0c0c0c;color:#d9d9d9;font:14px/1.42 ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding:10px 12px 40px;overflow:auto;cursor:text}
+.term .tl{white-space:pre-wrap;word-break:break-word}
+.term .pi{margin-top:8px}
+.term .pu{color:#3fc33f} .term .pm{color:#c45ac4} .term .pp{color:#d7c43f}
+.term .ls-d{color:#6f9eff;font-weight:700}
+.term .dim{color:#8a8a8a}
+.term .inl{display:flex}
+.term .inl span{white-space:pre}
+.term input{flex:1;min-width:40px;background:transparent;border:0;outline:none;color:#f2f2f2;font:inherit;padding:0;caret-color:#f2f2f2}
+.term .tip{color:#8a8a8a;font-style:italic}
+.termbar{flex:none;background:#1f1f1f;color:#bbb;font-size:12px;padding:4px 12px;display:flex;gap:14px;flex-wrap:wrap}
+.termbar b{color:#eee}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work{grid-template-columns:1fr;display:block;overflow:auto}
+  .explorer{border-right:0;border-bottom:1px solid var(--line);max-height:260px}
+  .term{min-height:320px}
+  #practice{height:auto;min-height:100%}
+  html,body{height:auto}
+  .answer input{min-width:0;width:100%}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+  <div class="work" id="work">
+    <div class="explorer" id="explorer"></div>
+    <div class="right">
+      <div class="solbox hidden" id="solbox"></div>
+      <div class="answer hidden" id="answer"></div>
+      <div class="term" id="term"></div>
+      <div class="termbar" id="termbar"><span><b>Tab</b> finishes a name</span><span><b>↑</b> last command</span><span><b>Ctrl+C</b> stop / cancel</span><span><b>Ctrl+L</b> clear</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+var LESSON = "Lesson 8 · Your own server";
+var SHORT = "Lesson 8";
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+
+/* ====================================================================
+   A small Git Bash: folders, files, and the commands a beginner needs.
+   A folder is { d: { name: node } }, a file is { f: "text" }.
+   ==================================================================== */
+
+var HOME = "/h";
+var USER = "you@school-pc";
+var COMMANDS = ["cat", "cd", "clear", "code", "cp", "dir", "echo", "exit", "help", "ls", "mkdir", "mv", "node", "pwd", "rm", "rmdir", "touch"];
+
+function rng(seed){ var a = seed >>> 0; return function(){ a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function pick(R, arr){ return arr[Math.floor(R() * arr.length)]; }
+function shuffle(R, arr){ arr = arr.slice(); for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(R() * (i + 1)), t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+
+function isDir(n){ return !!(n && n.d); }
+function parts(p){ return p.split("/").filter(Boolean); }
+function parentOf(p){ var a = parts(p); a.pop(); return "/" + a.join("/"); }
+function baseOf(p){ var a = parts(p); return a[a.length - 1] || "/"; }
+function joinP(a, b){ return (a === "/" ? "" : a) + "/" + b; }
+function keyIn(dir, name){ if (Object.prototype.hasOwnProperty.call(dir.d, name)) return name; var l = name.toLowerCase(); for (var k in dir.d) if (k.toLowerCase() === l) return k; return null; }
+
+// Make every folder on the way; returns the last one.
+function mkdirp(fs, p){ var n = fs; parts(p).forEach(function(x){ var k = keyIn(n, x); if (k === null) { n.d[x] = { d: {} }; k = x; } n = n.d[k]; }); return n; }
+function put(fs, p, text){ mkdirp(fs, parentOf(p)).d[baseOf(p)] = { f: text || "" }; }
+
+// Turn what was typed into an absolute path (it may not exist).
+function absPath(cwd, p){
+  var m = /^([a-zA-Z]):(\/.*)?$/.exec(p);
+  if (m) p = "/" + m[1].toLowerCase() + (m[2] || "");
+  var a = p.charAt(0) === "/" ? [] : parts(cwd);
+  parts(p).forEach(function(x){ if (x === ".") return; if (x === "..") a.pop(); else a.push(x); });
+  return "/" + a.join("/");
+}
+// Find a node; folder names are not case sensitive (Windows). Returns { node, path } with the real spelling.
+function lookup(fs, abs){
+  var n = fs, real = [];
+  var ps = parts(abs);
+  for (var i = 0; i < ps.length; i++) {
+    if (!isDir(n)) return null;
+    var k = keyIn(n, ps[i]); if (k === null) return null;
+    real.push(k); n = n.d[k];
+  }
+  return { node: n, path: "/" + real.join("/") };
+}
+function exists(st, p){ return !!lookup(st.fs, p); }
+function dirExists(st, p){ var r = lookup(st.fs, p); return !!(r && isDir(r.node)); }
+function fileExists(st, p){ var r = lookup(st.fs, p); return !!(r && r.node && !isDir(r.node)); }
+
+function shortPath(p){ if (p === HOME) return "~"; if (p.indexOf(HOME + "/") === 0) return "~" + p.slice(HOME.length); return p; }
+// How Windows names the same place.
+function winPath(p){
+  var a = parts(p);
+  if (a.length && /^[a-z]$/.test(a[0])) return a[0].toUpperCase() + ":\\" + a.slice(1).join("\\");
+  return "C:\\Program Files\\Git" + (a.length ? "\\" + a.join("\\") : "");
+}
+function sortedKeys(dir){ return Object.keys(dir.d).sort(function(a, b){ var da = isDir(dir.d[a]), db = isDir(dir.d[b]); if (da !== db) return da ? -1 : 1; return a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0; }); }
+function lsKeys(dir, isRoot){ return Object.keys(dir.d).filter(function(k){ return !(isRoot && /^[a-z]$/.test(k)); }).sort(function(a, b){ var x = a.toLowerCase().replace(/[^a-z0-9]/g, ""), y = b.toLowerCase().replace(/[^a-z0-9]/g, ""); return x < y ? -1 : x > y ? 1 : 0; }); }
+// ls quotes names with spaces or brackets, the way Git Bash shows them.
+function lsName(k){ return /[\s()'"&;!$]/.test(k) ? "'" + k.replace(/'/g, "'\\''") + "'" : k; }
+// For solutions shown to the student: single quotes when needed.
+function q(k){ return /[\s()'"&;!$\\]/.test(k) ? "'" + k + "'" : k; }
+
+// Split a command line like bash does: quotes, backslashes, ~.
+function tokenize(line){
+  var toks = [], cur = "", inTok = false, quote = null, tilde = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line.charAt(i);
+    if (quote) {
+      if (c === quote) quote = null;
+      else if (quote === '"' && c === "\\" && /["\\$`]/.test(line.charAt(i + 1))) cur += line.charAt(++i);
+      else cur += c;
+      continue;
+    }
+    if (c === "'" || c === '"') { quote = c; inTok = true; continue; }
+    if (c === "\\") { if (i + 1 < line.length) { cur += line.charAt(++i); inTok = true; } continue; }
+    if (/\s/.test(c)) { if (inTok) { toks.push(tilde ? expandTilde(cur) : cur); cur = ""; inTok = false; tilde = false; } continue; }
+    if (c === "(" || c === ")") return { err: "bash: syntax error near unexpected token `" + c + "'" };
+    if (/[;&|<>]/.test(c)) return { err: "(This practice terminal runs one command at a time. Leave out the " + c + " and run them one by one.)", tip: true };
+    if (!inTok && c === "~") tilde = true;
+    cur += c; inTok = true;
+  }
+  if (quote) return { err: "(The " + quote + " quote is never closed, so bash would wait for more. Close it, then press Enter.)", tip: true };
+  if (inTok) toks.push(tilde ? expandTilde(cur) : cur);
+  return { toks: toks };
+}
+function expandTilde(s){ return s === "~" ? HOME : s.indexOf("~/") === 0 ? HOME + s.slice(1) : s; }
+
+function newState(fs, cwd){ return { fs: fs, cwd: cwd, lines: [], hist: [], run: null, ncmd: 0, cds: 0, errs: 0, ran: [], answer: "", old: cwd }; }
+function out(st, text, cls){ st.lines.push({ k: "o", s: text, c: cls || "" }); }
+function outH(st, html){ st.lines.push({ k: "h", h: html }); }
+
+// The programs a node file can be: a server keeps running, anything else prints and ends.
+function nodeRun(st, file, abs){
+  var r = lookup(st.fs, abs);
+  if (!r) {
+    out(st, "node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '" + winPath(abs) + "'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)\n    at node:internal/main/run_main_module:28:49 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v22.11.0");
+    st.ran.push({ file: file, from: st.cwd, ok: false }); st.errs++; return;
+  }
+  if (isDir(r.node)) { out(st, "node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '" + winPath(r.path) + "'\n  code: 'MODULE_NOT_FOUND'\n\nNode.js v22.11.0"); st.errs++; return; }
+  var text = r.node.f, dirW = winPath(parentOf(r.path));
+  st.ran.push({ file: r.path, from: st.cwd, ok: true });
+  if (/app\.listen|\.listen\(/.test(text)) {
+    out(st, "Listening on http://localhost:3000");
+    out(st, "Stop it with Ctrl+C");
+    st.run = { file: r.path, from: st.cwd }; return;
+  }
+  var lines = text.split("\n"), printed = false;
+  lines.forEach(function(l){
+    var m = /console\.log\((.*)\);?\s*$/.exec(l); if (!m) return;
+    var s = m[1].split("+").map(function(p){ p = p.trim(); if (p === "__dirname") return dirW; var mm = /^["'`](.*)["'`]$/.exec(p); return mm ? mm[1] : p; }).join("");
+    out(st, s); printed = true;
+  });
+  if (!printed && !text.trim()) { /* an empty file prints nothing */ }
+}
+
+function exec(st, line){
+  var raw = line;
+  st.lines.push({ k: "p", p: shortPath(st.cwd), s: raw });
+  if (st.run) { st.lines.pop(); st.lines.push({ k: "o", s: raw, c: "" }); return; }
+  if (!raw.trim()) return;
+  st.hist.push(raw); if (st.hist.length > 60) st.hist.shift();
+  st.ncmd++;
+  var t = tokenize(raw);
+  if (t.err) { out(st, t.err, t.tip ? "tip" : ""); st.errs++; return; }
+  var a = t.toks, cmd = a[0], args = a.slice(1);
+  var flags = "", names = [];
+  args.forEach(function(x){ if (/^-[a-zA-Z]+$/.test(x)) flags += x.slice(1); else names.push(x); });
+  var before = st.errs;
+  switch (cmd) {
+    case "pwd": out(st, st.cwd); break;
+    case "cd": {
+      if (names.length > 1) { out(st, "bash: cd: too many arguments"); st.errs++; break; }
+      var target = names[0];
+      if (target === undefined || target === "") target = HOME;
+      if (target === "-") target = st.old;
+      var abs = absPath(st.cwd, target), r = lookup(st.fs, abs);
+      if (!r) { out(st, "bash: cd: " + names[0] + ": No such file or directory"); st.errs++; break; }
+      if (!isDir(r.node)) { out(st, "bash: cd: " + names[0] + ": Not a directory"); st.errs++; break; }
+      if (names[0] === "-") out(st, r.path);
+      if (r.path !== st.cwd) { st.old = st.cwd; st.cwd = r.path; st.cds++; }
+      break;
+    }
+    case "ls": case "dir": {
+      var targets = names.length ? names : ["."], multi = targets.length > 1, isDirCmd = cmd === "dir";
+      targets.forEach(function(nm, ti){
+        var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, (isDirCmd ? "dir" : "ls") + ": cannot access '" + nm + "': No such file or directory"); st.errs++; return; }
+        if (!isDir(r.node)) { out(st, lsName(nm)); return; }
+        if (multi) out(st, (ti ? "\n" : "") + nm + ":");
+        var keys = lsKeys(r.node, r.path === "/");
+        if (/a/.test(flags)) keys = ["./", "../"].concat(keys);
+        if (!keys.length) return;
+        if (/l/.test(flags)) {
+          out(st, "total " + keys.length * 4);
+          outH(st, keys.map(function(k){ var d = k === "./" || k === "../" || isDir(r.node.d[k]); var nm2 = k === "./" ? "." : k === "../" ? ".." : lsName(k);
+            return esc((d ? "drwxr-xr-x" : "-rw-r--r--") + " 1 you 197121 " + (d ? "   0" : " 412") + " Nov 30 08:12 ") + (d ? '<span class="ls-d">' + esc(nm2) + '</span>/' : esc(nm2)); }).join("\n"));
+        } else {
+          outH(st, keys.map(function(k){ if (k === "./" || k === "../") return '<span class="ls-d">' + k.slice(0, -1) + '</span>/'; var d = isDir(r.node.d[k]); return d ? '<span class="ls-d">' + esc(lsName(k)) + '</span>' + (isDirCmd ? "" : "/") : esc(lsName(k)); }).join("  "));
+        }
+      });
+      break;
+    }
+    case "mkdir": {
+      if (!names.length) { out(st, "mkdir: missing operand\nTry 'mkdir --help' for more information."); st.errs++; break; }
+      names.forEach(function(nm){
+        var abs = absPath(st.cwd, nm);
+        if (/p/.test(flags)) { var ex = lookup(st.fs, abs); if (ex && !isDir(ex.node)) { out(st, "mkdir: cannot create directory '" + nm + "': File exists"); st.errs++; return; } mkdirp(st.fs, abs); return; }
+        if (exists(st, abs)) { out(st, "mkdir: cannot create directory '" + nm + "': File exists"); st.errs++; return; }
+        var par = lookup(st.fs, parentOf(abs));
+        if (!par || !isDir(par.node)) { out(st, "mkdir: cannot create directory '" + nm + "': No such file or directory"); st.errs++; return; }
+        par.node.d[baseOf(abs)] = { d: {} };
+      });
+      break;
+    }
+    case "touch": {
+      if (!names.length) { out(st, "touch: missing file operand"); st.errs++; break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm); if (exists(st, abs)) return; var par = lookup(st.fs, parentOf(abs)); if (!par || !isDir(par.node)) { out(st, "touch: cannot touch '" + nm + "': No such file or directory"); st.errs++; return; } par.node.d[baseOf(abs)] = { f: "" }; });
+      break;
+    }
+    case "cp": case "mv": {
+      var tool = cmd;
+      if (names.length < 2) { out(st, tool + ": " + (names.length ? "missing destination file operand after '" + names[0] + "'" : "missing file operand") + "\nTry '" + tool + " --help' for more information."); st.errs++; break; }
+      var dest = names[names.length - 1], srcs = names.slice(0, -1), dAbs = absPath(st.cwd, dest), dR = lookup(st.fs, dAbs);
+      if (srcs.length > 1 && !(dR && isDir(dR.node))) { out(st, tool + ": target '" + dest + "': " + (dR ? "Not a directory" : "No such file or directory")); st.errs++; break; }
+      srcs.forEach(function(s){
+        var sAbs = absPath(st.cwd, s), sR = lookup(st.fs, sAbs);
+        if (!sR) { out(st, tool + ": cannot stat '" + s + "': No such file or directory"); st.errs++; return; }
+        if (tool === "cp" && isDir(sR.node) && !/r/i.test(flags)) { out(st, "cp: -r not specified; omitting directory '" + s + "'"); st.errs++; return; }
+        var into, nm;
+        var dNow = lookup(st.fs, dAbs);
+        if (dNow && isDir(dNow.node)) { into = dNow; nm = baseOf(sR.path); }
+        else { into = lookup(st.fs, parentOf(dAbs)); nm = baseOf(dAbs); if (!into || !isDir(into.node)) { out(st, tool + ": cannot " + (tool === "cp" ? "create regular file" : "move '" + s + "' to") + " '" + dest + "': No such file or directory"); st.errs++; return; } }
+        if (isDir(sR.node) && (into.path + "/").indexOf(sR.path + "/") === 0) { out(st, tool + ": cannot " + (tool === "cp" ? "copy a directory, '" + s + "', into itself" : "move '" + s + "' to a subdirectory of itself") + ", '" + dest + "'"); st.errs++; return; }
+        var existingKey = keyIn(into.node, nm);
+        if (existingKey !== null && isDir(into.node.d[existingKey]) && !isDir(sR.node)) { out(st, tool + ": cannot overwrite directory '" + joinP(dest, nm) + "' with non-directory"); st.errs++; return; }
+        if (existingKey !== null && existingKey !== nm) delete into.node.d[existingKey];
+        if (tool === "cp") into.node.d[nm] = clone(sR.node);
+        else { var sp = lookup(st.fs, parentOf(sR.path)); var node = sp.node.d[baseOf(sR.path)]; delete sp.node.d[baseOf(sR.path)]; into.node.d[nm] = node;
+          if ((st.cwd + "/").indexOf(sR.path + "/") === 0) st.cwd = joinP(into.path, nm) + st.cwd.slice(sR.path.length); }
+      });
+      break;
+    }
+    case "rm": {
+      if (!names.length) { out(st, "rm: missing operand\nTry 'rm --help' for more information."); st.errs++; break; }
+      names.forEach(function(nm){
+        var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { if (!/f/.test(flags)) { out(st, "rm: cannot remove '" + nm + "': No such file or directory"); st.errs++; } return; }
+        if (isDir(r.node) && !/r/i.test(flags)) { out(st, "rm: cannot remove '" + nm + "': Is a directory"); st.errs++; return; }
+        if ((st.cwd + "/").indexOf(r.path + "/") === 0) { out(st, "rm: refusing to remove the folder you are in. cd .. first."); st.errs++; return; }
+        delete lookup(st.fs, parentOf(r.path)).node.d[baseOf(r.path)];
+      });
+      break;
+    }
+    case "rmdir": {
+      if (!names.length) { out(st, "rmdir: missing operand"); st.errs++; break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, "rmdir: failed to remove '" + nm + "': No such file or directory"); st.errs++; return; }
+        if (!isDir(r.node)) { out(st, "rmdir: failed to remove '" + nm + "': Not a directory"); st.errs++; return; }
+        if (Object.keys(r.node.d).length) { out(st, "rmdir: failed to remove '" + nm + "': Directory not empty"); st.errs++; return; }
+        delete lookup(st.fs, parentOf(r.path)).node.d[baseOf(r.path)]; });
+      break;
+    }
+    case "cat": {
+      if (!names.length) { out(st, "(cat with nothing after it waits for you to type. Give it a file: cat notes.txt)", "tip"); break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, "cat: " + nm + ": No such file or directory"); st.errs++; return; }
+        if (isDir(r.node)) { out(st, "cat: " + nm + ": Is a directory"); st.errs++; return; }
+        if (r.node.f) out(st, r.node.f.replace(/\n$/, "")); });
+      break;
+    }
+    case "echo": out(st, names.join(" ")); break;
+    case "clear": st.lines = []; break;
+    case "node": {
+      if (!names.length) { out(st, "Welcome to Node.js v22.11.0.\nType \".help\" for more information.\n(This is Node's own prompt, not bash. Ctrl+C gets you out.)"); st.run = { repl: true, from: st.cwd }; break; }
+      nodeRun(st, names[0], absPath(st.cwd, names[0]));
+      break;
+    }
+    case "code": out(st, "(VS Code would open " + winPath(absPath(st.cwd, names[0] || ".")) + " now.)", "tip"); break;
+    case "exit": out(st, "(In a real terminal, exit closes it. Here it stays open.)", "tip"); break;
+    case "help": out(st, "(The commands here: pwd  ls  cd  mkdir  cp  mv  rm  cat  node  clear. Tab finishes a name, ↑ brings back the last command.)", "tip"); break;
+    case "cls": out(st, "bash: cls: command not found\n(cls is the Windows cmd word. In bash it's clear, or Ctrl+L.)"); st.errs++; break;
+    default: out(st, "bash: " + cmd + ": command not found"); st.errs++;
+  }
+  if (st.errs > before) st.lastErr = st.ncmd;
+}
+
+// Ctrl+C: stop what runs, or drop the line being typed.
+function interrupt(st, typed){
+  if (st.run) { out(st, "^C"); st.run = null; return; }
+  st.lines.push({ k: "p", p: shortPath(st.cwd), s: typed + "^C" });
+}
+
+// Tab: finish the name, the way bash does (spaces get a backslash).
+function bashEsc(s){ return s.replace(/([ ()'"\\&;!$])/g, "\\$1"); }
+function complete(st, input){
+  var start = 0, quote = null;
+  for (var i = 0; i < input.length; i++) {
+    var c = input.charAt(i);
+    if (quote) { if (c === quote) quote = null; continue; }
+    if (c === "'" || c === '"') { quote = c; continue; }
+    if (c === "\\") { i++; continue; }
+    if (c === " ") start = i + 1;
+  }
+  var rawWord = input.slice(start), isFirst = !input.slice(0, start).trim();
+  var esc2 = rawWord.replace(/(^|[^\\])([()])/g, "$1\\$2"), t = tokenize(esc2);
+  if (t.err) t = tokenize(esc2 + (esc2.indexOf("'") >= 0 ? "'" : '"'));
+  var word = t.toks && t.toks.length ? t.toks[0] : "";
+  if (isFirst && word.indexOf("/") < 0) {
+    var cs = COMMANDS.filter(function(c){ return c.indexOf(word) === 0; });
+    if (cs.length === 1) return { line: cs[0] + " " };
+    if (cs.length > 1) return { list: cs };
+    return null;
+  }
+  var cut = word.lastIndexOf("/"), dirPart = cut >= 0 ? word.slice(0, cut + 1) : "", base = cut >= 0 ? word.slice(cut + 1) : word;
+  var r = lookup(st.fs, absPath(st.cwd, dirPart || "."));
+  if (!r || !isDir(r.node)) return null;
+  var keys = Object.keys(r.node.d), c1 = keys.filter(function(k){ return k.indexOf(base) === 0; });
+  if (!c1.length) c1 = keys.filter(function(k){ return k.toLowerCase().indexOf(base.toLowerCase()) === 0; });
+  if (!c1.length) return null;
+  var shownDir = rawWord.charAt(0) === "~" ? "~" + dirPart.slice(HOME.length) : dirPart;
+  var pre = function(s){ return shownDir.charAt(0) === "~" ? "~" + bashEsc(shownDir.slice(1)) + bashEsc(s) : bashEsc(shownDir + s); };
+  if (c1.length === 1) return { line: input.slice(0, start) + pre(c1[0]) + (isDir(r.node.d[c1[0]]) ? "/" : " ") };
+  var lcp = c1.reduce(function(a, b){ var j = 0; while (j < a.length && j < b.length && a.charAt(j) === b.charAt(j)) j++; return a.slice(0, j); });
+  if (lcp.length > base.length) return { line: input.slice(0, start) + pre(lcp) };
+  return { list: c1.sort().map(function(k){ return isDir(r.node.d[k]) ? k + "/" : k; }) };
+}
+
+/* ====================================================================
+   The H: drive the lessons play on. Names and places change on every
+   start, so a path copied from a friend's screen does not work.
+   ==================================================================== */
+
+var SUBJECTS = ["webprog", "angol", "matek", "tori", "nemet", "halozat", "irodalom"];
+var SUBS = ["homework", "notes", "essays", "old", "2025", "projekt"];
+var TOP = ["zene", "kepek", "jatek-mentesek", "New folder", "videok"];
+
+function world(R){
+  var fs = { d: {} };
+  ["bin", "dev", "etc", "mingw64", "tmp", "usr"].forEach(function(x){ mkdirp(fs, "/" + x); });
+  mkdirp(fs, "/c/Users/you/Downloads"); mkdirp(fs, "/c/Windows"); mkdirp(fs, "/c/Program Files/Git");
+  mkdirp(fs, HOME);
+  var subs = ["webprog"].concat(shuffle(R, SUBJECTS.slice(1)).slice(0, 2 + Math.floor(R() * 2)));
+  subs.forEach(function(s){
+    var kids = shuffle(R, SUBS).slice(0, 1 + Math.floor(R() * 2));
+    kids.forEach(function(k){ mkdirp(fs, HOME + "/13F/" + s + "/" + k); });
+    if (R() < 0.6) put(fs, HOME + "/13F/" + s + "/" + kids[0] + "/" + pick(R, ["notes.txt", "todo.txt", "draft.docx"]), "");
+  });
+  put(fs, HOME + "/13F/orarend.pdf", "");
+  shuffle(R, TOP).slice(0, 2 + Math.floor(R() * 2)).forEach(function(x){ mkdirp(fs, HOME + "/" + x); });
+  put(fs, HOME + "/jegyzet.txt", "Ne felejtsd el: pwd, ls, cd\n");
+  return fs;
+}
+function allDirs(fs, from){
+  var out2 = [], r = lookup(fs, from);
+  (function walk(n, p){ out2.push(p); Object.keys(n.d).forEach(function(k){ if (isDir(n.d[k])) walk(n.d[k], joinP(p, k)); }); })(r.node, r.path);
+  return out2;
+}
+function subjectDirs(fs){ return Object.keys(lookup(fs, HOME + "/13F").node.d).filter(function(k){ return isDir(lookup(fs, HOME + "/13F/" + k).node); }); }
+function countDirs(fs, p){ var n = lookup(fs, p).node; return Object.keys(n.d).filter(function(k){ return isDir(n.d[k]); }).length; }
+
+var SERVER_JS = 'const express = require("express");\nconst app = express();\n\napp.get("/health", (req, res) => {\n  res.json({ status: "ok" });\n});\n\napp.listen(3000, () => {\n  console.log("Listening on http://localhost:3000");\n});\n';
+
+// The commands that walk from one folder to another, one step at a time, looking around on the way.
+function walkCmds(from, to){
+  var a = parts(from), b = parts(to), i = 0, cmds = [];
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  for (var u = a.length; u > i; u--) { cmds.push("cd .."); cmds.push("ls"); }
+  for (var d = i; d < b.length; d++) { cmds.push("cd " + q(b[d])); cmds.push("ls"); }
+  if (cmds[cmds.length - 1] === "ls") cmds.pop();
+  return ["pwd", "ls"].concat(cmds);
+}
+function relPath(from, to){
+  var a = parts(from), b = parts(to), i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  var r = []; for (var u = a.length; u > i; u--) r.push("..");
+  return r.concat(b.slice(i).map(function(x){ return x; })).join("/");
+}
+
+// What a student may write as a path: /h/13F, ~/13F, H:\13F, H:/13F, with or without the last slash.
+function samePath(ans, p){
+  var a = String(ans || "").trim().replace(/^["']|["']$/g, "").replace(/\\/g, "/").replace(/\/+$/, "");
+  if (!a) return false;
+  var m = /^([a-zA-Z]):(\/.*)?$/.exec(a); if (m) a = "/" + m[1].toLowerCase() + (m[2] || "");
+  if (a === "~") a = HOME; else if (a.indexOf("~/") === 0) a = HOME + a.slice(1);
+  return a.toLowerCase() === p.toLowerCase();
+}
+
+/* ====================================================================
+   The slides: why first. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+var TG = "#3fc33f", TM = "#c45ac4", TY = "#d7c43f", TW = "#d9d9d9", TBL = "#6f9eff";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + esc(label) + '">' + inner + '</svg>'; }
+function TP(x, y, ps, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" font-family="ui-monospace,Consolas,monospace" xml:space="preserve">' + ps.map(function(p){ return '<tspan fill="' + (p[1] || TW) + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+function TERM(x, y, w, h, title){ return R(x, y, w, h, { rx: 8, fill: "#0c0c0c", stroke: "#333" }) + R(x, y, w, 22, { rx: 8, fill: "#2b2b2b", stroke: "#333" }) + R(x, y + 14, w, 8, { rx: 0, fill: "#2b2b2b", stroke: "#2b2b2b" }) + T(x + 10, y + 15, esc(title || "MINGW64:/h/13F"), { size: 11, fill: "#bbb" }); }
+function PROMPT(x, y, path, cmd, size){ size = size || 13; return TP(x, y, [[USER + " ", TG], ["MINGW64 ", TM], [path, TY]], size) + TP(x, y + size + 5, [["$ " + (cmd || ""), TW]], size); }
+function FOLDER(x, y, name, o){ o = o || {}; return R(x, y + 3, 16, 12, { rx: 2, fill: o.fill || "#fcd34d", stroke: "#d4a017" }) + R(x, y, 7, 5, { rx: 1, fill: o.fill || "#fcd34d", stroke: "#d4a017" }) + T(x + 22, y + 13, esc(name), { size: o.size || 13, bold: !!o.bold, fill: o.col || INK }); }
+
+function BROWSER(x, y, w, h, url){ return R(x, y, w, h, { rx: 8, fill: "#fff", stroke: "#cfd6df" }) + R(x, y, w, 30, { rx: 8, fill: "#f3f4f6", stroke: "#cfd6df" }) + R(x + 10, y + 6, w - 20, 18, { rx: 9, fill: "#fff", stroke: "#d6d9de" }) + T(x + 20, y + 19, esc(url), { size: 12, mono: true }); }
+
+var ART = {
+  why: function(){
+    var s = "";
+    s += R(8, 20, 110, 150, { rx: 16, fill: "#fff", stroke: "#cfd6df", sw: 2 }) + T(63, 50, "your app", { anchor: "middle", bold: true, size: 13 });
+    s += R(22, 66, 82, 26, { rx: 6, fill: "#eef3fc", stroke: A }) + T(63, 84, "Refresh", { anchor: "middle", size: 12, bold: true, fill: A });
+    s += ARROW(124, 70, 330, 70, A) + T(227, 60, "GET /health", { anchor: "middle", mono: true, bold: true, size: 13, fill: A });
+    s += ARROW(330, 124, 124, 124, GRN) + T(227, 146, '{ "status": "ok" }', { anchor: "middle", mono: true, bold: true, size: 13, fill: GRN });
+    s += TERM(340, 20, 292, 150, "MINGW64:/h/13F/lesson08-starter");
+    s += TP(352, 64, [["$ node server.js", TW]], 13) + TP(352, 86, [["Listening on http://localhost:3000", TW, 1]], 11.5);
+    s += T(486, 192, "a program that answers: a server", { anchor: "middle", bold: true, size: 13 });
+    return svg(204, "Your app sends GET /health to a program running in a terminal, node server.js, Listening on localhost 3000. The program answers with status ok. A program that answers is a server", s);
+  },
+  start: function(){
+    var s = R(8, 8, 624, 176, { rx: 8, fill: "#1f1f1f", stroke: "#333" });
+    s += T(20, 28, "VS Code  ·  File → Open Folder → lesson08-starter", { size: 12, fill: "#ccc" });
+    s += R(16, 38, 150, 138, { rx: 4, fill: "#252526", stroke: "#333" }) + T(26, 58, "LESSON08-STARTER", { size: 10.5, bold: true, fill: "#bbb" });
+    s += T(34, 80, "› node_modules", { size: 12, fill: "#ddd" }) + T(34, 100, "package.json", { size: 12, fill: "#ddd" }) + T(34, 120, "server.js", { size: 12, fill: "#ddd", bold: true });
+    s += R(176, 38, 448, 138, { rx: 4, fill: "#0c0c0c", stroke: "#333" }) + T(188, 54, "TERMINAL    bash", { size: 10.5, bold: true, fill: "#bbb" });
+    s += PROMPT(188, 76, "~/13F/lesson08-starter", "ls", 12) + TP(188, 110, [["node_modules/  package.json  server.js", TW]], 12);
+    s += TP(188, 132, [["$ node server.js", TW]], 12) + TP(188, 150, [["Listening on http://localhost:3000", TW, 1]], 12) + TP(188, 168, [["▌", TW]], 12);
+    return svg(194, "VS Code with the folder lesson08-starter open: node_modules, package.json, server.js. In its terminal, ls shows the same three, then node server.js prints Listening on http://localhost:3000 and the terminal stays busy", s);
+  },
+  ask: function(){
+    var s = BROWSER(8, 8, 420, 96, "localhost:3000/health");
+    s += T(20, 66, '{"status":"ok","owner":"nobody","startedAt":"8:12:40"}', { size: 11, mono: true });
+    s += T(450, 30, "localhost", { bold: true, size: 14, mono: true, fill: A }) + T(450, 48, "= this computer", { size: 13 });
+    s += T(450, 76, ":3000", { bold: true, size: 14, mono: true, fill: AMB }) + T(450, 94, "= which door (the port)", { size: 13 });
+    s += T(450, 122, "/health", { bold: true, size: 14, mono: true, fill: GRN }) + T(450, 140, "= what you ask for", { size: 13 });
+    s += BROWSER(8, 120, 420, 64, "localhost:3000/"); s += T(22, 170, "Cannot GET /", { size: 12, mono: true });
+    s += T(8, 206, "Cannot GET / : the server is up, but / has no answer.", { size: 12.5, fill: MUT });
+    return svg(216, "A browser at localhost:3000/health shows status ok, owner nobody, startedAt 8:12:40. localhost is this computer, 3000 is which door, the port, /health is what you ask for. Below, localhost:3000/ shows Cannot GET /: the server is up, but slash has no answer", s);
+  },
+  restart: function(){
+    var s = "";
+    s += R(8, 16, 200, 70, { rx: 8, fill: "#fff", stroke: "#cfd6df" }) + T(20, 36, "server.js  (saved)", { size: 12, bold: true }) + T(20, 62, 'owner: "Anna"', { size: 13, mono: true, fill: GRN, bold: true });
+    s += TERM(232, 16, 400, 70, "still running since 8:12:40");
+    s += TP(244, 62, [["running the file as it was at 8:12:40", TW]], 12.5);
+    s += BROWSER(232, 100, 400, 60, "localhost:3000/health") + T(246, 148, '"owner":"nobody"', { size: 12, mono: true, fill: RED, bold: true });
+    s += T(20, 124, "Ctrl+C", { size: 14, bold: true, mono: true, fill: A }) + T(20, 144, "↑  Enter", { size: 14, bold: true, mono: true, fill: A }) + T(20, 166, "= restart: it reads the file again", { size: 12.5, fill: A, bold: true });
+    return svg(178, "server.js is saved with owner Anna. The server is still running since 8:12:40, running the file as it was then, so the browser still shows owner nobody. Ctrl+C, up arrow, Enter restarts it: it reads the file again", s);
+  },
+  errors: function(){
+    var rows = [["EADDRINUSE", "one is already running on 3000", "Ctrl+C the other one"], ["Cannot find module '…server.js'", "not in the folder with server.js", "pwd, ls, cd"], ["Cannot find module 'express'", "no node_modules beside it", "open the right folder"], ["SyntaxError … server.js:11", "a typo on that line", "fix line 11, save, start"], ["This site can't be reached", "no server is running", "start it"]];
+    var s = R(8, 8, 624, 26, { rx: 0, fill: "#f9fafb", stroke: LINE }) + T(18, 26, "It says", { bold: true, size: 12.5 }) + T(266, 26, "It means", { bold: true, size: 12.5 }) + T(492, 26, "Do", { bold: true, size: 12.5 });
+    rows.forEach(function(r, i){ var y = 34 + i * 30; s += R(8, y, 624, 30, { rx: 0, fill: "#fff", stroke: LINE }) + T(18, y + 20, esc(r[0]), { size: 11.5, mono: true, bold: true }) + T(266, y + 20, esc(r[1]), { size: 11.5 }) + T(492, y + 20, esc(r[2]), { size: 12, fill: GRN, bold: true }); });
+    return svg(190, "Five messages. EADDRINUSE: one is already running on 3000, stop the other one. Cannot find module server.js: not in the folder with server.js, use pwd, ls, cd. Cannot find module express: node_modules is not next to server.js, open the right folder. SyntaxError with server.js:11: a typo on that line. This site can't be reached: no server is running, start it", s);
+  },
+  loop: function(){
+    var steps = [["Where am I?", "pwd, ls"], ["Run", "node server.js"], ["Read the terminal", "first lines"], ["Change one thing", "save, restart"]], s = "";
+    steps.forEach(function(st, i){
+      var x = 14 + i * 158, nw = i === 2;
+      s += R(x, 40, 136, 62, { rx: 12, fill: nw ? "#fef3c7" : "#fff", stroke: nw ? AMB : "#cfd6df", sw: 2 });
+      s += T(x + 68, 66, st[0], { anchor: "middle", bold: true, size: 13.5, fill: nw ? AMB : INK }) + T(x + 68, 87, st[1], { anchor: "middle", mono: true, size: 12, fill: MUT });
+      if (i < 3) s += ARROW(x + 138, 71, x + 156, 71, "#9aa0a6");
+    });
+    s += T(320, 140, "On a server, errors go to the terminal, not the browser's Console.", { anchor: "middle", size: 13, bold: true });
+    return svg(156, "The loop: Where am I? with pwd and ls. Run with node server.js. Read the terminal, the first lines, highlighted as new. Change one thing: save, restart. On a server, errors go to the terminal, not the browser's Console", s);
+  }
+};
+
+var PRIMER = [
+  { title: "A program that answers", art: "why",
+    body: "Every time an app loads your grades or your messages, it <b>asks a program</b> on another computer, and that program answers with JSON. That program is a <b>server</b>.<br><br>Today you run one on your own computer, ask it something from the browser, and break it four ways on purpose, so the errors don't scare you later.",
+    say: "Ask what KRÉTA has to ask a server for when they open it. Grades, absences, timetable: each one is a question with a JSON answer." },
+  { title: "Start it from its folder", art: "start",
+    body: "In VS Code: <b>File → Open Folder</b>, and pick the folder that has <span class=\"mono\">server.js</span> in it. Then <b>Terminal → New Terminal</b>: it opens in that folder. Check with <span class=\"mono\">ls</span>, then <span class=\"mono\">node server.js</span>.<br><br><span class=\"mono\">Listening on …</span> and no <span class=\"mono\">$</span>: the server is running, and the terminal is its.",
+    say: "Do it live from the zip: download, Extract All, open the folder. Show what happens when Extract All makes a folder in a folder: ls shows lesson08-starter/, so cd into it." },
+  { title: "Ask it from the browser", art: "ask",
+    body: "Open <span class=\"mono\">http://localhost:3000/health</span>. <b>localhost</b> is your own computer, <b>3000</b> is the door the server listens at, <b>/health</b> is what you ask for. The answer is JSON.<br><br><span class=\"mono\">Cannot GET /</span> is good news: the server is up, it just has no answer for that address.",
+    say: "Ask: whose computer is localhost? (Everybody's own. Your neighbour's localhost is their computer.)" },
+  { title: "Changed the file? Restart it", art: "restart",
+    body: "The server reads <span class=\"mono\">server.js</span> <b>once</b>, when it starts. Saving the file changes the file, not the server that's running.<br><br>So after every change: <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>↑</kbd>, <kbd>Enter</kbd>. The <span class=\"mono\">startedAt</span> time in the answer proves it restarted.",
+    say: "This is the bug they will hit most this year. Ask them to say \"Ctrl+C, up, Enter\" out loud once. It sticks." },
+  { title: "Read the terminal", art: "errors",
+    body: "When the server won't start, the terminal says why, in its <b>first lines</b>. The long list of <span class=\"mono\">at …</span> lines after them is for later.<br><br>Five messages cover nearly every problem you'll have today. You'll make four of them on purpose.",
+    say: "Point out that the browser's Console is no help here: the server runs in the terminal, so its errors are there." },
+  { title: "Run, then read", art: "loop",
+    body: "The new step: <b>read the terminal</b>. Something wrong? Read the first lines, change one thing, restart.<br><br>Then: the practice. You work in your real VS Code, and paste what you see into this page. Download the starter in task 1.",
+    say: "Everything they paste is checked on the page, so they can go at their own speed. The detective and the extras are for the fast ones." }
+];
+
+/* ====================================================================
+   Tasks: they work in their real VS Code and paste what they see.
+   ==================================================================== */
+
+function P(qq){ return '<span class="predict">Predict first: ' + qq + '</span> '; }
+function here(st){ return ""; }
+function txt(st){ return String(st.answer || "").replace(/\r/g, ""); }
+// The JSON the browser showed, or the fields we can still read from a JSON viewer.
+function readJson(t){
+  var a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  var o = {}, m, re = /"?(\w+)"?\s*:\s*"?([^"\n,}]*)"?/g, n = 0;
+  while ((m = re.exec(t))) { o[m[1]] = m[2].trim(); n++; }
+  return n ? o : null;
+}
+// What the pasted text says went wrong, in plain words. "" = nothing we recognise.
+function why(t){
+  if (/EADDRINUSE/.test(t)) return "<code>EADDRINUSE</code>: a server is already running on 3000, in another terminal. Stop that one first (Ctrl+C in it), or use that one.";
+  if (/Cannot find module '[^']*server\.js'/.test(t)) return "<code>Cannot find module …server.js</code>: node looked for server.js in the folder you're in, and it isn't there. <code>pwd</code> and <code>ls</code>: if you see <code>lesson08-starter/</code>, <code>cd</code> into it.";
+  if (/Cannot find module 'express'/.test(t)) return "<code>Cannot find module 'express'</code>: node found server.js but no <code>node_modules</code> next to it. Open the folder that has both (ls shows <code>node_modules/</code>), or unzip it again.";
+  if (/node: command not found|'node' is not recognized|term 'node' is not recognized/.test(t)) return "This computer doesn't find node. Tell the teacher which PC you're on.";
+  if (/ReferenceError: (\w+) is not defined/.test(t)) { var w = /ReferenceError: (\w+) is not defined/.exec(t)[1]; return "<code>" + esc(w) + " is not defined</code>: a name in JavaScript needs quotes: <code>\"" + esc(w) + "\"</code>. Fix it in server.js, save, restart."; }
+  if (/SyntaxError/.test(t)) return "<code>SyntaxError</code>: server.js has a typo. The first line of the error names the line (<code>server.js:11</code>). Fix it, save, start again.";
+  if (/can.t be reached|ERR_CONNECTION_REFUSED|refused to connect|Unable to connect/i.test(t)) return "No server answered. Look at the terminal: do you see <code>$</code>? Then it isn't running: <code>node server.js</code>.";
+  if (/Cannot GET \/health/.test(t)) return "<code>Cannot GET /health</code>: this server has no /health. Is it the lesson08 server.js? <code>pwd</code>.";
+  if (/Cannot GET/.test(t)) return "The server is up, but has no answer for that address. Check the end of the address: <code>/health</code>.";
+  return "";
+}
+
+var OK_START = "Listening on http://localhost:3000\nAsk it: http://localhost:3000/health";
+var NONE = function(){ return newState({ d: {} }, HOME); };
+
+var LESSONS = [
+  { title: "Start it", kind: "paste", noTerm: true, explorer: false,
+    do: P("after node server.js, will the $ come back?") + "Download <a href=\"lesson08-starter.zip\" download>lesson08-starter.zip</a> and unzip it into a folder of yours. Open the folder that has <code>server.js</code> in VS Code, open a terminal, and start it with <code>node server.js</code>. Paste what the terminal printed.",
+    sub: "<b>File → Open Folder</b>, then <b>Terminal → New Terminal</b>. Before starting: <code>ls</code> should show <code>server.js</code> and <code>node_modules/</code>.",
+    build: NONE, solve: function(){ return { answer: OK_START }; },
+    hints: ["Windows' Extract All often makes a folder inside a folder. If <code>ls</code> shows <code>lesson08-starter/</code>, <code>cd</code> into it.", "In the terminal: <code>pwd</code>, <code>ls</code>. You want to see server.js in the list before you run node."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the terminal printed after <code>node server.js</code>."; if (/Listening on http:\/\/localhost:3000/.test(t)) return ""; return why(t) || "I don't see <code>Listening on http://localhost:3000</code>. Paste everything the terminal printed after <code>node server.js</code>."; },
+    after: function(){ return "No <code>$</code>: the terminal is busy running your server. Leave it running for the next task."; } },
+
+  { title: "Ask it", kind: "paste", noTerm: true, explorer: false,
+    do: P("what will the browser show: a page, or JSON?") + "With the server running, open <code>http://localhost:3000/health</code> in the browser. Paste what it shows.",
+    sub: "If the browser shows a JSON viewer, click <b>Raw Data</b> (Firefox) or just copy the text.",
+    build: NONE, solve: function(){ return { answer: '{"status":"ok","owner":"nobody","startedAt":"8:12:40"}' }; },
+    hints: ["Type the address exactly, with <code>http://</code> and <code>/health</code> at the end.", "\"Can't be reached\"? Look at the terminal: if you see <code>$</code>, the server stopped. Start it again."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the browser shows at <code>localhost:3000/health</code>."; var j = readJson(t); if (j && j.status === "ok" && j.startedAt) return ""; return why(t) || "That isn't the server's answer. Open <code>http://localhost:3000/health</code> and copy the line that starts with <code>{</code>."; },
+    after: function(){ return "JSON, the same kind you fetched from the class API. Only now the server is yours, on your computer."; } },
+
+  { title: "Make it yours", kind: "paste", noTerm: true, explorer: false,
+    do: P("will the browser show your name as soon as you save?") + "In <code>server.js</code>, change <code>\"nobody\"</code> to your first name, and save. Make the browser show it at <code>/health</code>, and paste what it shows.",
+    sub: "Keep the quotes: <code>owner: \"Anna\"</code>.",
+    build: NONE, solve: function(){ return { answer: '{"status":"ok","owner":"Anna","startedAt":"8:15:02"}' }; },
+    hints: ["Saved, refreshed, still nobody? The server read server.js when it started. It's still running the old one.", "In the terminal: <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>↑</kbd>, <kbd>Enter</kbd>. Then refresh the browser."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the browser shows at <code>/health</code>."; var j = readJson(t); if (j && j.status === "ok") { var o = String(j.owner || "").trim(); if (!o) return "owner is empty. Write your name between the quotes."; if (o.toLowerCase() === "nobody") return "Still <code>nobody</code>. The file is saved, but the server is still running the old one: it reads the file only when it starts. <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>↑</kbd>, <kbd>Enter</kbd>, then refresh."; return ""; } return why(t) || "Paste the line the browser shows at <code>/health</code>, the one that starts with <code>{</code>."; },
+    after: function(){ return "No: saving changes the file, restarting changes the server. <code>startedAt</code> changed too: that's how you can tell it restarted."; } },
+
+  { title: "Break it: two servers", kind: "paste", noTerm: true, explorer: false,
+    do: P("can two servers listen on the same door?") + "Leave your server running. Open a <b>second</b> terminal (the <b>+</b> in the terminal panel) and run <code>node server.js</code> there too. Paste the error.",
+    sub: "The second terminal opens in the same folder. Paste the first lines; the <code>at …</code> lines can stay out.",
+    build: NONE, solve: function(){ return { answer: "node:events:497\n      throw er; // Unhandled 'error' event\n      ^\n\nError: listen EADDRINUSE: address already in use :::3000" }; },
+    hints: ["The + is at the top right of the terminal panel. The old terminal must still say Listening.", "In the second terminal: <code>node server.js</code>. Copy what it prints."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the second terminal printed."; if (/EADDRINUSE/.test(t)) return ""; if (/Listening on/.test(t)) return "That one started fine, so nothing else was running on 3000. Start the server in the first terminal, then again in a second one."; return why(t) || "Paste what the second terminal printed after <code>node server.js</code>."; },
+    after: function(){ return "No: <code>EADDRINUSE</code>, address already in use. One door, one server. When you see it, a server is already running somewhere: find that terminal. Close the second one now (the bin icon)."; } },
+
+  { title: "Break it: wrong folder", kind: "paste", noTerm: true, explorer: false,
+    do: P("what will the error say, and which folder will it name?") + "In your terminal: stop the server (<kbd>Ctrl</kbd>+<kbd>C</kbd>), go one folder up (<code>cd ..</code>), and run <code>node server.js</code>. Paste the error. Then go back in.",
+    sub: "Paste the first lines, up to <code>Error: …</code>.",
+    build: NONE, solve: function(){ return { answer: "node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module 'H:\\13F\\server.js'" }; },
+    hints: ["<code>cd ..</code> takes you out of lesson08-starter. The prompt should no longer end with it.", "Then <code>node server.js</code> and copy from the first line to the line that says <code>Error:</code>."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the terminal printed."; if (/Cannot find module '[^']*server\.js'/.test(t)) return ""; if (/Listening on/.test(t)) return "It started: you're still in the folder with server.js. <code>cd ..</code> first, then <code>node server.js</code>."; if (/EADDRINUSE/.test(t)) return "That's the other error: a server is still running. Stop it first with Ctrl+C."; return why(t) || "Paste what the terminal printed after <code>node server.js</code>."; },
+    after: function(){ return "The path in quotes is where node looked: the folder above. Not \"server.js is gone\", but \"not here\". Now <code>cd</code> back in (Tab!) and start it again."; } },
+
+  { title: "Break it: a typo", kind: "paste", noTerm: true, explorer: false,
+    do: P("will node tell you which line is wrong?") + "In <code>server.js</code>, on the <code>res.json(…)</code> line, delete the <code>)</code> just before the <code>;</code>. Save, stop the server and start it again. Paste the error.",
+    sub: "Paste from the very first line: it ends with <code>server.js</code> and a number.",
+    build: NONE, solve: function(){ return { answer: "H:\\13F\\lesson08-starter\\server.js:11\n  res.json({ status: \"ok\", owner: \"Anna\", startedAt: startedAt };\n                                                               ^\n\nSyntaxError: missing ) after argument list" }; },
+    hints: ["The line is <code>res.json({ status: … });</code>. Make the end <code>};</code> instead of <code>});</code>.", "A typo is found when the server starts. Ctrl+C, ↑, Enter, then copy the error from its first line."],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the terminal printed."; if (/SyntaxError/.test(t) && /server\.js:\d+/.test(t)) return ""; if (/SyntaxError/.test(t)) return "That's the SyntaxError. Paste from the very first line too: it ends with <code>server.js</code> and the line number."; if (/Listening on/.test(t)) return "It started fine, so there's no typo in the file it ran. Did you save? Then restart."; return why(t) || "Paste what the terminal printed when you started it."; },
+    after: function(st){ var m = /server\.js:(\d+)/.exec(txt(st)); return "Yes: the first line names the file and the line (<code>server.js:" + (m ? m[1] : "11") + "</code>), and the <code>^</code> points where node gave up. <b>Put the <code>)</code> back</b>, save, and start it again before you go on."; } },
+
+  { title: "A teammate's server", kind: "choose", noTerm: true, explorer: false, detective: true,
+    do: "Your teammate: \"I changed my name in server.js and saved. The browser still says nobody. So I typed <code>node server.js</code> in a new terminal, and got <code>EADDRINUSE</code>.\" What should they do?",
+    sub: "Two clues: what the browser says, and what the new terminal says. One answer explains both.",
+    options: [
+      ["Stop the old server in the first terminal (Ctrl+C), then start it again there.", 1],
+      ["Port 3000 is broken. Change it to 3001 in server.js.", 0, "That hides it: the old server is still running on 3000, with the old name. Why is it still running?"],
+      ["Save server.js again, then refresh the browser.", 0, "Saving was never the problem: the server reads the file only when it starts."],
+      ["Restart the computer.", 0, "That works, in five minutes. What's still running on 3000, and where?"]
+    ],
+    build: NONE, solve: function(){ return { answer: "0" }; },
+    hints: ["Why does the browser still say nobody? The server read the file when it started.", "EADDRINUSE means something already listens on 3000. Which server could that be?"],
+    check: function(st){ var a = st.answer; if (a === "" || a === undefined) return "Pick one."; var o = this.options[Number(a)]; return o[1] ? "" : o[2]; },
+    after: function(){ return "Both clues point at the same thing: the old server, started before the change, is still running in the first terminal. It still answers \"nobody\", and it still holds 3000. Ctrl+C there, ↑, Enter."; } },
+
+  { title: "Extra A: a second address", kind: "paste", noTerm: true, explorer: false, extra: true,
+    do: "Make your server answer at <code>/time</code> too, with the current time in JSON. Paste what the browser shows at <code>localhost:3000/time</code>.",
+    sub: "No hints. Copy the <code>/health</code> part of server.js and change it. <code>new Date().toLocaleTimeString(\"hu-HU\")</code> gives the time now.",
+    build: NONE, solve: function(){ return { answer: '{"time":"8:31:07"}' }; },
+    hints: [],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the browser shows at <code>/time</code>."; if (/Cannot GET \/time/.test(t)) return "<code>Cannot GET /time</code>: the server you asked has no /time. Did you save and restart?"; var j = readJson(t); if (j && typeof j === "object") { var ks = Object.keys(j).sort().join(","); if (ks === "owner,startedAt,status") return "That's what <code>/health</code> answers. Ask <code>/time</code>."; if (Object.keys(j).length) return ""; } return why(t) || "Paste the JSON the browser shows at <code>/time</code>."; },
+    after: function(){ return "Two addresses, two answers. Each <code>app.get</code> is one address the server can answer. Next lesson: an address that sends a whole list."; } },
+
+  { title: "Extra B: the error that waits", kind: "paste", noTerm: true, explorer: false, extra: true, last: true,
+    do: "In <code>server.js</code>, change <code>res.json(</code> to <code>res.jsn(</code>. Save and restart: it starts fine. Now ask <code>/health</code> in the browser. Paste what the <b>terminal</b> says.",
+    sub: "No hints. Put it back afterwards.",
+    build: NONE, solve: function(){ return { answer: "Listening on http://localhost:3000\nAsk it: http://localhost:3000/health\nTypeError: res.jsn is not a function\n    at H:\\13F\\lesson08-starter\\server.js:11:7" }; },
+    hints: [],
+    check: function(st){ var t = txt(st); if (!t.trim()) return "Paste what the terminal shows after you asked /health."; if (/res\.jsn is not a function/.test(t)) return ""; if (/Listening on/.test(t)) return "It started fine: the mistake hasn't run yet. Ask <code>/health</code> in the browser, then look at the terminal again."; return why(t) || "Paste what the terminal shows after you asked /health."; },
+    after: function(){ return "It started fine: the broken line only runs when somebody asks for /health. Then the error goes to the terminal, with the line number. When a page says something went wrong on the server, look at the terminal. Now change it back to <code>res.json(</code>."; } }
+];
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "backend-your-own-server-v1";
+var TRIES_PER_HINT = 3;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, work: {}, msg: {}, checked: {} }; }
+function normalizeS(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalizeS((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+function startTask(i, seed){
+  var les = LESSONS[i];
+  if (seed === undefined) seed = Math.floor(Math.random() * 1e9);
+  var st = les.build(rng(seed));
+  st.seed = seed; st.cwd0 = st.cwd;
+  return st;
+}
+var UI = { note: "", prepView: "solution", hi: 0 };
+var primerIdx = 0, showSay = PREP;
+function L(){ return LESSONS[S.i]; }
+function W(){ if (!S.work[S.i]) S.work[S.i] = startTask(S.i); return S.work[S.i]; }
+
+/* ====================================================================
+   The work area: Explorer, answer box, terminal
+   ==================================================================== */
+
+var lastPaths = null, flashPaths = {};
+function pathList(fs){ var out2 = []; (function walk(n, p){ Object.keys(n.d).forEach(function(k){ var pp = joinP(p, k); out2.push(pp); if (isDir(n.d[k])) walk(n.d[k], pp); }); })(lookup(fs, HOME).node, HOME); return out2; }
+
+function renderExplorer(){
+  var les = L(), st = W(), ex = $("explorer");
+  var show = les.explorer !== false;
+  $("work").classList.toggle("noexp", !show);
+  ex.classList.toggle("hidden", !show);
+  if (!show) return;
+  var pin = les.pin !== false, h = '<h3>Explorer</h3><div class="addr">' + esc(pin ? winPath(st.cwd) : "H:\\") + '</div>';
+  var row = function(depth, name, path, dir, isHere, mark){
+    return '<div class="trow ' + (dir ? "dir" : "file") + (isHere ? " here" : "") + (flashPaths[path] ? " new" : "") + '" style="padding-left:' + (6 + depth * 16) + 'px"><span class="ic">' + (dir ? "📁" : "📄") + '</span><span class="nm">' + esc(name) + '</span>' + (isHere ? '<span class="pin">◀ you are here</span>' : "") + (mark ? '<span class="pin">◀ get here</span>' : "") + '</div>';
+  };
+  h += row(0, "H:  (~, your home folder)", HOME, true, pin && st.cwd === HOME, st.mark === HOME);
+  (function walk(n, p, depth){
+    sortedKeys(n).forEach(function(k){ var pp = joinP(p, k), d = isDir(n.d[k]); h += row(depth, k, pp, d, pin && d && st.cwd === pp, st.mark === pp); if (d) walk(n.d[k], pp, depth + 1); });
+  })(lookup(st.fs, HOME).node, HOME, 1);
+  if (pin && st.cwd.indexOf(HOME) !== 0) h += '<div class="off">You are outside H: now, in <b>' + esc(winPath(st.cwd)) + '</b>. <code>cd</code> on its own brings you home.</div>';
+  ex.innerHTML = h;
+}
+
+function promptHtml(p){ return '<div class="tl pi"><span class="pu">' + USER + '</span> <span class="pm">MINGW64</span> <span class="pp">' + esc(p) + '</span></div>'; }
+function renderTerm(focus){
+  var st = W(), h = "";
+  st.lines.forEach(function(l){
+    if (l.k === "p") h += promptHtml(l.p) + '<div class="tl">$ ' + esc(l.s) + '</div>';
+    else if (l.k === "h") h += '<div class="tl">' + l.h + '</div>';
+    else h += '<div class="tl' + (l.c === "tip" ? " tip" : "") + '">' + esc(l.s) + '</div>';
+  });
+  if (st.run) h += '<div class="inl"><input id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></div>';
+  else h += promptHtml(shortPath(st.cwd)) + '<div class="inl"><span>$ </span><input id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></div>';
+  var t = $("term"); t.innerHTML = h; t.scrollTop = t.scrollHeight;
+  var inp = $("tin");
+  inp.value = UI.typed || "";
+  if (focus !== false && !PREP) inp.focus({ preventScroll: true });
+}
+
+function boxKind(les){ return les.kind === "answer" || les.kind === "paste" || les.kind === "choose"; }
+function renderAnswer(){
+  var les = L(), st = W(), box = $("answer");
+  if (!boxKind(les)) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+  box.classList.remove("hidden");
+  if (les.kind === "choose") {
+    box.innerHTML = '<div style="width:100%;display:flex;flex-direction:column;gap:8px">' + les.options.map(function(o, i){ var on = String(st.answer) === String(i); return '<label style="display:flex;gap:10px;align-items:flex-start;border:1px solid ' + (on ? "#2f6fde" : "#d6d9de") + ';background:' + (on ? "#eef3fc" : "#fff") + ';border-radius:10px;padding:9px 12px;cursor:pointer;font-size:15px"><input type="radio" name="opt" value="' + i + '"' + (on ? " checked" : "") + ' style="margin-top:4px"><span>' + esc(o[0]) + '</span></label>'; }).join("") + '</div><button class="btn primary" id="ans-check">Check</button>';
+    box.querySelectorAll("input[name=opt]").forEach(function(r){ r.addEventListener("change", function(){ W().answer = r.value; save(); renderAnswer(); }); });
+    $("ans-check").onclick = function(){ checkNow(true); };
+    return;
+  }
+  if (les.kind === "paste") box.innerHTML = '<label for="ans">Paste it here:</label><textarea id="ans" spellcheck="false">' + esc(st.answer || "") + '</textarea><button class="btn primary" id="ans-check">Check</button>';
+  else box.innerHTML = '<label for="ans">Your answer:</label><input id="ans" autocomplete="off" spellcheck="false" value="' + esc(st.answer || "") + '"><button class="btn primary" id="ans-check">Check</button>';
+  $("ans").addEventListener("input", function(e){ W().answer = e.target.value; save(); });
+  $("ans").addEventListener("keydown", function(e){ if (e.key === "Enter" && (les.kind !== "paste" || e.ctrlKey)) { e.preventDefault(); checkNow(true); } });
+  $("ans-check").onclick = function(){ checkNow(true); };
+}
+
+function renderSol(){
+  var box = $("solbox"), les = L(), st = W();
+  if (!(S.sol[S.i] && !S.done[S.i])) { box.classList.add("hidden"); return; }
+  var s = les.solve(st);
+  box.classList.remove("hidden");
+  if (les.kind === "paste") { box.innerHTML = '<h4>What it looks like when it works</h4><pre>' + esc(s.answer) + '</pre>'; return; }
+  if (les.kind === "choose") { box.innerHTML = '<h4>Solution</h4>' + esc(les.options[Number(s.answer)][0]); return; }
+  box.innerHTML = '<h4>Solution: type it yourself (paste is off)</h4>' + s.cmds.map(function(c){ return c === "Ctrl+C" ? "<kbd>Ctrl</kbd>+<kbd>C</kbd>" : "<code>" + esc(c) + "</code>"; }).join(" ") + (s.answer !== undefined ? '<div>Then write <code>' + esc(s.answer) + '</code> in the box.</div>' : "");
+}
+
+function renderWork(focus){ var noTerm = !!L().noTerm; $("term").classList.toggle("hidden", noTerm); $("termbar").classList.toggle("hidden", noTerm); renderExplorer(); renderSol(); renderAnswer(); if (!noTerm) renderTerm(focus); }
+
+$("term").addEventListener("mouseup", function(){ var sel = window.getSelection(); if (sel && String(sel).length) return; var i = $("tin"); if (i) i.focus({ preventScroll: true }); });
+$("term").addEventListener("keydown", function(e){
+  var inp = e.target; if (inp.id !== "tin") return;
+  var st = W();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    var before = pathList(st.fs), line = inp.value;
+    UI.typed = ""; UI.hi = 0;
+    exec(st, line);
+    var after = pathList(st.fs); flashPaths = {};
+    after.forEach(function(p){ if (before.indexOf(p) < 0) flashPaths[p] = true; });
+    afterCommand();
+    return;
+  }
+  if (e.key === "Tab") {
+    e.preventDefault(); if (st.run) return;
+    var r = complete(st, inp.value);
+    if (!r) return;
+    if (r.line !== undefined) { inp.value = r.line; UI.typed = r.line; return; }
+    st.lines.push({ k: "p", p: shortPath(st.cwd), s: inp.value }); outH(st, r.list.map(function(x){ return /\/$/.test(x) ? '<span class="ls-d">' + esc(x.slice(0, -1)) + '</span>/' : esc(x); }).join("  "));
+    UI.typed = inp.value; save(); renderTerm(); return;
+  }
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    e.preventDefault(); if (st.run) return;
+    var hs = st.hist; if (!hs.length) return;
+    UI.hi = Math.max(0, Math.min(hs.length, UI.hi + (e.key === "ArrowUp" ? 1 : -1)));
+    inp.value = UI.hi ? hs[hs.length - UI.hi] : ""; UI.typed = inp.value; return;
+  }
+  if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
+    if (window.getSelection && String(window.getSelection()).length && !st.run) return;
+    e.preventDefault(); interrupt(st, inp.value); UI.typed = ""; afterCommand(); return;
+  }
+  if (e.ctrlKey && (e.key === "l" || e.key === "L")) { e.preventDefault(); st.lines = []; UI.typed = inp.value; save(); renderTerm(); return; }
+});
+$("term").addEventListener("input", function(e){ if (e.target.id === "tin") UI.typed = e.target.value; });
+$("term").addEventListener("paste", function(e){
+  if (S.sol[S.i] && !S.done[S.i]) { e.preventDefault(); UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); }
+});
+
+// After every command: done yet? (No red until they press Check.)
+function afterCommand(){
+  var idx = S.i, les = LESSONS[idx], st = W();
+  if (st.lines.length > 400) st.lines = st.lines.slice(-300);
+  if (!boxKind(les) && !S.done[idx] && !les.check(st)) markDone(idx);
+  else if (S.checked[idx] && !S.done[idx]) S.msg[idx] = les.check(st);
+  save(); renderDots(); renderStrip(); renderWork();
+}
+function markDone(idx){
+  var les = LESSONS[idx];
+  S.done[idx] = true; S.msg[idx] = ""; S.checked[idx] = true;
+  if (S.sol[idx]) S.usedSol[idx] = true;
+  S.sol[idx] = false;
+  (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+}
+
+function checkNow(fromAnswer){
+  var idx = S.i, les = LESSONS[idx], st = W(), msg = les.check(st), key = JSON.stringify([st.cwd, st.answer, st.ncmd]);
+  S.checked[idx] = true; S.msg[idx] = msg; UI.note = "";
+  if (!msg) markDone(idx);
+  else if (S.lastTried[idx] !== key) { S.lastTried[idx] = key; S.tries[idx] = (S.tries[idx] || 0) + 1; }
+  save(); renderDots(); renderStrip(); renderWork(!fromAnswer);
+  if (fromAnswer && $("ans")) $("ans").focus();
+  else if (L().noTerm && $("ans")) $("ans").focus();
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), st = W(), shown = S.hints[S.i] || 0, tries = (S.tries[S.i] || 0) + (st.ncmd || 0), len = les.hints.length;
+  var nextAt = len === 0 ? 6 * TRIES_PER_HINT / 2 : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function renderStrip(){
+  var les = L(), st = W(), done = !!S.done[S.i], msg = S.msg[S.i], r = "";
+  $("t-kicker").textContent = SHORT + " · Task " + (S.i + 1) + " of " + N + (les.boss ? " · Confident? Start here" : les.detective ? " · Detective" : les.extra ? " · Extra" : "") + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? "The solution is above the terminal. Type it in yourself." : les.sub;
+  if (!S.checked[S.i] && !done) r = '<span class="dim">' + (les.kind === "choose" ? "Pick one, then press <b>Check</b>." : les.kind === "paste" ? "Paste it in the box, then press <b>Check</b>." : les.kind === "answer" ? "Use the terminal, then write your answer and press <b>Check</b>." : "Type in the terminal and press Enter. It ticks itself when you get there.") + '</span>';
+  else if (S.checked[S.i] && msg && !done) r = '<span class="no">✗ Not yet.</span> ' + msg;
+  else if (done) r = '<span class="yes">✓ Done.</span> ' + les.after(st);
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    return renderStripNote();
+  }
+  if (!boxKind(les) && !done) act.appendChild(button("Check", "btn primary", function(){ checkNow(false); }));
+  if (done) { if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); })); }
+  else if (!S.sol[S.i]) act.appendChild(button(hs.solutionNext ? "Show solution" : (hs.len ? "Stuck? Hint" : "Stuck?"), "btn", stuck));
+  renderStripNote();
+}
+function renderStripNote(){ var n = $("t-note"); n.classList.toggle("hidden", !UI.note); n.textContent = UI.note; }
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: type commands, look at what they print. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+
+// Run the solution on a fresh start of the task (prep mode and tests).
+function solvedState(i, seed){
+  var st = startTask(i, seed), s = LESSONS[i].solve(st);
+  (s.cmds || []).forEach(function(c){ if (c === "Ctrl+C") interrupt(st, ""); else exec(st, c); });
+  if (s.answer !== undefined) st.answer = s.answer;
+  return st;
+}
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  var seed = W().seed;
+  S.work[S.i] = UI.prepView === "task" ? startTask(S.i, seed) : solvedState(S.i, seed);
+  S.done[S.i] = false; S.checked[S.i] = false;
+  if (UI.prepView === "solution") { if (!LESSONS[S.i].check(W())) { S.done[S.i] = true; S.checked[S.i] = true; } }
+  renderAll();
+}
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); UI.note = ""; UI.typed = ""; UI.hi = 0; flashPaths = {};
+  if (PREP) { UI.prepView = "solution"; S.work[S.i] = solvedState(S.i, 1000 + S.i); S.done[S.i] = !LESSONS[S.i].check(W()); S.checked[S.i] = true; renderAll(); return; }
+  save(); renderAll();
+}
+function renderAll(){ renderDots(); renderStrip(); renderWork(); }
+$("l-again").onclick = function(){
+  if (!confirm("Start this task again? The folders get shuffled and your commands are cleared.")) return;
+  S.work[S.i] = startTask(S.i); S.checked[S.i] = false; S.msg[S.i] = ""; S.sol[S.i] = false; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your work and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); }
+});
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); else { var i = $("tin"); if (i) i.focus(); } }
+function renderPrimer(){
+  var Pr = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + LESSON + ' · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(Pr.title) + '</h2>' +
+    '<div class="art">' + ART[Pr.art]() + '</div>' +
+    '<p>' + Pr.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(Pr.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook.
+window.__L8 = { LESSONS: LESSONS, PRIMER: PRIMER, ART: ART, PREP: PREP, gotoTask: gotoTask, state: function(){ return S; },
+  start: startTask, exec: exec, complete: complete, check: function(i, st){ return LESSONS[i].check(st); }, solved: solvedState, tokenize: tokenize, newState: newState, world: world, rng: rng };
+
+document.title = LESSON;
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson T2 · Make, move, run</title>
+<style>
+:root{
+  --accent:#2f6fde; --ink:#1c2430; --muted:#6b7280; --line:#e3e6ea; --soft:#f6f7f9; --ok:#2e9e5b; --warn:#b45309; --bad:#b91c1c; --amber:#f2b04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--soft);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono,code,kbd{font-family:ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace}
+button,input,textarea{font:inherit}
+.btn{border:1px solid #d3d7dd;background:#fff;color:var(--ink);border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}
+
+/* ===== slides ===== */
+#primer{position:fixed;inset:0;z-index:20;background:var(--soft);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:26px 34px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin:auto 0}
+.slide .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.slide h2{font-size:28px;margin:4px 0 16px}
+.slide .art{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.slide .art svg{width:100%;min-width:520px;height:auto;display:block}
+.slide p{font-size:17px;line-height:1.65;margin:14px 0 0}
+.slide .say{margin-top:16px;background:#1c2430;color:#e8ecf1;border-radius:10px;padding:12px 14px;font-size:14px}
+.slide .nav{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdots{display:flex;gap:6px;margin-right:auto}
+.pdot{width:9px;height:9px;border-radius:50%;background:#dfe3e8;cursor:pointer}
+.pdot.cur{background:var(--accent)}
+.slide .keys{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ===== practice: task strip ===== */
+#practice{height:100%;display:flex;flex-direction:column;min-height:0}
+.strip{flex:none;background:var(--soft);border-bottom:1px solid #c9ced6;padding:10px 16px;display:grid;grid-template-columns:240px minmax(0,1fr) auto;gap:20px;align-items:start}
+.who .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.who .ltitle{font-size:17px;font-weight:800;margin:1px 0 6px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:#dfe3e8;cursor:pointer;border:0;padding:0}
+.dot.done{background:var(--accent)} .dot.used{background:var(--amber)} .dot.cur{outline:2px solid var(--accent);outline-offset:2px}
+.links{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.links a{color:var(--muted);cursor:pointer;text-decoration:underline}
+.do .sentence{font-size:17px;line-height:1.45}
+.do .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.do code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em;color:var(--ink)}
+.do kbd,.slide kbd{font-size:12px;border:1px solid #cfd4da;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--ink)}
+.result{margin-top:6px;font-size:14px}
+.result .no{color:var(--bad);font-weight:700}
+.result .yes{color:var(--ok);font-weight:700}
+.result .dim{color:var(--muted)}
+.result code{background:#e9edf2;border-radius:4px;padding:0 4px;font-size:.88em}
+.hints{margin-top:6px;background:#fff8e6;border:1px solid #f5e2b0;border-radius:8px;padding:6px 10px;font-size:14px}
+.hints div+div{margin-top:4px}
+.hints b{color:var(--warn)}
+.hints code{background:#fff;border-radius:4px;padding:0 4px;font-size:.88em}
+.note{margin-top:6px;font-size:13px;color:var(--warn)}
+.actions{display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap}
+.predict{display:inline-block;border:2px dashed #7c3aed;border-radius:6px;padding:0 6px;margin:0 6px 2px 0;color:#6d28d9;font-weight:700;background:#faf5ff}
+
+/* ===== practice: Explorer beside the terminal ===== */
+.work{flex:1;display:grid;grid-template-columns:minmax(240px,30fr) 70fr;min-height:0}
+.work.noexp{grid-template-columns:1fr}
+.explorer{background:#fff;border-right:1px solid var(--line);overflow:auto;padding:12px 14px;font-size:14px}
+.explorer h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.explorer .addr{font:13px ui-monospace,Consolas,monospace;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin-bottom:8px;word-break:break-all}
+.trow{display:flex;align-items:center;gap:6px;padding:2px 6px;border-radius:5px;white-space:nowrap}
+.trow .ic{width:16px;text-align:center;flex:none}
+.trow.dir .nm{font-weight:600}
+.trow.file{color:#374151}
+.trow.here{background:#fef3c7;outline:2px solid #f2b04a}
+.trow .pin{font-size:12px;font-weight:700;color:var(--warn);margin-left:6px}
+.trow.new{animation:flash 1.6s ease-out}
+@keyframes flash{0%{background:#bbf7d0}100%{background:transparent}}
+.explorer .off{color:var(--muted);font-size:13px;margin-top:8px}
+.right{display:flex;flex-direction:column;min-height:0;min-width:0}
+.answer{flex:none;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.answer label{font-weight:700}
+.answer input{border:1px solid #c9ced6;border-radius:6px;padding:6px 8px;min-width:260px;font-family:ui-monospace,Consolas,monospace}
+.answer textarea{border:1px solid #c9ced6;border-radius:6px;padding:6px 8px;width:100%;min-height:160px;font:13px ui-monospace,Consolas,monospace}
+.solbox{flex:none;border-bottom:2px solid #f2b04a;background:#fffaf0;padding:8px 14px;font-size:14px}
+.solbox h4{margin:0 0 4px;color:var(--warn);font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+.solbox pre{margin:4px 0 0;white-space:pre-wrap;font:12.5px ui-monospace,Consolas,monospace;background:#fff;border:1px solid #f5e2b0;border-radius:6px;padding:6px 8px;max-height:200px;overflow:auto}
+.solbox code{display:inline-block;background:#fff;border:1px solid #f5e2b0;border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0;font-size:13px}
+
+/* the terminal: Git Bash colours */
+.term{flex:1;min-height:240px;background:#0c0c0c;color:#d9d9d9;font:14px/1.42 ui-monospace,Consolas,"Cascadia Code","Liberation Mono",monospace;padding:10px 12px 40px;overflow:auto;cursor:text}
+.term .tl{white-space:pre-wrap;word-break:break-word}
+.term .pi{margin-top:8px}
+.term .pu{color:#3fc33f} .term .pm{color:#c45ac4} .term .pp{color:#d7c43f}
+.term .ls-d{color:#6f9eff;font-weight:700}
+.term .dim{color:#8a8a8a}
+.term .inl{display:flex}
+.term .inl span{white-space:pre}
+.term input{flex:1;min-width:40px;background:transparent;border:0;outline:none;color:#f2f2f2;font:inherit;padding:0;caret-color:#f2f2f2}
+.term .tip{color:#8a8a8a;font-style:italic}
+.termbar{flex:none;background:#1f1f1f;color:#bbb;font-size:12px;padding:4px 12px;display:flex;gap:14px;flex-wrap:wrap}
+.termbar b{color:#eee}
+
+@media (max-width:900px){
+  .strip{grid-template-columns:1fr;gap:8px}
+  .work{grid-template-columns:1fr;display:block;overflow:auto}
+  .explorer{border-right:0;border-bottom:1px solid var(--line);max-height:260px}
+  .term{min-height:320px}
+  #practice{height:auto;min-height:100%}
+  html,body{height:auto}
+  .answer input{min-width:0;width:100%}
+}
+</style>
+</head>
+<body>
+<div id="primer" class="hidden"></div>
+
+<div id="practice">
+  <div class="strip">
+    <div class="who">
+      <div class="kicker" id="t-kicker"></div>
+      <div class="ltitle" id="t-title"></div>
+      <div class="dots" id="dots"></div>
+      <div class="links"><a href="../">Home</a><a id="l-slides">Slides</a><a id="l-again">Start task again</a><a id="l-reset">Reset all</a></div>
+    </div>
+    <div class="do">
+      <div class="sentence" id="t-do"></div>
+      <div class="sub" id="t-sub"></div>
+      <div class="result" id="t-result"></div>
+      <div class="hints hidden" id="t-hints"></div>
+      <div class="note hidden" id="t-note"></div>
+    </div>
+    <div class="actions" id="t-actions"></div>
+  </div>
+  <div class="work" id="work">
+    <div class="explorer" id="explorer"></div>
+    <div class="right">
+      <div class="solbox hidden" id="solbox"></div>
+      <div class="answer hidden" id="answer"></div>
+      <div class="term" id="term"></div>
+      <div class="termbar" id="termbar"><span><b>Tab</b> finishes a name</span><span><b>↑</b> last command</span><span><b>Ctrl+C</b> stop / cancel</span><span><b>Ctrl+L</b> clear</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+var PREP = /[?&]prep(=|&|$)/.test(location.search);
+var LESSON = "Lesson T2 · Make, move, run";
+var SHORT = "Lesson T2";
+
+function esc(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+
+/* ====================================================================
+   A small Git Bash: folders, files, and the commands a beginner needs.
+   A folder is { d: { name: node } }, a file is { f: "text" }.
+   ==================================================================== */
+
+var HOME = "/h";
+var USER = "you@school-pc";
+var COMMANDS = ["cat", "cd", "clear", "code", "cp", "dir", "echo", "exit", "help", "ls", "mkdir", "mv", "node", "pwd", "rm", "rmdir", "touch"];
+
+function rng(seed){ var a = seed >>> 0; return function(){ a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function pick(R, arr){ return arr[Math.floor(R() * arr.length)]; }
+function shuffle(R, arr){ arr = arr.slice(); for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(R() * (i + 1)), t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+
+function isDir(n){ return !!(n && n.d); }
+function parts(p){ return p.split("/").filter(Boolean); }
+function parentOf(p){ var a = parts(p); a.pop(); return "/" + a.join("/"); }
+function baseOf(p){ var a = parts(p); return a[a.length - 1] || "/"; }
+function joinP(a, b){ return (a === "/" ? "" : a) + "/" + b; }
+function keyIn(dir, name){ if (Object.prototype.hasOwnProperty.call(dir.d, name)) return name; var l = name.toLowerCase(); for (var k in dir.d) if (k.toLowerCase() === l) return k; return null; }
+
+// Make every folder on the way; returns the last one.
+function mkdirp(fs, p){ var n = fs; parts(p).forEach(function(x){ var k = keyIn(n, x); if (k === null) { n.d[x] = { d: {} }; k = x; } n = n.d[k]; }); return n; }
+function put(fs, p, text){ mkdirp(fs, parentOf(p)).d[baseOf(p)] = { f: text || "" }; }
+
+// Turn what was typed into an absolute path (it may not exist).
+function absPath(cwd, p){
+  var m = /^([a-zA-Z]):(\/.*)?$/.exec(p);
+  if (m) p = "/" + m[1].toLowerCase() + (m[2] || "");
+  var a = p.charAt(0) === "/" ? [] : parts(cwd);
+  parts(p).forEach(function(x){ if (x === ".") return; if (x === "..") a.pop(); else a.push(x); });
+  return "/" + a.join("/");
+}
+// Find a node; folder names are not case sensitive (Windows). Returns { node, path } with the real spelling.
+function lookup(fs, abs){
+  var n = fs, real = [];
+  var ps = parts(abs);
+  for (var i = 0; i < ps.length; i++) {
+    if (!isDir(n)) return null;
+    var k = keyIn(n, ps[i]); if (k === null) return null;
+    real.push(k); n = n.d[k];
+  }
+  return { node: n, path: "/" + real.join("/") };
+}
+function exists(st, p){ return !!lookup(st.fs, p); }
+function dirExists(st, p){ var r = lookup(st.fs, p); return !!(r && isDir(r.node)); }
+function fileExists(st, p){ var r = lookup(st.fs, p); return !!(r && r.node && !isDir(r.node)); }
+
+function shortPath(p){ if (p === HOME) return "~"; if (p.indexOf(HOME + "/") === 0) return "~" + p.slice(HOME.length); return p; }
+// How Windows names the same place.
+function winPath(p){
+  var a = parts(p);
+  if (a.length && /^[a-z]$/.test(a[0])) return a[0].toUpperCase() + ":\\" + a.slice(1).join("\\");
+  return "C:\\Program Files\\Git" + (a.length ? "\\" + a.join("\\") : "");
+}
+function sortedKeys(dir){ return Object.keys(dir.d).sort(function(a, b){ var da = isDir(dir.d[a]), db = isDir(dir.d[b]); if (da !== db) return da ? -1 : 1; return a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0; }); }
+function lsKeys(dir, isRoot){ return Object.keys(dir.d).filter(function(k){ return !(isRoot && /^[a-z]$/.test(k)); }).sort(function(a, b){ var x = a.toLowerCase().replace(/[^a-z0-9]/g, ""), y = b.toLowerCase().replace(/[^a-z0-9]/g, ""); return x < y ? -1 : x > y ? 1 : 0; }); }
+// ls quotes names with spaces or brackets, the way Git Bash shows them.
+function lsName(k){ return /[\s()'"&;!$]/.test(k) ? "'" + k.replace(/'/g, "'\\''") + "'" : k; }
+// For solutions shown to the student: single quotes when needed.
+function q(k){ return /[\s()'"&;!$\\]/.test(k) ? "'" + k + "'" : k; }
+
+// Split a command line like bash does: quotes, backslashes, ~.
+function tokenize(line){
+  var toks = [], cur = "", inTok = false, quote = null, tilde = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line.charAt(i);
+    if (quote) {
+      if (c === quote) quote = null;
+      else if (quote === '"' && c === "\\" && /["\\$`]/.test(line.charAt(i + 1))) cur += line.charAt(++i);
+      else cur += c;
+      continue;
+    }
+    if (c === "'" || c === '"') { quote = c; inTok = true; continue; }
+    if (c === "\\") { if (i + 1 < line.length) { cur += line.charAt(++i); inTok = true; } continue; }
+    if (/\s/.test(c)) { if (inTok) { toks.push(tilde ? expandTilde(cur) : cur); cur = ""; inTok = false; tilde = false; } continue; }
+    if (c === "(" || c === ")") return { err: "bash: syntax error near unexpected token `" + c + "'" };
+    if (/[;&|<>]/.test(c)) return { err: "(This practice terminal runs one command at a time. Leave out the " + c + " and run them one by one.)", tip: true };
+    if (!inTok && c === "~") tilde = true;
+    cur += c; inTok = true;
+  }
+  if (quote) return { err: "(The " + quote + " quote is never closed, so bash would wait for more. Close it, then press Enter.)", tip: true };
+  if (inTok) toks.push(tilde ? expandTilde(cur) : cur);
+  return { toks: toks };
+}
+function expandTilde(s){ return s === "~" ? HOME : s.indexOf("~/") === 0 ? HOME + s.slice(1) : s; }
+
+function newState(fs, cwd){ return { fs: fs, cwd: cwd, lines: [], hist: [], run: null, ncmd: 0, cds: 0, errs: 0, ran: [], answer: "", old: cwd }; }
+function out(st, text, cls){ st.lines.push({ k: "o", s: text, c: cls || "" }); }
+function outH(st, html){ st.lines.push({ k: "h", h: html }); }
+
+// The programs a node file can be: a server keeps running, anything else prints and ends.
+function nodeRun(st, file, abs){
+  var r = lookup(st.fs, abs);
+  if (!r) {
+    out(st, "node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '" + winPath(abs) + "'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)\n    at node:internal/main/run_main_module:28:49 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v22.11.0");
+    st.ran.push({ file: file, from: st.cwd, ok: false }); st.errs++; return;
+  }
+  if (isDir(r.node)) { out(st, "node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '" + winPath(r.path) + "'\n  code: 'MODULE_NOT_FOUND'\n\nNode.js v22.11.0"); st.errs++; return; }
+  var text = r.node.f, dirW = winPath(parentOf(r.path));
+  st.ran.push({ file: r.path, from: st.cwd, ok: true });
+  if (/app\.listen|\.listen\(/.test(text)) {
+    out(st, "Listening on http://localhost:3000");
+    out(st, "Stop it with Ctrl+C");
+    st.run = { file: r.path, from: st.cwd }; return;
+  }
+  var lines = text.split("\n"), printed = false;
+  lines.forEach(function(l){
+    var m = /console\.log\((.*)\);?\s*$/.exec(l); if (!m) return;
+    var s = m[1].split("+").map(function(p){ p = p.trim(); if (p === "__dirname") return dirW; var mm = /^["'`](.*)["'`]$/.exec(p); return mm ? mm[1] : p; }).join("");
+    out(st, s); printed = true;
+  });
+  if (!printed && !text.trim()) { /* an empty file prints nothing */ }
+}
+
+function exec(st, line){
+  var raw = line;
+  st.lines.push({ k: "p", p: shortPath(st.cwd), s: raw });
+  if (st.run) { st.lines.pop(); st.lines.push({ k: "o", s: raw, c: "" }); return; }
+  if (!raw.trim()) return;
+  st.hist.push(raw); if (st.hist.length > 60) st.hist.shift();
+  st.ncmd++;
+  var t = tokenize(raw);
+  if (t.err) { out(st, t.err, t.tip ? "tip" : ""); st.errs++; return; }
+  var a = t.toks, cmd = a[0], args = a.slice(1);
+  var flags = "", names = [];
+  args.forEach(function(x){ if (/^-[a-zA-Z]+$/.test(x)) flags += x.slice(1); else names.push(x); });
+  var before = st.errs;
+  switch (cmd) {
+    case "pwd": out(st, st.cwd); break;
+    case "cd": {
+      if (names.length > 1) { out(st, "bash: cd: too many arguments"); st.errs++; break; }
+      var target = names[0];
+      if (target === undefined || target === "") target = HOME;
+      if (target === "-") target = st.old;
+      var abs = absPath(st.cwd, target), r = lookup(st.fs, abs);
+      if (!r) { out(st, "bash: cd: " + names[0] + ": No such file or directory"); st.errs++; break; }
+      if (!isDir(r.node)) { out(st, "bash: cd: " + names[0] + ": Not a directory"); st.errs++; break; }
+      if (names[0] === "-") out(st, r.path);
+      if (r.path !== st.cwd) { st.old = st.cwd; st.cwd = r.path; st.cds++; }
+      break;
+    }
+    case "ls": case "dir": {
+      var targets = names.length ? names : ["."], multi = targets.length > 1, isDirCmd = cmd === "dir";
+      targets.forEach(function(nm, ti){
+        var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, (isDirCmd ? "dir" : "ls") + ": cannot access '" + nm + "': No such file or directory"); st.errs++; return; }
+        if (!isDir(r.node)) { out(st, lsName(nm)); return; }
+        if (multi) out(st, (ti ? "\n" : "") + nm + ":");
+        var keys = lsKeys(r.node, r.path === "/");
+        if (/a/.test(flags)) keys = ["./", "../"].concat(keys);
+        if (!keys.length) return;
+        if (/l/.test(flags)) {
+          out(st, "total " + keys.length * 4);
+          outH(st, keys.map(function(k){ var d = k === "./" || k === "../" || isDir(r.node.d[k]); var nm2 = k === "./" ? "." : k === "../" ? ".." : lsName(k);
+            return esc((d ? "drwxr-xr-x" : "-rw-r--r--") + " 1 you 197121 " + (d ? "   0" : " 412") + " Nov 30 08:12 ") + (d ? '<span class="ls-d">' + esc(nm2) + '</span>/' : esc(nm2)); }).join("\n"));
+        } else {
+          outH(st, keys.map(function(k){ if (k === "./" || k === "../") return '<span class="ls-d">' + k.slice(0, -1) + '</span>/'; var d = isDir(r.node.d[k]); return d ? '<span class="ls-d">' + esc(lsName(k)) + '</span>' + (isDirCmd ? "" : "/") : esc(lsName(k)); }).join("  "));
+        }
+      });
+      break;
+    }
+    case "mkdir": {
+      if (!names.length) { out(st, "mkdir: missing operand\nTry 'mkdir --help' for more information."); st.errs++; break; }
+      names.forEach(function(nm){
+        var abs = absPath(st.cwd, nm);
+        if (/p/.test(flags)) { var ex = lookup(st.fs, abs); if (ex && !isDir(ex.node)) { out(st, "mkdir: cannot create directory '" + nm + "': File exists"); st.errs++; return; } mkdirp(st.fs, abs); return; }
+        if (exists(st, abs)) { out(st, "mkdir: cannot create directory '" + nm + "': File exists"); st.errs++; return; }
+        var par = lookup(st.fs, parentOf(abs));
+        if (!par || !isDir(par.node)) { out(st, "mkdir: cannot create directory '" + nm + "': No such file or directory"); st.errs++; return; }
+        par.node.d[baseOf(abs)] = { d: {} };
+      });
+      break;
+    }
+    case "touch": {
+      if (!names.length) { out(st, "touch: missing file operand"); st.errs++; break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm); if (exists(st, abs)) return; var par = lookup(st.fs, parentOf(abs)); if (!par || !isDir(par.node)) { out(st, "touch: cannot touch '" + nm + "': No such file or directory"); st.errs++; return; } par.node.d[baseOf(abs)] = { f: "" }; });
+      break;
+    }
+    case "cp": case "mv": {
+      var tool = cmd;
+      if (names.length < 2) { out(st, tool + ": " + (names.length ? "missing destination file operand after '" + names[0] + "'" : "missing file operand") + "\nTry '" + tool + " --help' for more information."); st.errs++; break; }
+      var dest = names[names.length - 1], srcs = names.slice(0, -1), dAbs = absPath(st.cwd, dest), dR = lookup(st.fs, dAbs);
+      if (srcs.length > 1 && !(dR && isDir(dR.node))) { out(st, tool + ": target '" + dest + "': " + (dR ? "Not a directory" : "No such file or directory")); st.errs++; break; }
+      srcs.forEach(function(s){
+        var sAbs = absPath(st.cwd, s), sR = lookup(st.fs, sAbs);
+        if (!sR) { out(st, tool + ": cannot stat '" + s + "': No such file or directory"); st.errs++; return; }
+        if (tool === "cp" && isDir(sR.node) && !/r/i.test(flags)) { out(st, "cp: -r not specified; omitting directory '" + s + "'"); st.errs++; return; }
+        var into, nm;
+        var dNow = lookup(st.fs, dAbs);
+        if (dNow && isDir(dNow.node)) { into = dNow; nm = baseOf(sR.path); }
+        else { into = lookup(st.fs, parentOf(dAbs)); nm = baseOf(dAbs); if (!into || !isDir(into.node)) { out(st, tool + ": cannot " + (tool === "cp" ? "create regular file" : "move '" + s + "' to") + " '" + dest + "': No such file or directory"); st.errs++; return; } }
+        if (isDir(sR.node) && (into.path + "/").indexOf(sR.path + "/") === 0) { out(st, tool + ": cannot " + (tool === "cp" ? "copy a directory, '" + s + "', into itself" : "move '" + s + "' to a subdirectory of itself") + ", '" + dest + "'"); st.errs++; return; }
+        var existingKey = keyIn(into.node, nm);
+        if (existingKey !== null && isDir(into.node.d[existingKey]) && !isDir(sR.node)) { out(st, tool + ": cannot overwrite directory '" + joinP(dest, nm) + "' with non-directory"); st.errs++; return; }
+        if (existingKey !== null && existingKey !== nm) delete into.node.d[existingKey];
+        if (tool === "cp") into.node.d[nm] = clone(sR.node);
+        else { var sp = lookup(st.fs, parentOf(sR.path)); var node = sp.node.d[baseOf(sR.path)]; delete sp.node.d[baseOf(sR.path)]; into.node.d[nm] = node;
+          if ((st.cwd + "/").indexOf(sR.path + "/") === 0) st.cwd = joinP(into.path, nm) + st.cwd.slice(sR.path.length); }
+      });
+      break;
+    }
+    case "rm": {
+      if (!names.length) { out(st, "rm: missing operand\nTry 'rm --help' for more information."); st.errs++; break; }
+      names.forEach(function(nm){
+        var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { if (!/f/.test(flags)) { out(st, "rm: cannot remove '" + nm + "': No such file or directory"); st.errs++; } return; }
+        if (isDir(r.node) && !/r/i.test(flags)) { out(st, "rm: cannot remove '" + nm + "': Is a directory"); st.errs++; return; }
+        if ((st.cwd + "/").indexOf(r.path + "/") === 0) { out(st, "rm: refusing to remove the folder you are in. cd .. first."); st.errs++; return; }
+        delete lookup(st.fs, parentOf(r.path)).node.d[baseOf(r.path)];
+      });
+      break;
+    }
+    case "rmdir": {
+      if (!names.length) { out(st, "rmdir: missing operand"); st.errs++; break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, "rmdir: failed to remove '" + nm + "': No such file or directory"); st.errs++; return; }
+        if (!isDir(r.node)) { out(st, "rmdir: failed to remove '" + nm + "': Not a directory"); st.errs++; return; }
+        if (Object.keys(r.node.d).length) { out(st, "rmdir: failed to remove '" + nm + "': Directory not empty"); st.errs++; return; }
+        delete lookup(st.fs, parentOf(r.path)).node.d[baseOf(r.path)]; });
+      break;
+    }
+    case "cat": {
+      if (!names.length) { out(st, "(cat with nothing after it waits for you to type. Give it a file: cat notes.txt)", "tip"); break; }
+      names.forEach(function(nm){ var abs = absPath(st.cwd, nm), r = lookup(st.fs, abs);
+        if (!r) { out(st, "cat: " + nm + ": No such file or directory"); st.errs++; return; }
+        if (isDir(r.node)) { out(st, "cat: " + nm + ": Is a directory"); st.errs++; return; }
+        if (r.node.f) out(st, r.node.f.replace(/\n$/, "")); });
+      break;
+    }
+    case "echo": out(st, names.join(" ")); break;
+    case "clear": st.lines = []; break;
+    case "node": {
+      if (!names.length) { out(st, "Welcome to Node.js v22.11.0.\nType \".help\" for more information.\n(This is Node's own prompt, not bash. Ctrl+C gets you out.)"); st.run = { repl: true, from: st.cwd }; break; }
+      nodeRun(st, names[0], absPath(st.cwd, names[0]));
+      break;
+    }
+    case "code": out(st, "(VS Code would open " + winPath(absPath(st.cwd, names[0] || ".")) + " now.)", "tip"); break;
+    case "exit": out(st, "(In a real terminal, exit closes it. Here it stays open.)", "tip"); break;
+    case "help": out(st, "(The commands here: pwd  ls  cd  mkdir  cp  mv  rm  cat  node  clear. Tab finishes a name, ↑ brings back the last command.)", "tip"); break;
+    case "cls": out(st, "bash: cls: command not found\n(cls is the Windows cmd word. In bash it's clear, or Ctrl+L.)"); st.errs++; break;
+    default: out(st, "bash: " + cmd + ": command not found"); st.errs++;
+  }
+  if (st.errs > before) st.lastErr = st.ncmd;
+}
+
+// Ctrl+C: stop what runs, or drop the line being typed.
+function interrupt(st, typed){
+  if (st.run) { out(st, "^C"); st.run = null; return; }
+  st.lines.push({ k: "p", p: shortPath(st.cwd), s: typed + "^C" });
+}
+
+// Tab: finish the name, the way bash does (spaces get a backslash).
+function bashEsc(s){ return s.replace(/([ ()'"\\&;!$])/g, "\\$1"); }
+function complete(st, input){
+  var start = 0, quote = null;
+  for (var i = 0; i < input.length; i++) {
+    var c = input.charAt(i);
+    if (quote) { if (c === quote) quote = null; continue; }
+    if (c === "'" || c === '"') { quote = c; continue; }
+    if (c === "\\") { i++; continue; }
+    if (c === " ") start = i + 1;
+  }
+  var rawWord = input.slice(start), isFirst = !input.slice(0, start).trim();
+  var esc2 = rawWord.replace(/(^|[^\\])([()])/g, "$1\\$2"), t = tokenize(esc2);
+  if (t.err) t = tokenize(esc2 + (esc2.indexOf("'") >= 0 ? "'" : '"'));
+  var word = t.toks && t.toks.length ? t.toks[0] : "";
+  if (isFirst && word.indexOf("/") < 0) {
+    var cs = COMMANDS.filter(function(c){ return c.indexOf(word) === 0; });
+    if (cs.length === 1) return { line: cs[0] + " " };
+    if (cs.length > 1) return { list: cs };
+    return null;
+  }
+  var cut = word.lastIndexOf("/"), dirPart = cut >= 0 ? word.slice(0, cut + 1) : "", base = cut >= 0 ? word.slice(cut + 1) : word;
+  var r = lookup(st.fs, absPath(st.cwd, dirPart || "."));
+  if (!r || !isDir(r.node)) return null;
+  var keys = Object.keys(r.node.d), c1 = keys.filter(function(k){ return k.indexOf(base) === 0; });
+  if (!c1.length) c1 = keys.filter(function(k){ return k.toLowerCase().indexOf(base.toLowerCase()) === 0; });
+  if (!c1.length) return null;
+  var shownDir = rawWord.charAt(0) === "~" ? "~" + dirPart.slice(HOME.length) : dirPart;
+  var pre = function(s){ return shownDir.charAt(0) === "~" ? "~" + bashEsc(shownDir.slice(1)) + bashEsc(s) : bashEsc(shownDir + s); };
+  if (c1.length === 1) return { line: input.slice(0, start) + pre(c1[0]) + (isDir(r.node.d[c1[0]]) ? "/" : " ") };
+  var lcp = c1.reduce(function(a, b){ var j = 0; while (j < a.length && j < b.length && a.charAt(j) === b.charAt(j)) j++; return a.slice(0, j); });
+  if (lcp.length > base.length) return { line: input.slice(0, start) + pre(lcp) };
+  return { list: c1.sort().map(function(k){ return isDir(r.node.d[k]) ? k + "/" : k; }) };
+}
+
+/* ====================================================================
+   The H: drive the lessons play on. Names and places change on every
+   start, so a path copied from a friend's screen does not work.
+   ==================================================================== */
+
+var SUBJECTS = ["webprog", "angol", "matek", "tori", "nemet", "halozat", "irodalom"];
+var SUBS = ["homework", "notes", "essays", "old", "2025", "projekt"];
+var TOP = ["zene", "kepek", "jatek-mentesek", "New folder", "videok"];
+
+function world(R){
+  var fs = { d: {} };
+  ["bin", "dev", "etc", "mingw64", "tmp", "usr"].forEach(function(x){ mkdirp(fs, "/" + x); });
+  mkdirp(fs, "/c/Users/you/Downloads"); mkdirp(fs, "/c/Windows"); mkdirp(fs, "/c/Program Files/Git");
+  mkdirp(fs, HOME);
+  var subs = ["webprog"].concat(shuffle(R, SUBJECTS.slice(1)).slice(0, 2 + Math.floor(R() * 2)));
+  subs.forEach(function(s){
+    var kids = shuffle(R, SUBS).slice(0, 1 + Math.floor(R() * 2));
+    kids.forEach(function(k){ mkdirp(fs, HOME + "/13F/" + s + "/" + k); });
+    if (R() < 0.6) put(fs, HOME + "/13F/" + s + "/" + kids[0] + "/" + pick(R, ["notes.txt", "todo.txt", "draft.docx"]), "");
+  });
+  put(fs, HOME + "/13F/orarend.pdf", "");
+  shuffle(R, TOP).slice(0, 2 + Math.floor(R() * 2)).forEach(function(x){ mkdirp(fs, HOME + "/" + x); });
+  put(fs, HOME + "/jegyzet.txt", "Ne felejtsd el: pwd, ls, cd\n");
+  return fs;
+}
+function allDirs(fs, from){
+  var out2 = [], r = lookup(fs, from);
+  (function walk(n, p){ out2.push(p); Object.keys(n.d).forEach(function(k){ if (isDir(n.d[k])) walk(n.d[k], joinP(p, k)); }); })(r.node, r.path);
+  return out2;
+}
+function subjectDirs(fs){ return Object.keys(lookup(fs, HOME + "/13F").node.d).filter(function(k){ return isDir(lookup(fs, HOME + "/13F/" + k).node); }); }
+function countDirs(fs, p){ var n = lookup(fs, p).node; return Object.keys(n.d).filter(function(k){ return isDir(n.d[k]); }).length; }
+
+var SERVER_JS = 'const express = require("express");\nconst app = express();\n\napp.get("/health", (req, res) => {\n  res.json({ status: "ok" });\n});\n\napp.listen(3000, () => {\n  console.log("Listening on http://localhost:3000");\n});\n';
+
+// The commands that walk from one folder to another, one step at a time, looking around on the way.
+function walkCmds(from, to){
+  var a = parts(from), b = parts(to), i = 0, cmds = [];
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  for (var u = a.length; u > i; u--) { cmds.push("cd .."); cmds.push("ls"); }
+  for (var d = i; d < b.length; d++) { cmds.push("cd " + q(b[d])); cmds.push("ls"); }
+  if (cmds[cmds.length - 1] === "ls") cmds.pop();
+  return ["pwd", "ls"].concat(cmds);
+}
+function relPath(from, to){
+  var a = parts(from), b = parts(to), i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  var r = []; for (var u = a.length; u > i; u--) r.push("..");
+  return r.concat(b.slice(i).map(function(x){ return x; })).join("/");
+}
+
+// What a student may write as a path: /h/13F, ~/13F, H:\13F, H:/13F, with or without the last slash.
+function samePath(ans, p){
+  var a = String(ans || "").trim().replace(/^["']|["']$/g, "").replace(/\\/g, "/").replace(/\/+$/, "");
+  if (!a) return false;
+  var m = /^([a-zA-Z]):(\/.*)?$/.exec(a); if (m) a = "/" + m[1].toLowerCase() + (m[2] || "");
+  if (a === "~") a = HOME; else if (a.indexOf("~/") === 0) a = HOME + a.slice(1);
+  return a.toLowerCase() === p.toLowerCase();
+}
+
+/* ====================================================================
+   The slides: why first. One picture each.
+   ==================================================================== */
+
+var A = "#2f6fde", INK = "#1c2430", MUT = "#6b7280", LINE = "#e3e6ea", RED = "#b91c1c", GRN = "#15803d", AMB = "#b45309";
+var TG = "#3fc33f", TM = "#c45ac4", TY = "#d7c43f", TW = "#d9d9d9", TBL = "#6f9eff";
+function T(x, y, s, o){ o = o || {}; return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '"' + (o.bold ? ' font-weight="700"' : "") + (o.mono ? ' font-family="ui-monospace,Consolas,monospace"' : "") + ' fill="' + (o.fill || INK) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + ' xml:space="preserve">' + s + '</text>'; }
+function R(x, y, w, h, o){ o = o || {}; return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (o.rx === undefined ? 8 : o.rx) + '" fill="' + (o.fill || "#fff") + '" stroke="' + (o.stroke || LINE) + '"' + (o.sw ? ' stroke-width="' + o.sw + '"' : "") + (o.dash ? ' stroke-dasharray="5 4"' : "") + '/>'; }
+function ARROW(x1, y1, x2, y2, c){ c = c || "#9aa0a6"; var a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - 9 * Math.cos(a), hy = y2 - 9 * Math.sin(a);
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + hx + '" y2="' + hy + '" stroke="' + c + '" stroke-width="2"/>' +
+    '<path d="M ' + x2 + ' ' + y2 + ' L ' + (hx + 5 * Math.sin(a)) + ' ' + (hy - 5 * Math.cos(a)) + ' L ' + (hx - 5 * Math.sin(a)) + ' ' + (hy + 5 * Math.cos(a)) + ' z" fill="' + c + '"/>'; }
+function svg(h, label, inner){ return '<svg viewBox="0 0 640 ' + h + '" role="img" aria-label="' + esc(label) + '">' + inner + '</svg>'; }
+function TP(x, y, ps, size){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 13) + '" font-family="ui-monospace,Consolas,monospace" xml:space="preserve">' + ps.map(function(p){ return '<tspan fill="' + (p[1] || TW) + '"' + (p[2] ? ' font-weight="700"' : "") + '>' + esc(p[0]) + '</tspan>'; }).join("") + '</text>'; }
+function TERM(x, y, w, h, title){ return R(x, y, w, h, { rx: 8, fill: "#0c0c0c", stroke: "#333" }) + R(x, y, w, 22, { rx: 8, fill: "#2b2b2b", stroke: "#333" }) + R(x, y + 14, w, 8, { rx: 0, fill: "#2b2b2b", stroke: "#2b2b2b" }) + T(x + 10, y + 15, esc(title || "MINGW64:/h/13F"), { size: 11, fill: "#bbb" }); }
+function PROMPT(x, y, path, cmd, size){ size = size || 13; return TP(x, y, [[USER + " ", TG], ["MINGW64 ", TM], [path, TY]], size) + TP(x, y + size + 5, [["$ " + (cmd || ""), TW]], size); }
+function FOLDER(x, y, name, o){ o = o || {}; return R(x, y + 3, 16, 12, { rx: 2, fill: o.fill || "#fcd34d", stroke: "#d4a017" }) + R(x, y, 7, 5, { rx: 1, fill: o.fill || "#fcd34d", stroke: "#d4a017" }) + T(x + 22, y + 13, esc(name), { size: o.size || 13, bold: !!o.bold, fill: o.col || INK }); }
+
+var ART = {
+  why: function(){
+    var s = TERM(8, 8, 624, 196, "MINGW64:/h/13F/myserver");
+    s += PROMPT(24, 46, "~/13F", "cd myserver", 14);
+    s += PROMPT(24, 90, "~/13F/myserver", "ls", 14) + TP(24, 128, [["server.js", TW]], 14);
+    s += PROMPT(24, 152, "~/13F/myserver", "node server.js", 14) + TP(24, 190, [["Listening on http://localhost:3000", TW, 1]], 14);
+    return svg(212, "A terminal: cd myserver, then ls shows server.js, then node server.js prints Listening on http://localhost:3000. Get to the folder, check the file is there, run it", s);
+  },
+  mkdir: function(){
+    var s = TERM(8, 8, 300, 124, "MINGW64:/h/13F");
+    s += PROMPT(20, 46, "~/13F", "mkdir practice", 13) + PROMPT(20, 86, "~/13F", "ls", 13) + TP(20, 120, [["angol/  practice/  webprog/", TBL, 1]], 12);
+    s += ARROW(316, 64, 352, 64, A);
+    s += R(360, 8, 272, 130, { rx: 8, fill: "#fff", stroke: "#cfd6df" }) + T(372, 28, "H:  ›  13F", { size: 12, bold: true });
+    s += FOLDER(376, 44, "angol") + R(370, 66, 254, 22, { rx: 4, fill: "#dcfce7", stroke: GRN }) + FOLDER(376, 69, "practice", { bold: true }) + T(470, 82, "new", { size: 12, bold: true, fill: GRN }) + FOLDER(376, 96, "webprog");
+    s += T(320, 166, "The new folder appears where you are: here, in 13F.", { anchor: "middle", bold: true, size: 13 });
+    return svg(182, "In the terminal, in ~/13F: mkdir practice, then ls lists angol, practice and webprog. File Explorer at H:, 13F shows the new practice folder, marked new. The new folder appears where you are", s);
+  },
+  cpmv: function(){
+    var s = "";
+    var row = function(y, cmd, leftHas, label, col){
+      var r = TP(16, y + 26, [["$ " + cmd, INK, 1]], 14);
+      r += R(300, y, 150, 44, { rx: 8, fill: "#fff", stroke: "#cfd6df" }) + FOLDER(310, y + 6, "downloaded", { size: 12 }) + T(330, y + 38, leftHas ? "hello.js" : "(empty)", { size: 12, fill: leftHas ? INK : MUT });
+      r += R(470, y, 150, 44, { rx: 8, fill: "#fff", stroke: "#cfd6df" }) + FOLDER(480, y + 6, "practice", { size: 12 }) + T(500, y + 38, "hello.js", { size: 12, bold: true, fill: GRN });
+      r += T(16, y + 46, label, { size: 12.5, bold: true, fill: col });
+      return r;
+    };
+    s += row(10, "cp hello.js ../practice", true, "cp = copy: it's in both places", A);
+    s += row(80, "mv hello.js ../practice", false, "mv = move: it left the old place", AMB);
+    s += TP(16, 176, [["$ mv old-name new-name", INK, 1]], 14) + T(300, 176, "mv in the same folder = rename", { size: 13, bold: true, fill: AMB });
+    return svg(192, "cp hello.js ../practice: hello.js is now in both downloaded and practice. mv hello.js ../practice: downloaded is empty, hello.js is only in practice. mv old-name new-name in the same folder renames it", s);
+  },
+  rm: function(){
+    var s = TERM(8, 8, 330, 120, "MINGW64:/h/13F/practice");
+    s += PROMPT(20, 46, "~/13F/practice", "rm todo.txt", 13) + PROMPT(20, 86, "~/13F/practice", "ls", 13) + TP(20, 120, [["todo-old.txt", TW]], 13);
+    s += R(380, 20, 70, 84, { rx: 6, fill: "#f3f4f6", stroke: "#9aa0a6", sw: 2 }) + R(372, 12, 86, 10, { rx: 3, fill: "#e5e7eb", stroke: "#9aa0a6" });
+    s += T(415, 70, "empty", { anchor: "middle", size: 12, fill: MUT });
+    s += T(470, 52, "Recycle Bin:", { size: 13, bold: true }) + T(470, 72, "not in here.", { size: 13, fill: RED, bold: true }) + T(470, 92, "rm is for good.", { size: 13 });
+    s += T(320, 156, "ls before rm, ls after rm.", { anchor: "middle", bold: true, size: 13 });
+    return svg(170, "rm todo.txt in ~/13F/practice, then ls shows only todo-old.txt. The Recycle Bin is empty: a file deleted with rm is not in there, it is gone for good. ls before rm, ls after rm", s);
+  },
+  node: function(){
+    var s = TERM(8, 8, 300, 120, "running");
+    s += PROMPT(20, 46, "~/13F/myserver", "node server.js", 13) + TP(20, 84, [["Listening on http://localhost:3000", TW]], 12) + TP(20, 104, [["▌", TW]], 13);
+    s += T(158, 148, "busy: no $", { anchor: "middle", bold: true, size: 13, fill: AMB });
+    s += ARROW(316, 64, 352, 64, A) + T(334, 54, "Ctrl+C", { anchor: "middle", bold: true, size: 12, fill: A });
+    s += TERM(360, 8, 272, 120, "stopped");
+    s += TP(372, 46, [["Listening on …", "#8a8a8a"]], 12) + TP(372, 64, [["^C", TW]], 13) + PROMPT(372, 86, "~/13F/myserver", "", 10.5);
+    s += T(496, 148, "stopped: the $ is back", { anchor: "middle", bold: true, size: 13, fill: GRN });
+    return svg(160, "Left: node server.js printed Listening on http://localhost:3000, and there is no dollar sign: the terminal is busy running it. Ctrl+C. Right: ^C, and the prompt with the dollar sign is back: stopped", s);
+  },
+  loop: function(){
+    var steps = [["Where am I?", "prompt, pwd"], ["Do it", "mkdir cp mv rm"], ["Look after", "ls"], ["Run", "node file.js"]], s = "";
+    steps.forEach(function(st, i){
+      var x = 14 + i * 158, nw = i === 2;
+      s += R(x, 40, 136, 62, { rx: 12, fill: nw ? "#fef3c7" : "#fff", stroke: nw ? AMB : "#cfd6df", sw: 2 });
+      s += T(x + 68, 66, st[0], { anchor: "middle", bold: true, size: 14, fill: nw ? AMB : INK }) + T(x + 68, 87, st[1], { anchor: "middle", mono: true, size: 12, fill: MUT });
+      if (i < 3) s += ARROW(x + 138, 71, x + 156, 71, "#9aa0a6");
+    });
+    s += T(320, 140, "The terminal says nothing when it works. ls is how you see it worked.", { anchor: "middle", size: 13, bold: true });
+    return svg(156, "The loop: Where am I? with the prompt and pwd. Do it with mkdir, cp, mv or rm. Look after with ls, highlighted as new. Run with node file.js. The terminal says nothing when it works: ls is how you see it", s);
+  }
+};
+
+var PRIMER = [
+  { title: "Every server starts like this", art: "why",
+    body: "Get to the folder. Check the file is there. Run it. That's how you start every server, on every computer, for the rest of the year.<br><br>Last time: getting around. Today: making the folder, putting the files in it, and running them. Six commands in all.",
+    say: "Run these three commands on the projector, in a real terminal, with a real server. Then stop it with Ctrl+C. Tell them that by the end of today they can do it too." },
+  { title: "mkdir makes a folder where you are", art: "mkdir",
+    body: "<span class=\"mono\">mkdir practice</span> makes a folder called practice <b>in the folder you are in</b>. The terminal prints nothing. Silence means it worked.<br><br>Want it somewhere else? Go there first, or give the path: <span class=\"mono\">mkdir 13F/practice</span>.",
+    say: "Live: mkdir in the wrong folder on purpose, then ls, then find it in Explorer. Ask: how could you have known before? (The prompt.)" },
+  { title: "cp copies, mv moves", art: "cpmv",
+    body: "<span class=\"mono\">cp file where</span>: copy, the original stays. <span class=\"mono\">mv file where</span>: move, the original leaves. The file comes first, then where it goes.<br><br>Rename is a move too: <span class=\"mono\">mv old-name new-name</span>. Names with spaces or brackets need quotes, or Tab.",
+    say: "Ask what happens with cp hello.js practise, misspelt. (No such folder, so you get a file called practise. It's a copy with a new name.) They'll hit this in task 2." },
+  { title: "rm is for good", art: "rm",
+    body: "<span class=\"mono\">rm file</span> deletes it. There is no Recycle Bin and no undo, and the terminal doesn't ask \"are you sure?\".<br><br>So: <span class=\"mono\">ls</span> before, read the name, then <span class=\"mono\">rm</span>. Use Tab so you delete the file you meant.",
+    say: "Ask who has deleted the wrong file in Explorer and got it back from the Recycle Bin. Here you can't. That's the whole slide." },
+  { title: "node runs it, Ctrl+C stops it", art: "node",
+    body: "<span class=\"mono\">node hello.js</span> runs a JavaScript file. A small script prints and ends, and the <span class=\"mono\">$</span> comes back. A server keeps running: <b>no <span class=\"mono\">$</span></b>, the terminal is busy, and anything you type does nothing.<br><br><kbd>Ctrl</kbd>+<kbd>C</kbd> stops it. The file must be where you are, or node says <span class=\"mono\">Cannot find module</span>.",
+    say: "Live: start a server, type ls (nothing happens), Ctrl+C, ls again. The frozen terminal is the most common call for help in the backend lessons." },
+  { title: "Do it, then look", art: "loop",
+    body: "The terminal tells you when something is wrong, and says nothing when it works. So after every change, <b>look</b>: <span class=\"mono\">ls</span>.<br><br>Then: the practice. Each start puts the files in different places, so look, don't copy. The last task is in your real VS Code terminal.",
+    say: "The last task needs VS Code. Make sure everybody gets to it, even if they skip the extras." }
+];
+
+/* ====================================================================
+   Tasks
+   ==================================================================== */
+
+function P(qq){ return '<span class="predict">Predict first: ' + qq + '</span> '; }
+function here(st){ return '<code>' + esc(shortPath(st.cwd)) + '</code>'; }
+
+var HELLO_JS = 'console.log("Hello from hello.js!");\nconsole.log("I am running in: " + __dirname);\n';
+function world2(R){
+  var fs = world(R);
+  put(fs, HOME + "/downloaded/hello.js", HELLO_JS);
+  put(fs, HOME + "/downloaded/server.js", SERVER_JS);
+  shuffle(R, ["kep.png", "readme.txt", "starter.zip", "jegyek.xlsx"]).slice(0, 2).forEach(function(f){ put(fs, HOME + "/downloaded/" + f, ""); });
+  return fs;
+}
+function startAt(R, fs){ var ds = [HOME].concat(subjectDirs(fs).map(function(s){ return HOME + "/13F/" + s; })); return pick(R, ds); }
+function list13(fs){ return Object.keys(lookup(fs, HOME + "/13F").node.d); }
+function findDirsNamed(st, name){ return allDirs(st.fs, HOME).filter(function(d){ return baseOf(d).toLowerCase() === name; }); }
+function newFiles13(st){ return list13(st.fs).filter(function(k){ return st.base13.indexOf(k) < 0 && !isDir(lookup(st.fs, HOME + "/13F/" + k).node); }); }
+var PRACTICE = HOME + "/13F/practice";
+
+var LESSONS = [
+  { title: "Make a folder", kind: "go",
+    do: P("if you don't say where, where does the new folder appear?") + "Make a folder called <code>practice</code> inside <code>13F</code>.",
+    sub: "<code>mkdir name</code> makes a folder. Watch the Explorer.",
+    build: function(R){ var fs = world2(R); return newState(fs, startAt(R, fs)); },
+    solve: function(st){ return { cmds: walkCmds(st.cwd0, HOME + "/13F").concat(["mkdir practice", "ls"]) }; },
+    hints: ["Where are you? The prompt says. Is that 13F?", "Get into 13F first (<code>cd</code>), then <code>mkdir practice</code>, then <code>ls</code> to see it."],
+    check: function(st){
+      if (dirExists(st, PRACTICE)) return "";
+      var wrong = findDirsNamed(st, "practice");
+      if (wrong.length) return "There's a practice folder now, but in <code>" + esc(shortPath(parentOf(wrong[0]))) + "</code>, not in 13F. It appeared where you were. Get to 13F, then make it there.";
+      return "No practice folder in 13F yet. Where are you? Get into 13F, then <code>mkdir</code>.";
+    },
+    after: function(st){ var w = findDirsNamed(st, "practice").filter(function(d){ return d !== PRACTICE; }); return "Where you are: that's why you read the prompt before <code>mkdir</code>." + (w.length ? " The extra one in <code>" + esc(shortPath(parentOf(w[0]))) + "</code> can go: <code>rmdir</code> removes an empty folder." : ""); } },
+
+  { title: "Copy a file", kind: "go",
+    do: P("after cp, how many hello.js files will there be?") + "Copy <code>hello.js</code> from <code>downloaded</code> into <code>13F/practice</code>.",
+    sub: "<code>cp file where</code>: the file first, then where it goes.",
+    build: function(R){ var fs = world2(R); mkdirp(fs, PRACTICE); var st = newState(fs, HOME); st.base13 = list13(fs); return st; },
+    solve: function(st){ return { cmds: ["ls", "cd downloaded", "ls", "cp hello.js ../13F/practice", "ls ../13F/practice"] }; },
+    hints: ["Go where the file is first: <code>cd downloaded</code>, then <code>ls</code>.", "From there, 13F is one folder up and then in: <code>../13F/practice</code>. Tab helps with every part."],
+    check: function(st){
+      var inP = fileExists(st, PRACTICE + "/hello.js"), orig = fileExists(st, HOME + "/downloaded/hello.js");
+      if (inP && orig) return "";
+      if (inP && !orig) return "hello.js is in practice, but gone from downloaded: that was a move. <code>cp</code> keeps the original. <b>Start task again</b> and use cp.";
+      var nf = newFiles13(st);
+      if (nf.length) return "13F now has a file called <code>" + esc(nf[0]) + "</code>. No folder has that name, so cp made a copy with that name. Check the spelling (Tab won't misspell it).";
+      if (!orig) return "hello.js is gone from downloaded. Where did it go? <b>Start task again</b> if you can't find it.";
+      return "practice has no hello.js yet. In the folder where hello.js is: <code>cp hello.js</code>, then the path to practice.";
+    },
+    after: function(st){ return "Two: the original in downloaded and the copy in practice. With <code>mv</code> there would be one."; } },
+
+  { title: "Rename a folder", kind: "go",
+    do: P("does renaming need a new command?") + "In <code>13F</code>, rename the folder <code>New folder (3)</code> to <code>old</code>. What's inside stays inside.",
+    sub: "Rename is a move: <code>mv old-name new-name</code>. Spaces and brackets need quotes, or Tab.",
+    build: function(R){ var fs = world2(R); put(fs, HOME + "/13F/New folder (3)/" + pick(R, ["dolgozat-2025.docx", "regi-jegyzet.txt", "proba.html"]), "old"); var st = newState(fs, HOME); st.inside = Object.keys(lookup(fs, HOME + "/13F/New folder (3)").node.d)[0]; return st; },
+    solve: function(st){ return { cmds: ["cd 13F", "ls", "mv 'New folder (3)' old", "ls"] }; },
+    hints: ["Get into 13F first, then <code>ls</code>.", "Typed by hand, the brackets break the command. Type <code>mv New</code> and press Tab, then add <code>old</code>."],
+    check: function(st){
+      var nf = exists(st, HOME + "/13F/New folder (3)"), old = dirExists(st, HOME + "/13F/old");
+      if (!nf && old && fileExists(st, HOME + "/13F/old/" + st.inside)) return "";
+      if (nf && old) return "There's an empty <code>old</code> now, and <code>New folder (3)</code> is still there. mv doesn't need a new folder: it renames the one you have. You can <code>rmdir old</code> and try mv.";
+      if (!nf) { var where = allDirs(st.fs, HOME).filter(function(d){ return fileExists(st, d + "/" + st.inside); })[0]; return "New folder (3) has moved to <code>" + esc(shortPath(where || "?")) + "</code>. The second name decides where it goes. In 13F, the new name is just <code>old</code>. <b>Start task again</b>, or move it back."; }
+      return "New folder (3) is still there. In 13F: <code>mv</code>, the old name, the new name.";
+    },
+    after: function(st){ return "No new command: <code>mv</code> moves, and moving to a new name in the same folder is renaming. " + esc(st.inside) + " came along inside it."; } },
+
+  { title: "Delete a file", kind: "go",
+    do: P("where does a file go after rm?") + "In <code>13F/practice</code>, delete <code>todo-old.txt</code>. Keep <code>todo.txt</code>.",
+    sub: "<code>rm file</code>. <code>ls</code> before, <code>ls</code> after.",
+    build: function(R){ var fs = world2(R); put(fs, PRACTICE + "/todo.txt", "- finish the server\n"); put(fs, PRACTICE + "/todo-old.txt", "- start the server\n"); if (R() < 0.5) put(fs, PRACTICE + "/hello.js", HELLO_JS); return newState(fs, HOME); },
+    solve: function(st){ return { cmds: ["cd 13F/practice", "ls", "rm todo-old.txt", "ls"] }; },
+    hints: ["Get into 13F/practice and <code>ls</code>.", "Type <code>rm todo-</code> and press Tab: only one name starts like that."],
+    check: function(st){
+      var keep = fileExists(st, PRACTICE + "/todo.txt"), gone = !exists(st, PRACTICE + "/todo-old.txt");
+      if (!dirExists(st, PRACTICE)) return "The practice folder is gone. <b>Start task again</b>.";
+      if (!keep) return "todo.txt is gone, for good: there is no Recycle Bin in the terminal. <b>Start task again</b> and read the name before rm.";
+      if (gone) return "";
+      return "todo-old.txt is still there. In practice: <code>rm</code> and the name.";
+    },
+    after: function(st){ return "Nowhere: it's gone. No Recycle Bin, no undo. That's why <code>ls</code> comes before <code>rm</code>."; } },
+
+  { title: "Run it", kind: "go",
+    do: P("what happens if you type node hello.js right now, where you are?") + "Run <code>hello.js</code> with node. It's in <code>13F/practice</code>.",
+    sub: "<code>node file.js</code> runs a JavaScript file.",
+    build: function(R){ var fs = world2(R); put(fs, PRACTICE + "/hello.js", HELLO_JS); return newState(fs, startAt(R, fs)); },
+    solve: function(st){ return { cmds: ["node hello.js"].concat(walkCmds(st.cwd0, PRACTICE).slice(2)).concat(["ls", "node hello.js"]) }; },
+    hints: ["Read the error: <code>Cannot find module</code> and a path. That path is where node looked.", "Get into 13F/practice, <code>ls</code> to see hello.js, then <code>node hello.js</code>."],
+    check: function(st){
+      if (st.ran.some(function(r){ return r.ok && baseOf(r.file) === "hello.js"; })) return "";
+      if (st.ran.some(function(r){ return !r.ok; })) return "node looked for hello.js where you were, and it isn't there: that's <code>Cannot find module</code>. Get to its folder first.";
+      return "Not run yet. <code>node hello.js</code>, from the folder it's in.";
+    },
+    after: function(st){ return "From the wrong folder: <code>Cannot find module</code>, with the path where node looked. The fix is always the same: get to the file's folder, then run it. hello.js even printed where it ran."; } },
+
+  { title: "Set up a server", kind: "go", boss: true, alsoDone: [0, 1, 4],
+    do: P("how will you know the server has stopped?") + "Make a folder <code>13F/myserver</code>, put a copy of <code>server.js</code> from <code>downloaded</code> in it, start it with node, then stop it.",
+    sub: "<b>Confident? Start here.</b> If this passes, tasks 1, 2 and 5 are done too.",
+    build: function(R){ var fs = world2(R); return newState(fs, startAt(R, fs)); },
+    solve: function(st){ return { cmds: walkCmds(st.cwd0, HOME + "/13F").slice(2).concat(["mkdir myserver", "cp ../downloaded/server.js myserver", "cd myserver", "ls", "node server.js", "Ctrl+C"]) }; },
+    hints: ["Four steps: mkdir, cp, cd, node. After each one, <code>ls</code>.", "A server keeps running: no <code>$</code>. <kbd>Ctrl</kbd>+<kbd>C</kbd> stops it."],
+    check: function(st){
+      var M = HOME + "/13F/myserver";
+      if (!dirExists(st, M)) { var w = findDirsNamed(st, "myserver"); return w.length ? "There's a myserver folder in <code>" + esc(shortPath(parentOf(w[0]))) + "</code>, not in 13F." : "No myserver folder in 13F yet."; }
+      if (!fileExists(st, M + "/server.js")) return "myserver has no server.js yet. Copy it from downloaded.";
+      if (!fileExists(st, HOME + "/downloaded/server.js")) return "server.js is gone from downloaded: that was a move. It should be a copy. <b>Start task again</b>.";
+      if (!st.ran.some(function(r){ return r.ok && r.file === M + "/server.js"; })) return "The file is in place. Now start it: <code>node server.js</code>, in myserver.";
+      if (st.run) return "It's running: no <code>$</code>, the terminal is busy. Now stop it.";
+      return "";
+    },
+    after: function(st){ return "The <code>$</code> came back. That's how you know it stopped. You just did the start of every backend lesson."; } },
+
+  { title: "A frozen terminal", kind: "go", detective: true,
+    do: "Your teammate's terminal is \"frozen\": they typed commands and nothing happens. Get the <code>$</code> back without closing the terminal.",
+    sub: "Read the lines first. What was the last thing that answered?",
+    build: function(R){
+      var fs = world2(R), M = HOME + "/13F/myserver"; put(fs, M + "/server.js", SERVER_JS);
+      var st = newState(fs, M);
+      ["ls", "node server.js", "ls", "ls", "pwd", "cd .."].forEach(function(c){ exec(st, c); });
+      st.ncmd = 0; st.errs = 0; st.ran = []; st.hist = []; return st; },
+    solve: function(st){ return { cmds: ["Ctrl+C", "ls"] }; },
+    hints: ["Look at the line just after <code>node server.js</code>. What's running?", "While a server runs, the terminal is its, not yours. Stopping it gives the <code>$</code> back."],
+    check: function(st){ return st.run ? "Still busy. Look at the line after <code>node server.js</code>: something is still running." : ""; },
+    after: function(st){ return "Not frozen: busy. <code>Listening on …</code> means the server is running and has the terminal. <kbd>Ctrl</kbd>+<kbd>C</kbd> stops it, and the <code>$</code> comes back."; } },
+
+  { title: "Extra A: a whole folder", kind: "go", extra: true,
+    do: "Back up the whole <code>13F/practice</code> folder: make a copy called <code>practice-backup</code> next to it, with everything inside.",
+    sub: "No hints. If cp complains, read what it says.",
+    build: function(R){ var fs = world2(R); put(fs, PRACTICE + "/hello.js", HELLO_JS); put(fs, PRACTICE + "/todo.txt", "- finish the server\n"); return newState(fs, HOME + "/13F"); },
+    solve: function(st){ return { cmds: ["ls", "cp practice practice-backup", "cp -r practice practice-backup", "ls practice-backup"] }; },
+    hints: [],
+    check: function(st){
+      var B = HOME + "/13F/practice-backup";
+      if (!dirExists(st, PRACTICE)) return "practice itself is gone. A backup keeps the original. <b>Start task again</b>.";
+      if (!dirExists(st, B)) return "No practice-backup folder in 13F yet.";
+      var want = Object.keys(lookup(st.fs, PRACTICE).node.d).sort().join("|"), got = Object.keys(lookup(st.fs, B).node.d).sort().join("|");
+      if (dirExists(st, B + "/practice")) return "Your copy went inside: <code>practice-backup/practice</code>. When the second name is a folder that already exists, cp puts the copy inside it. Remove practice-backup (<code>rm -r practice-backup</code>) and copy once, without making the folder first.";
+      if (!got) return "practice-backup is empty. cp copies a whole folder only when you ask: read what it said when you tried.";
+      if (got !== want) return "practice-backup doesn't hold the same files as practice. <code>ls</code> both and compare.";
+      return "";
+    },
+    after: function(st){ return "<code>cp: -r not specified; omitting directory</code> told you the fix: <code>cp -r</code>. The r is for \"recursive\": the folder, and everything inside it. Error messages are instructions more often than you'd think."; } },
+
+  { title: "Your real terminal", kind: "paste", noTerm: true, explorer: false, last: true,
+    do: "Now the real one. In VS Code: <b>File → Open Folder</b>, pick any folder of yours with something in it. Then <b>Terminal → New Terminal</b>. Type <code>pwd</code> and <code>ls</code> there. Copy what it printed and paste it below.",
+    sub: "The terminal should say <code>MINGW64</code>. If it says <code>PS</code>, click the <b>∨</b> next to <b>+</b> in the terminal panel and pick <b>Git Bash</b>. To copy: select the text, then right-click → Copy.",
+    build: function(R){ return newState({ d: {} }, HOME); },
+    solve: function(st){ return { cmds: [], answer: USER + " MINGW64 ~/13F\n$ pwd\n/h/13F\n\n" + USER + " MINGW64 ~/13F\n$ ls\nangol/  webprog/  orarend.pdf" }; },
+    hints: ["Terminal → New Terminal opens it at the bottom of VS Code. Type there, press Enter.", "Select from the first prompt to the last line ls printed, right-click, Copy. Then click the box here and Ctrl+V."],
+    check: function(st){
+      var t = String(st.answer || "").replace(/\r/g, "");
+      if (!t.trim()) return "Paste the terminal's text in the box.";
+      if (/^PS [A-Z]:\\/m.test(t) || /Mode\s+LastWriteTime/.test(t) || /^\s*Directory: /m.test(t)) return "That's PowerShell (<code>PS</code>). In the terminal panel, click the ∨ next to + and pick Git Bash. Then <code>pwd</code> and <code>ls</code> again.";
+      if (/^[A-Z]:\\[^>\n]*>/m.test(t)) return "That's the old Windows cmd. In the terminal panel, click the ∨ next to + and pick Git Bash.";
+      if (/command not found/.test(t)) return "Something was misspelt: <code>command not found</code>. Try <code>pwd</code> and <code>ls</code> again.";
+      var lines = t.split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+      var pi = -1; lines.forEach(function(l, i){ if (pi < 0 && /^\/[a-z](\/|$)/.test(l)) pi = i; });
+      if (pi < 0) return "I can't find what <code>pwd</code> printed: a line that starts with <code>/</code>, like <code>/h/13F</code>. Run <code>pwd</code> and paste that too.";
+      var rest = lines.slice(pi + 1).filter(function(l){ return !/MINGW64|^\$/.test(l); });
+      if (!rest.length) return "I see <code>pwd</code>. Now <code>ls</code> too, and paste both. (If ls printed nothing, the folder is empty: open one with something in it.)";
+      return "";
+    },
+    after: function(st){ return "That was your real terminal, and it worked the same way. Everything from today works there."; } }
+];
+
+
+/* ====================================================================
+   State
+   ==================================================================== */
+
+var KEY = "term-make-move-run-v1";
+var TRIES_PER_HINT = 3;
+var N = LESSONS.length;
+function fresh(){ return { i: 0, done: [], primerDone: false, tries: {}, lastTried: {}, hints: {}, sol: {}, usedSol: {}, work: {}, msg: {}, checked: {} }; }
+function normalizeS(s){
+  var f = fresh();
+  if (!s || typeof s !== "object") return f;
+  for (var k in f) if (s[k] === undefined || typeof s[k] !== typeof f[k]) s[k] = f[k];
+  if (!Array.isArray(s.done)) s.done = [];
+  s.i = Math.max(0, Math.min(N - 1, Number(s.i) || 0));
+  return s;
+}
+var S = normalizeS((function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } })());
+if (PREP) { S = fresh(); S.primerDone = true; }
+function save(){ if (PREP) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+function startTask(i, seed){
+  var les = LESSONS[i];
+  if (seed === undefined) seed = Math.floor(Math.random() * 1e9);
+  var st = les.build(rng(seed));
+  st.seed = seed; st.cwd0 = st.cwd;
+  return st;
+}
+var UI = { note: "", prepView: "solution", hi: 0 };
+var primerIdx = 0, showSay = PREP;
+function L(){ return LESSONS[S.i]; }
+function W(){ if (!S.work[S.i]) S.work[S.i] = startTask(S.i); return S.work[S.i]; }
+
+/* ====================================================================
+   The work area: Explorer, answer box, terminal
+   ==================================================================== */
+
+var lastPaths = null, flashPaths = {};
+function pathList(fs){ var out2 = []; (function walk(n, p){ Object.keys(n.d).forEach(function(k){ var pp = joinP(p, k); out2.push(pp); if (isDir(n.d[k])) walk(n.d[k], pp); }); })(lookup(fs, HOME).node, HOME); return out2; }
+
+function renderExplorer(){
+  var les = L(), st = W(), ex = $("explorer");
+  var show = les.explorer !== false;
+  $("work").classList.toggle("noexp", !show);
+  ex.classList.toggle("hidden", !show);
+  if (!show) return;
+  var pin = les.pin !== false, h = '<h3>Explorer</h3><div class="addr">' + esc(pin ? winPath(st.cwd) : "H:\\") + '</div>';
+  var row = function(depth, name, path, dir, isHere, mark){
+    return '<div class="trow ' + (dir ? "dir" : "file") + (isHere ? " here" : "") + (flashPaths[path] ? " new" : "") + '" style="padding-left:' + (6 + depth * 16) + 'px"><span class="ic">' + (dir ? "📁" : "📄") + '</span><span class="nm">' + esc(name) + '</span>' + (isHere ? '<span class="pin">◀ you are here</span>' : "") + (mark ? '<span class="pin">◀ get here</span>' : "") + '</div>';
+  };
+  h += row(0, "H:  (~, your home folder)", HOME, true, pin && st.cwd === HOME, st.mark === HOME);
+  (function walk(n, p, depth){
+    sortedKeys(n).forEach(function(k){ var pp = joinP(p, k), d = isDir(n.d[k]); h += row(depth, k, pp, d, pin && d && st.cwd === pp, st.mark === pp); if (d) walk(n.d[k], pp, depth + 1); });
+  })(lookup(st.fs, HOME).node, HOME, 1);
+  if (pin && st.cwd.indexOf(HOME) !== 0) h += '<div class="off">You are outside H: now, in <b>' + esc(winPath(st.cwd)) + '</b>. <code>cd</code> on its own brings you home.</div>';
+  ex.innerHTML = h;
+}
+
+function promptHtml(p){ return '<div class="tl pi"><span class="pu">' + USER + '</span> <span class="pm">MINGW64</span> <span class="pp">' + esc(p) + '</span></div>'; }
+function renderTerm(focus){
+  var st = W(), h = "";
+  st.lines.forEach(function(l){
+    if (l.k === "p") h += promptHtml(l.p) + '<div class="tl">$ ' + esc(l.s) + '</div>';
+    else if (l.k === "h") h += '<div class="tl">' + l.h + '</div>';
+    else h += '<div class="tl' + (l.c === "tip" ? " tip" : "") + '">' + esc(l.s) + '</div>';
+  });
+  if (st.run) h += '<div class="inl"><input id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></div>';
+  else h += promptHtml(shortPath(st.cwd)) + '<div class="inl"><span>$ </span><input id="tin" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></div>';
+  var t = $("term"); t.innerHTML = h; t.scrollTop = t.scrollHeight;
+  var inp = $("tin");
+  inp.value = UI.typed || "";
+  if (focus !== false && !PREP) inp.focus({ preventScroll: true });
+}
+
+function boxKind(les){ return les.kind === "answer" || les.kind === "paste" || les.kind === "choose"; }
+function renderAnswer(){
+  var les = L(), st = W(), box = $("answer");
+  if (!boxKind(les)) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+  box.classList.remove("hidden");
+  if (les.kind === "choose") {
+    box.innerHTML = '<div style="width:100%;display:flex;flex-direction:column;gap:8px">' + les.options.map(function(o, i){ var on = String(st.answer) === String(i); return '<label style="display:flex;gap:10px;align-items:flex-start;border:1px solid ' + (on ? "#2f6fde" : "#d6d9de") + ';background:' + (on ? "#eef3fc" : "#fff") + ';border-radius:10px;padding:9px 12px;cursor:pointer;font-size:15px"><input type="radio" name="opt" value="' + i + '"' + (on ? " checked" : "") + ' style="margin-top:4px"><span>' + esc(o[0]) + '</span></label>'; }).join("") + '</div><button class="btn primary" id="ans-check">Check</button>';
+    box.querySelectorAll("input[name=opt]").forEach(function(r){ r.addEventListener("change", function(){ W().answer = r.value; save(); renderAnswer(); }); });
+    $("ans-check").onclick = function(){ checkNow(true); };
+    return;
+  }
+  if (les.kind === "paste") box.innerHTML = '<label for="ans">Paste it here:</label><textarea id="ans" spellcheck="false">' + esc(st.answer || "") + '</textarea><button class="btn primary" id="ans-check">Check</button>';
+  else box.innerHTML = '<label for="ans">Your answer:</label><input id="ans" autocomplete="off" spellcheck="false" value="' + esc(st.answer || "") + '"><button class="btn primary" id="ans-check">Check</button>';
+  $("ans").addEventListener("input", function(e){ W().answer = e.target.value; save(); });
+  $("ans").addEventListener("keydown", function(e){ if (e.key === "Enter" && (les.kind !== "paste" || e.ctrlKey)) { e.preventDefault(); checkNow(true); } });
+  $("ans-check").onclick = function(){ checkNow(true); };
+}
+
+function renderSol(){
+  var box = $("solbox"), les = L(), st = W();
+  if (!(S.sol[S.i] && !S.done[S.i])) { box.classList.add("hidden"); return; }
+  var s = les.solve(st);
+  box.classList.remove("hidden");
+  if (les.kind === "paste") { box.innerHTML = '<h4>What it looks like when it works</h4><pre>' + esc(s.answer) + '</pre>'; return; }
+  if (les.kind === "choose") { box.innerHTML = '<h4>Solution</h4>' + esc(les.options[Number(s.answer)][0]); return; }
+  box.innerHTML = '<h4>Solution: type it yourself (paste is off)</h4>' + s.cmds.map(function(c){ return c === "Ctrl+C" ? "<kbd>Ctrl</kbd>+<kbd>C</kbd>" : "<code>" + esc(c) + "</code>"; }).join(" ") + (s.answer !== undefined ? '<div>Then write <code>' + esc(s.answer) + '</code> in the box.</div>' : "");
+}
+
+function renderWork(focus){ var noTerm = !!L().noTerm; $("term").classList.toggle("hidden", noTerm); $("termbar").classList.toggle("hidden", noTerm); renderExplorer(); renderSol(); renderAnswer(); if (!noTerm) renderTerm(focus); }
+
+$("term").addEventListener("mouseup", function(){ var sel = window.getSelection(); if (sel && String(sel).length) return; var i = $("tin"); if (i) i.focus({ preventScroll: true }); });
+$("term").addEventListener("keydown", function(e){
+  var inp = e.target; if (inp.id !== "tin") return;
+  var st = W();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    var before = pathList(st.fs), line = inp.value;
+    UI.typed = ""; UI.hi = 0;
+    exec(st, line);
+    var after = pathList(st.fs); flashPaths = {};
+    after.forEach(function(p){ if (before.indexOf(p) < 0) flashPaths[p] = true; });
+    afterCommand();
+    return;
+  }
+  if (e.key === "Tab") {
+    e.preventDefault(); if (st.run) return;
+    var r = complete(st, inp.value);
+    if (!r) return;
+    if (r.line !== undefined) { inp.value = r.line; UI.typed = r.line; return; }
+    st.lines.push({ k: "p", p: shortPath(st.cwd), s: inp.value }); outH(st, r.list.map(function(x){ return /\/$/.test(x) ? '<span class="ls-d">' + esc(x.slice(0, -1)) + '</span>/' : esc(x); }).join("  "));
+    UI.typed = inp.value; save(); renderTerm(); return;
+  }
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    e.preventDefault(); if (st.run) return;
+    var hs = st.hist; if (!hs.length) return;
+    UI.hi = Math.max(0, Math.min(hs.length, UI.hi + (e.key === "ArrowUp" ? 1 : -1)));
+    inp.value = UI.hi ? hs[hs.length - UI.hi] : ""; UI.typed = inp.value; return;
+  }
+  if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
+    if (window.getSelection && String(window.getSelection()).length && !st.run) return;
+    e.preventDefault(); interrupt(st, inp.value); UI.typed = ""; afterCommand(); return;
+  }
+  if (e.ctrlKey && (e.key === "l" || e.key === "L")) { e.preventDefault(); st.lines = []; UI.typed = inp.value; save(); renderTerm(); return; }
+});
+$("term").addEventListener("input", function(e){ if (e.target.id === "tin") UI.typed = e.target.value; });
+$("term").addEventListener("paste", function(e){
+  if (S.sol[S.i] && !S.done[S.i]) { e.preventDefault(); UI.note = "Paste is off while the solution is open. Type it: that is how it sticks."; renderStripNote(); }
+});
+
+// After every command: done yet? (No red until they press Check.)
+function afterCommand(){
+  var idx = S.i, les = LESSONS[idx], st = W();
+  if (st.lines.length > 400) st.lines = st.lines.slice(-300);
+  if (!boxKind(les) && !S.done[idx] && !les.check(st)) markDone(idx);
+  else if (S.checked[idx] && !S.done[idx]) S.msg[idx] = les.check(st);
+  save(); renderDots(); renderStrip(); renderWork();
+}
+function markDone(idx){
+  var les = LESSONS[idx];
+  S.done[idx] = true; S.msg[idx] = ""; S.checked[idx] = true;
+  if (S.sol[idx]) S.usedSol[idx] = true;
+  S.sol[idx] = false;
+  (les.alsoDone || []).forEach(function(j){ S.done[j] = true; });
+}
+
+function checkNow(fromAnswer){
+  var idx = S.i, les = LESSONS[idx], st = W(), msg = les.check(st), key = JSON.stringify([st.cwd, st.answer, st.ncmd]);
+  S.checked[idx] = true; S.msg[idx] = msg; UI.note = "";
+  if (!msg) markDone(idx);
+  else if (S.lastTried[idx] !== key) { S.lastTried[idx] = key; S.tries[idx] = (S.tries[idx] || 0) + 1; }
+  save(); renderDots(); renderStrip(); renderWork(!fromAnswer);
+  if (fromAnswer && $("ans")) $("ans").focus();
+  else if (L().noTerm && $("ans")) $("ans").focus();
+}
+
+/* ====================================================================
+   Task strip
+   ==================================================================== */
+
+function renderDots(){
+  var h = "";
+  for (var i = 0; i < N; i++) h += '<button class="dot' + (S.done[i] ? (S.usedSol[i] ? " used" : " done") : "") + (i === S.i ? " cur" : "") + '" data-i="' + i + '" title="Task ' + (i + 1) + ": " + esc(LESSONS[i].title) + (S.usedSol[i] ? " (solved with the solution)" : "") + '"></button>';
+  $("dots").innerHTML = h;
+}
+$("dots").addEventListener("click", function(e){ var d = e.target.closest("[data-i]"); if (d) gotoTask(Number(d.dataset.i)); });
+
+function hintState(){
+  var les = L(), st = W(), shown = S.hints[S.i] || 0, tries = (S.tries[S.i] || 0) + (st.ncmd || 0), len = les.hints.length;
+  var nextAt = len === 0 ? 6 * TRIES_PER_HINT / 2 : (shown + 1) * TRIES_PER_HINT;
+  return { shown: shown, tries: tries, len: len, need: Math.max(0, nextAt - tries), solutionNext: shown >= len };
+}
+function button(label, cls, fn){ var b = document.createElement("button"); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+
+function renderStrip(){
+  var les = L(), st = W(), done = !!S.done[S.i], msg = S.msg[S.i], r = "";
+  $("t-kicker").textContent = SHORT + " · Task " + (S.i + 1) + " of " + N + (les.boss ? " · Confident? Start here" : les.detective ? " · Detective" : les.extra ? " · Extra" : "") + (PREP ? (UI.prepView === "task" ? " · Prep: task" : " · Prep: solution") : "");
+  $("t-title").textContent = les.title;
+  $("t-do").innerHTML = les.do;
+  $("t-sub").innerHTML = S.sol[S.i] && !done ? "The solution is above the terminal. Type it in yourself." : les.sub;
+  if (!S.checked[S.i] && !done) r = '<span class="dim">' + (les.kind === "choose" ? "Pick one, then press <b>Check</b>." : les.kind === "paste" ? "Paste it in the box, then press <b>Check</b>." : les.kind === "answer" ? "Use the terminal, then write your answer and press <b>Check</b>." : "Type in the terminal and press Enter. It ticks itself when you get there.") + '</span>';
+  else if (S.checked[S.i] && msg && !done) r = '<span class="no">✗ Not yet.</span> ' + msg;
+  else if (done) r = '<span class="yes">✓ Done.</span> ' + les.after(st);
+  $("t-result").innerHTML = r;
+  var hs = hintState();
+  if (hs.shown && les.hints.length) { $("t-hints").classList.remove("hidden"); $("t-hints").innerHTML = les.hints.slice(0, hs.shown).map(function(h, i){ return "<div><b>Hint " + (i + 1) + ":</b> " + h + "</div>"; }).join(""); }
+  else $("t-hints").classList.add("hidden");
+  var act = $("t-actions"); act.innerHTML = "";
+  if (PREP) {
+    act.appendChild(button("← Prev", "btn", function(){ gotoTask(S.i - 1); }));
+    act.appendChild(button(UI.prepView === "task" ? "Show solution" : "Show task", "btn", togglePrep));
+    act.appendChild(button("Next →", "btn primary", function(){ gotoTask(S.i + 1); }));
+    return renderStripNote();
+  }
+  if (!boxKind(les) && !done) act.appendChild(button("Check", "btn primary", function(){ checkNow(false); }));
+  if (done) { if (S.i < N - 1) act.appendChild(button("Next task →", "btn primary", function(){ gotoTask(S.i + 1); })); }
+  else if (!S.sol[S.i]) act.appendChild(button(hs.solutionNext ? "Show solution" : (hs.len ? "Stuck? Hint" : "Stuck?"), "btn", stuck));
+  renderStripNote();
+}
+function renderStripNote(){ var n = $("t-note"); n.classList.toggle("hidden", !UI.note); n.textContent = UI.note; }
+function stuck(){
+  var hs = hintState();
+  if (hs.need > 0) {
+    UI.note = "Have a go first: type commands, look at what they print. " + hs.need + " more and " + (hs.solutionNext ? "the solution" : "a hint") + " unlocks.";
+    renderStripNote(); return;
+  }
+  UI.note = "";
+  if (hs.solutionNext) { S.sol[S.i] = true; save(); renderAll(); return; }
+  S.hints[S.i] = hs.shown + 1; save(); renderStrip();
+}
+
+// Run the solution on a fresh start of the task (prep mode and tests).
+function solvedState(i, seed){
+  var st = startTask(i, seed), s = LESSONS[i].solve(st);
+  (s.cmds || []).forEach(function(c){ if (c === "Ctrl+C") interrupt(st, ""); else exec(st, c); });
+  if (s.answer !== undefined) st.answer = s.answer;
+  return st;
+}
+function togglePrep(){
+  UI.prepView = UI.prepView === "task" ? "solution" : "task";
+  var seed = W().seed;
+  S.work[S.i] = UI.prepView === "task" ? startTask(S.i, seed) : solvedState(S.i, seed);
+  S.done[S.i] = false; S.checked[S.i] = false;
+  if (UI.prepView === "solution") { if (!LESSONS[S.i].check(W())) { S.done[S.i] = true; S.checked[S.i] = true; } }
+  renderAll();
+}
+
+/* ====================================================================
+   Moving between tasks
+   ==================================================================== */
+
+function gotoTask(i){
+  S.i = Math.max(0, Math.min(N - 1, i)); UI.note = ""; UI.typed = ""; UI.hi = 0; flashPaths = {};
+  if (PREP) { UI.prepView = "solution"; S.work[S.i] = solvedState(S.i, 1000 + S.i); S.done[S.i] = !LESSONS[S.i].check(W()); S.checked[S.i] = true; renderAll(); return; }
+  save(); renderAll();
+}
+function renderAll(){ renderDots(); renderStrip(); renderWork(); }
+$("l-again").onclick = function(){
+  if (!confirm("Start this task again? The folders get shuffled and your commands are cleared.")) return;
+  S.work[S.i] = startTask(S.i); S.checked[S.i] = false; S.msg[S.i] = ""; S.sol[S.i] = false; save(); gotoTask(S.i);
+};
+$("l-reset").onclick = function(){
+  if (!confirm("Start the whole lesson again from task 1? Your work and progress are cleared.")) return;
+  S = fresh(); S.primerDone = true; save(); gotoTask(0);
+};
+$("l-slides").onclick = function(){ primerIdx = 0; showPrimer(true); };
+
+document.addEventListener("keydown", function(e){
+  if (!$("primer").classList.contains("hidden")) {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { primerIdx = Math.max(0, Math.min(PRIMER.length - 1, primerIdx + (e.key === "ArrowRight" ? 1 : -1))); renderPrimer(); }
+    if (e.key === "N" && e.shiftKey) { showSay = !showSay; renderPrimer(); }
+    return;
+  }
+  if (PREP && e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); gotoTask(S.i + (e.key === "ArrowRight" ? 1 : -1)); }
+});
+
+/* ====================================================================
+   Slides
+   ==================================================================== */
+
+function showPrimer(on){ $("primer").classList.toggle("hidden", !on); if (on) renderPrimer(); else { var i = $("tin"); if (i) i.focus(); } }
+function renderPrimer(){
+  var Pr = PRIMER[primerIdx], lastP = primerIdx === PRIMER.length - 1, dots = "";
+  for (var i = 0; i < PRIMER.length; i++) dots += '<span class="pdot' + (i === primerIdx ? " cur" : "") + '" data-slide="' + i + '"></span>';
+  $("primer").innerHTML = '<div class="slide">' +
+    '<div class="kicker">' + LESSON + ' · ' + (primerIdx + 1) + ' of ' + PRIMER.length + '</div>' +
+    '<h2>' + esc(Pr.title) + '</h2>' +
+    '<div class="art">' + ART[Pr.art]() + '</div>' +
+    '<p>' + Pr.body + '</p>' +
+    (showSay ? '<div class="say"><b>Teacher:</b> ' + esc(Pr.say) + '</div>' : "") +
+    '<div class="nav"><div class="pdots" id="pdots">' + dots + '</div>' +
+    '<button class="btn" id="p-back"' + (primerIdx === 0 ? " disabled" : "") + '>← Back</button>' +
+    '<button class="btn primary" id="p-next">' + (lastP ? "Let's go →" : "Next →") + '</button>' +
+    (S.primerDone ? '<button class="btn" id="p-close">Close</button>' : "") + '</div>' +
+    '<div class="keys">← → to move</div></div>';
+  $("p-back").onclick = function(){ if (primerIdx > 0) { primerIdx--; renderPrimer(); } };
+  $("p-next").onclick = function(){ if (!lastP) { primerIdx++; renderPrimer(); return; } S.primerDone = true; save(); showPrimer(false); };
+  if ($("p-close")) $("p-close").onclick = function(){ showPrimer(false); };
+  $("pdots").onclick = function(e){ var d = e.target.closest(".pdot"); if (d) { primerIdx = Number(d.dataset.slide); renderPrimer(); } };
+}
+
+// Test hook.
+window.__T2 = { LESSONS: LESSONS, PRIMER: PRIMER, ART: ART, PREP: PREP, gotoTask: gotoTask, state: function(){ return S; },
+  start: startTask, exec: exec, complete: complete, check: function(i, st){ return LESSONS[i].check(st); }, solved: solvedState, tokenize: tokenize, newState: newState, world: world, rng: rng };
+
+document.title = LESSON;
+showPrimer(!S.primerDone);
+gotoTask(S.i);
+})();
+</script>
+</body>
+</html>
